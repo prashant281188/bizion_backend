@@ -10,7 +10,7 @@ import transportRoutes from "./routes/transport"
 import partyRoutes from "./routes/party"
 import cors from 'cors'
 const app = express();
-const PORT = process.env.PORT || 3002
+const PORT = process.env.PORT 
 
 const allowedOrigin = ["http://localhost:3000", "https://192.168.29.120:3000", "*"];
 
@@ -27,7 +27,6 @@ const corsOptions: cors.CorsOptions = {
   credentials: true,
   optionsSuccessStatus: 204
 }
-app.use(cors(corsOptions));
 
 app.use(express.json());
 
