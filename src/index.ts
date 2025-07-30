@@ -1,5 +1,7 @@
 import express from "express";
-import dotenv from "dotenv"
+
+import cors from 'cors'
+
 import categoryRoutes from "./routes/category"
 import hsnRoutes from "./routes/hsn"
 import groupRoutes from "./routes/group"
@@ -8,15 +10,16 @@ import taxRoutes from "./routes/tax"
 import unitRoutes from "./routes/unit"
 import transportRoutes from "./routes/transport"
 import partyRoutes from "./routes/party"
-import cors from 'cors'
-const app = express();
-const PORT = process.env.PORT 
 
-const allowedOrigin = ["http://localhost:3000", "https://192.168.29.120:3000", "*"];
+const app = express();
+
+const PORT = process.env.PORT
+
+const allowedOrigin = process.env.ALLOWED_ORIGINS!;
 
 const corsOptions: cors.CorsOptions = {
   origin: (origin, callback) => {
-    if (!origin || allowedOrigin.indexOf(origin)!== -1) {
+    if (!origin || allowedOrigin.indexOf(origin) !== -1) {
       callback(null, true)
     }
     else {
