@@ -28,6 +28,8 @@ const corsOptions: cors.CorsOptions = {
   optionsSuccessStatus: 204
 }
 
+app.use(cors())
+
 app.use(express.json());
 
 
