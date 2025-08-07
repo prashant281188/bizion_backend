@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import { Model } from '../model/unit'
+import { unitSchema, unitUpdateSchema } from "../schema/unit";
 
-import { unitSchema } from '../validators/validatorSchema'
 
 export const Controller = {
 
@@ -36,7 +36,7 @@ export const Controller = {
 
     async update(req: Request, res: Response) {
         const id = req.params.id
-        const parsedData = unitSchema.safeParse(req.body);
+        const parsedData = unitUpdateSchema.safeParse(req.body);
         if (!parsedData.success)
             return res.status(400).json({
                 message: 'Validation error',

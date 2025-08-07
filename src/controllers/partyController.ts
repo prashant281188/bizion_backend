@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import { Model } from '../model/party'
+import { partySchema, partyUpdateSchema } from "../schema/party";
 
-import { partySchema } from '../validators/validatorSchema'
 
 export const Controller = {
 
@@ -36,7 +36,7 @@ export const Controller = {
 
     async update(req: Request, res: Response) {
         const id = req.params.id
-        const parsedData = partySchema.safeParse(req.body);
+        const parsedData = partyUpdateSchema.safeParse(req.body);
         if (!parsedData.success)
             return res.status(400).json({
                 message: 'Validation error',

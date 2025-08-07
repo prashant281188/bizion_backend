@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import { Model } from '../model/tax'
+import { taxSchema, taxUpdateSchema } from "../schema/tax";
 
-import { taxSchema } from '../validators/validatorSchema'
 
 export const Controller = {
 
@@ -36,21 +36,21 @@ export const Controller = {
 
     async update(req: Request, res: Response) {
         const id = req.params.id
-        const parsedData = taxSchema.safeParse(req.body);
+        const parsedData = taxUpdateSchema.safeParse(req.body);
         if (!parsedData.success)
             return res.status(400).json({
                 message: 'Validation error',
                 errors: parsedData.error.flatten().fieldErrors
             })
-        const updatedData = await Model.update(id, parsedData.data);
+        const updatedData = await Model.update(parsedData.data);
         if (!updatedData) return res.status(404).send('not found')
         res.status(201).json(updatedData)
     },
 
-    async updateSome(req: Request, res: Response){
+    async updateSome(req: Request, res: Response) {
         const id = req.params.id
         const body = req.body
-        const updatedData = await Model.update(id, body)
+        const updatedData = await Model.update(body)
         res.status(201).json(updatedData)
     }
 }

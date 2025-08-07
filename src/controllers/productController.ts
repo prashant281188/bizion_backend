@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import { Model } from '../model/product'
 
-import { productSchema, productUpdateSchema } from '../validators/validatorSchema'
+import { productSchema, productUpdateSchema } from '../schema/product'
 
 export const Controller = {
 
@@ -42,7 +42,7 @@ export const Controller = {
                 message: 'Validation error',
                 errors: parsedData.error.flatten().fieldErrors
             })
-        const updateData = await Model.update(id, parsedData.data);
+        const updateData = await Model.update(parsedData.data);
         if (!updateData) return res.status(404).send('not found')
         res.status(201).json(updateData)
     },

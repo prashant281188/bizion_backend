@@ -4,17 +4,18 @@ import { hsns } from "./hsn"
 import { categories } from "./category"
 import { taxes } from "./tax"
 import { units } from "./unit"
+import z from "zod"
 // -------------------------------------------------------PRODUCT------------------------------------------------------------//
 
 export const products = pgTable("products", {
   id: uuid().primaryKey().defaultRandom(),
-  name: varchar().unique(),
+  model: varchar().unique().notNull(),
   manufacture: varchar(),
   brand: varchar(),
   hsnId: uuid().notNull(),
   categoryId: uuid(),
-  taxId: uuid(),
-  unitId: uuid(),
+  taxId: uuid().notNull(),
+  unitId: uuid().notNull(),
   metal: varchar(),
 })
 
@@ -88,3 +89,47 @@ export const productVariantRelation = relations(productVariants, ({ one }) => ({
     references: [products.id]
   })
 }))
+
+
+// validataion schemas
+export const productVariantSchema = z.object({
+  productId: z.string().nullable().optional(),
+  size: z.string(),
+  finish: z.string(),
+  boxQty: z.coerce.number({ coerce: true }).nullable().optional(),
+  mrp: z.coerce.number().nullable().optional(),
+  purchaseDiscount: z.coerce.number().nullable().optional(),
+  purchaseRate: z.coerce.number().nullable().optional(),
+  saleRate: z.coerce.number().nullable().optional(),
+  saleDiscount: z.coerce.number().nullable().optional(),
+})
+
+export const productVariantUpdateSchema = productVariantSchema.extend({
+  id: z.string().uuid()
+})
+
+export type ProductVariantUpdateInput = z.infer<typeof productVariantUpdateSchema>
+export type ProductVariantInput = z.infer<typeof productVariantSchema>
+
+// --------------------------------------------------------------------------------
+
+export const productSchema = z.object({
+  model: z.string().min(1, { message: "prodcut name is required" }),
+  hsnId: z.string().uuid(),
+  categoryId: z.string().uuid().nullable().optional(),
+  unitId: z.string().uuid(),
+  taxId: z.string().uuid(),
+  metal: z.string().nullable().optional(),
+  brand: z.string().nullable().optional(),
+  manufacture: z.string().nullable().optional(),
+  variants: z.array(productVariantSchema).min(1, { message: "at least one variant is required" })
+})
+
+export const productUpdateSchema = productSchema.extend({
+  id: z.string().uuid(),
+  variants: z.array(productVariantUpdateSchema).min(1, { message: "at lease on variant is required" })
+
+})
+
+export type ProductUpdateInput = z.infer<typeof productUpdateSchema>
+export type ProductInput = z.infer<typeof productSchema>

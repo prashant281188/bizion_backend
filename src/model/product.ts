@@ -2,8 +2,7 @@ import { asc, eq } from 'drizzle-orm'
 import { db } from '../db/db'
 
 
-import { products, Product, NewProduct, NewProductVariant, productVariants } from '../schema/schema'
-import { ProductInput, ProductUpdateInput } from '../validators/validatorSchema'
+import { products, Product, NewProduct, NewProductVariant, productVariants, ProductInput, ProductUpdateInput } from '../schema/schema'
 
 
 
@@ -23,10 +22,10 @@ export const Model =
         variants: {
           orderBy: [asc(productVariants.size)],
         },
-      
-        
+
+
       },
-      orderBy:[asc(products.name)]
+      orderBy: [asc(products.model)]
     })
   },
 
@@ -61,8 +60,8 @@ export const Model =
 
   },
 
-  async update(id: string, data: ProductUpdateInput) {
-    const result = await db.update(products).set(data).where(eq(products.id, id)).returning()
+  async update(data: ProductUpdateInput) {
+    const result = await db.update(products).set(data).where(eq(products.id, data.id)).returning()
     return result[0]
   },
 
@@ -80,11 +79,11 @@ export const Model =
     })
   },
 
-  async updateProductVariants(id: string, productData: ProductUpdateInput ) {
+  async updateProductVariants(id: string, productData: ProductUpdateInput) {
     return await db.transaction(async (tx) => {
       productData.variants.map((v) => {
-        if(!!v.productId)
-        tx.update(productVariants).set(v).where(eq(productVariants.modelId, v.productId))
+        if (!!v.productId)
+          tx.update(productVariants).set(v).where(eq(productVariants.modelId, v.productId))
       })
       return await tx.update(products).set(productData).where(eq(products.id, id));
     })

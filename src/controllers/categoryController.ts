@@ -1,7 +1,6 @@
 import { Request, Response } from "express";
 import { Model } from '../model/category'
 import { categorySchema, categoryUpdateSchema } from "../schema/category";
-import { error } from "console";
 
 export const Controller = {
 

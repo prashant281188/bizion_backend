@@ -2,8 +2,7 @@ import { eq } from 'drizzle-orm'
 import { db } from '../db/db'
 
 
-import { units, Unit } from '../schema/schema'
-import { UnitInput } from '../validators/validatorSchema'
+import { units, Unit, UnitUpdate } from '../schema/schema'
 
 
 
@@ -23,13 +22,13 @@ export const Model =
     return result[0] || null
   },
 
-  async create(data: UnitInput): Promise<Unit> {
+  async create(data: Unit): Promise<Unit> {
     const result = await db.insert(units).values(data).returning()
     return result[0]
 
   },
 
-  async update(id: string, data: UnitInput) {
+  async update(id: string, data: UnitUpdate) {
     const result = await db.update(units).set(data).where(eq(units.id, id)).returning()
     return result[0]
   }

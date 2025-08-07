@@ -1,9 +1,20 @@
 import { numeric, pgTable, uuid, varchar } from "drizzle-orm/pg-core"
+import z from "zod"
 export const taxes = pgTable("taxes", {
   id: uuid().primaryKey().defaultRandom(),
-  taxValue: numeric({ mode: "number" }).notNull(),
+  taxValue: numeric({ mode: "number" }).notNull().unique(),
   taxName: varchar().default("").notNull()
 })
 
-export type Tax = typeof taxes.$inferSelect
-export type NewTax = typeof taxes.$inferInsert
+
+export const taxSchema = z.object({
+  taxName: z.string().min(1, { message: "tax name is required" }),
+  taxValue: z.coerce.number().max(100, { message: "tax value cannot be greater than 100" }).nonnegative({ message: "tax value cannot be less than 0" })
+})
+
+export const taxUpdateSchema = taxSchema.extend({
+  id: z.string().uuid()
+})
+
+export type TaxUpdate = z.infer<typeof taxUpdateSchema>
+export type Tax = z.infer<typeof taxSchema>

@@ -1,10 +1,6 @@
-import { eq } from 'drizzle-orm'
 import { db } from '../db/db'
-
-import { HSN, hsns } from '../schema/schema'
-import { HSNInput } from '../validators/validatorSchema'
-
-
+import { HSN, hsns, HSNUpdate } from '../schema/schema'
+import { eq } from 'drizzle-orm'
 
 export const Model =
 {
@@ -21,13 +17,14 @@ export const Model =
     const result = await db.delete(hsns).where(eq(hsns.id, id)).returning()
     return result[0] || null
   },
-  async create(data: HSNInput): Promise<HSN> {
+
+  async create(data: HSN): Promise<HSN> {
     const result = await db.insert(hsns).values(data).returning()
     return result[0]
   },
 
-  async update(id: string, data: Partial<HSNInput>): Promise<HSN> {
-    const result = await db.update(hsns).set(data).where(eq(hsns.id, id)).returning()
+  async update(data: HSNUpdate): Promise<HSN> {
+    const result = await db.update(hsns).set(data).where(eq(hsns.id, data.id)).returning()
     return result[0]
   }
 

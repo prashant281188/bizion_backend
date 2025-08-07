@@ -17,6 +17,7 @@ export const Model =
     const result = await db.delete(groups).where(eq(groups.id, id)).returning()
     return result[0] || null
   },
+  
   async create(data: Group): Promise<Group> {
     const result = await db.insert(groups).values(data).returning()
     return result[0]

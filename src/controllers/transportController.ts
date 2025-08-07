@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import { Model } from '../model/transport'
 
-import { transportSchema } from '../validators/validatorSchema'
+import { transportUpdateSchema, transportSchema } from "../schema/transport";
 
 export const Controller = {
 
@@ -36,13 +36,13 @@ export const Controller = {
 
     async update(req: Request, res: Response) {
         const id = req.params.id
-        const parsedData = transportSchema.safeParse(req.body);
+        const parsedData = transportUpdateSchema.safeParse(req.body);
         if (!parsedData.success)
             return res.status(400).json({
                 message: 'Validation error',
                 errors: parsedData.error.flatten().fieldErrors
             })
-        const updataData = await Model.update(id, parsedData.data);
+        const updataData = await Model.update(parsedData.data);
         if (!updataData) return res.status(404).send('not found')
         res.status(201).json(updataData)
     }
