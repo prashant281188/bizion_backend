@@ -1,7 +1,7 @@
 import { eq } from 'drizzle-orm'
-import { db } from '../drizzle/db'
+import { db } from '../db/db'
 
-import { Tax, taxes } from '../drizzle/schema'
+import { Tax, taxes } from '../schema/schema'
 import { TaxInput } from '../validators/validatorSchema'
 
 

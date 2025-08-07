@@ -1,8 +1,8 @@
 import { eq } from 'drizzle-orm'
-import { db } from '../drizzle/db'
+import { db } from '../db/db'
 
 
-import { units, Unit } from '../drizzle/schema'
+import { units, Unit } from '../schema/schema'
 import { UnitInput } from '../validators/validatorSchema'
 
 

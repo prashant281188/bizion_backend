@@ -1,7 +1,7 @@
 import { eq } from 'drizzle-orm'
-import { db } from '../drizzle/db'
+import { db } from '../db/db'
 
-import { Transport, transports } from '../drizzle/schema'
+import { Transport, transports } from '../schema/schema'
 import { TransportInput } from '../validators/validatorSchema'
 
 

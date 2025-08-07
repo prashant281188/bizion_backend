@@ -1,7 +1,7 @@
 import { eq } from 'drizzle-orm'
-import { db } from '../drizzle/db'
+import { db } from '../db/db'
 
-import { Group, groups } from '../drizzle/schema'
+import { Group, groups } from '../schema/schema'
 import { GroupInput } from '../validators/validatorSchema'
 
 

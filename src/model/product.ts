@@ -1,9 +1,9 @@
 import { asc, eq } from 'drizzle-orm'
-import { db } from '../drizzle/db'
+import { db } from '../db/db'
 
 
-import { products, Product, NewProduct, NewProductVariant, productVariants } from '../drizzle/schema'
-import { ProductInput } from '../validators/validatorSchema'
+import { products, Product, NewProduct, NewProductVariant, productVariants } from '../schema/schema'
+import { ProductInput, ProductUpdateInput } from '../validators/validatorSchema'
 
 
 
@@ -11,7 +11,6 @@ export const Model =
 {
   async getAll() {
     return await db.query.products.findMany({
-
       with: {
         hsn: {
           columns: { hsnCode: true }
@@ -21,16 +20,34 @@ export const Model =
         },
         tax: true,
         unit: true,
-        productVariant: {
+        variants: {
+          orderBy: [asc(productVariants.size)],
+        },
+      
+        
+      },
+      orderBy:[asc(products.name)]
+    })
+  },
+
+  async getByID(id: string) {
+    const result = await db.query.products.findMany({
+      where: eq(products.id, id),
+      with: {
+        hsn: {
+          columns: { hsnCode: true }
+        },
+        category: {
+          columns: { categoryName: true }
+        },
+        tax: true,
+        unit: true,
+        variants: {
           orderBy: [asc(productVariants.size)],
         }
       }
     })
-  },
-
-  async getByID(id: string): Promise<Product | null> {
-    const result = await db.select().from(products).where(eq(products.id, id))
-    return result[0] || null
+    return result[0]
   },
 
   async delete(id: string): Promise<Product | null> {
@@ -44,7 +61,7 @@ export const Model =
 
   },
 
-  async update(id: string, data: ProductInput) {
+  async update(id: string, data: ProductUpdateInput) {
     const result = await db.update(products).set(data).where(eq(products.id, id)).returning()
     return result[0]
   },
@@ -60,6 +77,16 @@ export const Model =
 
       await tx.insert(productVariants).values(variantData);
       return newProduct;
+    })
+  },
+
+  async updateProductVariants(id: string, productData: ProductUpdateInput ) {
+    return await db.transaction(async (tx) => {
+      productData.variants.map((v) => {
+        if(!!v.productId)
+        tx.update(productVariants).set(v).where(eq(productVariants.modelId, v.productId))
+      })
+      return await tx.update(products).set(productData).where(eq(products.id, id));
     })
   }
 

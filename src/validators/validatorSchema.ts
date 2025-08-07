@@ -41,6 +41,7 @@ export type TaxInput = z.infer<typeof taxSchema>
 // ----------------------------------------------------------------------------------
 
 export const groupSchema = z.object({
+    id: z.string().optional(),
     groupName: z.string().min(1, { message: "hsn code is required" }),
     groupDescription: z.string().optional()
 })
@@ -104,12 +105,14 @@ export const productSchema = z.object({
     metal: z.string(),
     brand: z.string(),
     manufacture: z.string(),
-    variants: z.array(productVariantSchema).min(1, { message: "at least one variant is requiered" })
+    variants: z.array(productVariantSchema).min(1, { message: "at least one variant is required" })
 })
 
 
 export const productUpdateSchema = productSchema.extend({
-    id: z.string().uuid()
+    id: z.string().uuid(),
+    variants: z.array(productVariantUpdateSchema).min(1, { message: "at lease on variant is required" })
+
 })
 
 export type ProductUpdateInput = z.infer<typeof productUpdateSchema>
@@ -118,6 +121,7 @@ export type ProductInput = z.infer<typeof productSchema>
 
 // ------------------------------------------------------------------------------------------------------------
 export const transportSchema = z.object({
+    id: z.string().optional(),
     name: z.string().min(1, { message: "trasnport name is required" }),
     gstin: z.string().optional(),
     contact: z.string().optional()
@@ -127,7 +131,6 @@ export const transportUpdateSchema = transportSchema.extend({
     id: z.string().uuid()
 })
 
-export type TransportUpdateInput = z.infer<typeof transportUpdateSchema>
 export type TransportInput = z.infer<typeof transportSchema>
 
 // -------------------------------------------------------------------------------------------------------------
@@ -141,9 +144,9 @@ export const partySchema = z.object({
     addressLine2: z.string().optional(),
     city: z.string(),
     state: z.string().optional(),
-    pincode: z.coerce.number().min(100000, {message: "pincode must be of 6 digits"}).max(999999, {message: "pincode must be of 6 digits"}).optional(),
-    groupId: z.string(),
-    transportId: z.string(),
+    pincode: z.coerce.number().min(100000, { message: "pincode must be of 6 digits" }).max(999999, { message: "pincode must be of 6 digits" }).optional(),
+    groupId: z.string().optional(),
+    transportId: z.string().optional(),
     // isActive: z.boolean().default(true),
 
 })
@@ -157,3 +160,4 @@ export type PartyUpdateInput = z.infer<typeof partyUpdateSchema>
 export type PartyInput = z.infer<typeof partySchema>
 
 // ----------------------------------------------------------------------------------------------------------------
+

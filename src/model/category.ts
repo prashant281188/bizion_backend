@@ -1,9 +1,10 @@
 import { eq } from 'drizzle-orm'
-import { db } from '../drizzle/db'
 
 
-import { categories, Category } from '../drizzle/schema'
+
+import { categories, Category } from '../schema/schema'
 import { CategoryInput } from '../validators/validatorSchema'
+import { db } from '../db/db'
 
 
 

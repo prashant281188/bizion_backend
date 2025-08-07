@@ -1,7 +1,7 @@
 import { eq } from 'drizzle-orm'
-import { db } from '../drizzle/db'
+import { db } from '../db/db'
 
-import { HSN, hsns } from '../drizzle/schema'
+import { HSN, hsns } from '../schema/schema'
 import { HSNInput } from '../validators/validatorSchema'
 
 

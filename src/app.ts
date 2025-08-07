@@ -15,7 +15,7 @@ const app = express();
 
 const PORT = process.env.PORT
 
-const allowedOrigin = process.env.ALLOWED_ORIGINS!;
+const allowedOrigin = ["http://localhost:3000", "https://192.168.29.120:3000", "*"];
 
 const corsOptions: cors.CorsOptions = {
   origin: (origin, callback) => {
@@ -42,13 +42,13 @@ app.get("/", (req, res) => {
 
 
 app.use('/api/v1/category', categoryRoutes)
-app.use('/api/v1/hsn', hsnRoutes)
 app.use('/api/v1/group', groupRoutes)
+app.use('/api/v1/hsn', hsnRoutes)
+app.use('/api/v1/party', partyRoutes)
 app.use('/api/v1/product', productRoutes)
 app.use('/api/v1/tax', taxRoutes)
-app.use('/api/v1/unit', unitRoutes)
 app.use('/api/v1/transport', transportRoutes)
-app.use('/api/v1/party', partyRoutes)
+app.use('/api/v1/unit', unitRoutes)
 
 
 
