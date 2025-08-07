@@ -1,10 +1,21 @@
 import { pgTable, uuid, varchar } from "drizzle-orm/pg-core"
 
+import { z } from "zod"
+
 export const categories = pgTable("category", {
   id: uuid("id").defaultRandom().primaryKey(),
   categoryName: varchar("categoryName", { length: 100 }).notNull().unique(),
   categoryDescription: varchar("categoryDescription", { length: 100 }),
 });
 
-export type Category = typeof categories.$inferSelect
-export type NewCategory = typeof categories.$inferInsert
+export const categorySchema = z.object({
+  categoryName: z.string().min(4, { message: "categroy name must be 4 characters long" }),
+  categoryDescription: z.string().nullable().optional()
+})
+
+export const categoryUpdateSchema = categorySchema.partial().extend({
+  id: z.string().uuid()
+})
+
+export type Category = z.infer<typeof categorySchema>
+export type CategoryUpdate = z.infer<typeof categoryUpdateSchema>

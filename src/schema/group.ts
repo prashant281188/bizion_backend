@@ -1,4 +1,5 @@
 import { pgTable, uuid, varchar } from "drizzle-orm/pg-core"
+import z from "zod"
 
 export const groups = pgTable("groups", {
   id: uuid().primaryKey().defaultRandom(),
@@ -6,5 +7,14 @@ export const groups = pgTable("groups", {
   groupDescription: varchar()
 })
 
-export type Group = typeof groups.$inferSelect
-export type NewGroup = typeof groups.$inferInsert
+export const groupSchema = z.object({
+  groupName: z.string().min(1, { message: "group name is required" }),
+  groupDescription: z.string().nullable().optional()
+})
+
+export const groupUpdateSchema = groupSchema.extend({
+  id: z.string().uuid()
+})
+
+export type Group = z.infer<typeof groupSchema>
+export type GroupUpdate = z.infer<typeof groupUpdateSchema>

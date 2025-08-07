@@ -1,16 +1,5 @@
 import { z } from "zod"
 
-export const categorySchema = z.object({
-    categoryName: z.string().min(4, { message: "categroy name must be 4 characters long" }),
-    categoryDescription: z.string().optional()
-})
-
-export const categoryUpdateSchema = categorySchema.extend({
-    id: z.string().uuid()
-})
-export type CategoryInput = z.infer<typeof categorySchema>
-export type CategoryUpdateInput = z.infer<typeof categoryUpdateSchema>
-
 // ---------------------------------------------------------------------------------
 export const hsnSchema = z.object({
     hsnCode: z.coerce.number().min(1, { message: "hsn code is required" }),
@@ -40,18 +29,7 @@ export type TaxInput = z.infer<typeof taxSchema>
 
 // ----------------------------------------------------------------------------------
 
-export const groupSchema = z.object({
-    id: z.string().optional(),
-    groupName: z.string().min(1, { message: "hsn code is required" }),
-    groupDescription: z.string().optional()
-})
 
-export const groupUpdateSchema = groupSchema.extend({
-    id: z.string().uuid()
-})
-
-export type GroupUpdateInput = z.infer<typeof groupUpdateSchema>
-export type GroupInput = z.infer<typeof groupSchema>
 
 
 
