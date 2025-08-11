@@ -3,12 +3,12 @@ import z from "zod"
 
 export const hsns = pgTable("hsns", {
   id: uuid().primaryKey().defaultRandom(),
-  hsnCode: varchar().notNull().unique(),
+  hsnCode: numeric({mode:"number"}).notNull().unique(),
   hsnDescription: varchar()
 })
 
 export const hsnSchema = z.object({
-  hsnCode: z.string().min(1, { message: "hsn code is required" }),
+  hsnCode: z.coerce.number().min(1, { message: "hsn code is required" }),
   hsnDescription: z.string().nullable().optional()
 })
 
@@ -18,3 +18,4 @@ export const hsnUpdateSchema = hsnSchema.extend({
 
 export type HSN = z.infer<typeof hsnSchema>
 export type HSNUpdate = z.infer<typeof hsnUpdateSchema>
+export type HsnRecord = HSNUpdate

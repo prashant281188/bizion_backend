@@ -18,3 +18,4 @@ export const groupUpdateSchema = groupSchema.extend({
 
 export type Group = z.infer<typeof groupSchema>
 export type GroupUpdate = z.infer<typeof groupUpdateSchema>
+export type GroupRecord = GroupUpdate

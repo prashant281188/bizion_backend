@@ -1,14 +1,15 @@
 import { Router } from "express";
 import { Controller } from "../controllers/hsnController";
+import { validateId } from "../middlewares/validateId";
 
 const router = Router();
 
 
 router.get('/', Controller.getAll)
-router.get('/:id', Controller.getByID)
-router.delete('/:id', Controller.delete)
+router.get('/:id', validateId(), Controller.getByID)
+router.delete('/:id', validateId(), Controller.delete)
 router.post('/', Controller.create)
-router.put('/:id', Controller.update)
-router.patch('/:id', Controller.updateSome)
+router.put('/:id', validateId(), Controller.update)
+router.patch('/:id', validateId(), Controller.updateSome)
 
 export default router
