@@ -1,38 +1,29 @@
 import { Request, Response } from "express";
 import { taxModel } from '../model/tax'
 import { taxSchema, taxUpdateSchema } from "../schema/tax";
+import { buildMeta, getPagination } from "../utils/paginationUtil";
 
 export const taxController = {
 
     async getAll(req: Request, res: Response) {
 
-        const {
-            search = '',
-            page = 1,
-            limit = 10
-        } = req.query
-
-        const pageNum = Number(page)
-        const limitNum = Number(limit)
-        const offset = (pageNum - 1) * limitNum
-
         try {
+            const { search = '' } = req.query
+            const { page, limit, offset } = getPagination(req.query);
+
             const filters = {
                 search: String(search)
             }
             const [data, total] = await Promise.all([
-                taxModel.getAll({ filters, offset, limit: limitNum }),
+                taxModel.getAll({ filters, offset, limit }),
                 taxModel.count({ filters })
             ])
+            if (!data)
+                return res.error("Not Found", 404)
             return res.success(
                 "Fetched Successfully",
                 data,
-                {
-                    total,
-                    page: pageNum,
-                    limit: limitNum,
-                    totalPages: Math.ceil(total / limitNum)
-                }
+                buildMeta(page, limit, total)
             )
         }
         catch (err) {

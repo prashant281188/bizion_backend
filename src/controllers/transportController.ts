@@ -1,34 +1,26 @@
 import { Request, Response } from "express";
 import { transportModel } from '../model/transport'
 import { transportSchema, transportUpdateSchema } from "../schema/transport";
+import { buildMeta, getPagination } from "../utils/paginationUtil";
 
 export const transportController = {
     async getAll(req: Request, res: Response) {
-        const {
-            search = '',
-            page = 1,
-            limit = 10
-        } = req.query
-        const pageNum = Number(page)
-        const limitNum = Number(limit)
-        const offset = (pageNum - 1) * limitNum
+        const { search = '' } = req.query
+        const { page, limit, offset } = getPagination(req.query);
         try {
             const filters = {
                 search: String(search)
             }
             const [data, total] = await Promise.all([
-                transportModel.getAll({ filters, offset, limit: limitNum }),
+                transportModel.getAll({ filters, offset, limit }),
                 transportModel.count({ filters })
             ]);
+            if (!data)
+                return res.error("Not Found", 404)
             return res.success(
                 "Fetched Successfully",
                 data,
-                {
-                    total,
-                    page: pageNum,
-                    limit: limitNum,
-                    totalPages: Math.ceil(total / limitNum)
-                }
+                buildMeta(page, limit, total)
             )
         }
         catch (err) {
@@ -39,7 +31,7 @@ export const transportController = {
     async getByID(req: Request, res: Response) {
         const id = req.params.id
         const data = await transportModel.getByID(id);
-        if (!data) 
+        if (!data)
             return res.error("Not Found", 404)
         return res.success("Fetched successfully", data)
     },

@@ -37,7 +37,6 @@ app.use(cors(corsOptions));
 app.use(express.json());
 app.use(responseHandler)
 
-
 app.get("/", (req, res) => {
   res.send("Hellow from your Express server");
 });

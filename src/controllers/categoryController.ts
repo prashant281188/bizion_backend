@@ -1,10 +1,13 @@
 import { Request, Response } from "express";
 import { categoryModel } from '../model/category'
-import { categorySchema, categoryUpdateSchema } from "../schema/category";
+import { categories, categorySchema, categoryUpdateSchema } from "../schema/category";
+import ExcelJS from "exceljs"
+import { buildMeta, getPagination } from "../utils/paginationUtil";
 
 export const categoryController = {
 
-    async getAll(req: Request, res: Response) {
+    async exportExcel(req: Request, res: Response) {
+
         const {
             page = 1,
             limit = 10,
@@ -18,20 +21,98 @@ export const categoryController = {
             const filters = {
                 search: String(search),
             };
+            const workbook = new ExcelJS.Workbook();
+            const worksheet = workbook.addWorksheet("categories");
 
-            const [data, total] = await Promise.all([await categoryModel.getAll({ filters, offset, limit: limitNum }),
+            worksheet.columns = [
+                { header: "Category Name", key: "categoryName", width: 50 },
+                { header: "Category Description", key: "categoryDescription", width: 50 }
+            ];
+
+            const [data] = await Promise.all([await categoryModel.getAll({ filters, offset, limit: limitNum }),]);
+
+            console.log(data)
+            if (!data)
+                return res.error("Not found", 404)
+
+
+            data.forEach((cat) => {
+                worksheet.addRow({
+                    categoryName: cat.categoryName,
+                    categoryDescription: cat.categoryDescription
+                })
+            })
+
+            res.setHeader(
+                "Content-Type",
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            )
+            res.setHeader(
+                "Content-Disposition",
+                `attachment; filename=categories_${Date.now()}.xlsx`
+            )
+
+            await workbook.xlsx.write(res);
+            res.end();
+
+        }
+        catch (err) {
+            return res.error("Internal server error", 500, err)
+        }
+
+    },
+
+    async importExcel(req: Request, res: Response) {
+        try {
+
+            if (!req.file) {
+                console.log(req.file)
+                return res.error("Not file uploaded ", 400);
+
+            }
+            const workbook = new ExcelJS.Workbook();
+            // @ts-ignore
+            await workbook.xlsx.load(req.file.buffer)
+            const sheet = workbook.getWorksheet(1);
+
+            sheet?.eachRow((row, rowNumber) => {
+
+                if (rowNumber === 1) return;
+
+                const parsed = categorySchema.safeParse({
+                    categoryName: row.getCell(1).value ?? "",
+                    categoryDescription: row.getCell(2).value ?? ""
+                })
+                if (parsed.success) {
+                    categoryModel.create(parsed.data)
+                }
+                console.log(`Row ${rowNumber}:`, row.values)
+            })
+
+            res.success("Uploaded successfull.....")
+        }
+        catch (err) {
+            return res.error("Failed to import", 500, err)
+        }
+
+    },
+    async getAll(req: Request, res: Response) {
+        try {
+            const { search = '' } = req.query
+            const { page, limit, offset } = getPagination(req.query);
+
+            const filters = {
+                search: String(search),
+            };
+
+            const [data, total] = await Promise.all([await categoryModel.getAll({ filters, offset, limit }),
             await categoryModel.count({ filters })
             ]);
             if (!data) return res.error("Not found", 404)
             return res.success(
                 "Fetched successfully",
                 data,
-                {
-                    total,
-                    page: pageNum,
-                    limit: limitNum,
-                    totalPages: Math.ceil(total / limitNum)
-                }
+                buildMeta(page, limit, total)
             )
         }
         catch (err) {

@@ -27,6 +27,7 @@ export const categoryModel =
   },
 
 
+
   async count({ filters }: { filters: { search?: string; status?: string; createdFrom?: Date; createdTo?: Date } }) {
     const conditions = [];
 

@@ -1,36 +1,26 @@
 import { Request, Response } from "express";
 import { partyModel } from '../model/party'
 import { partySchema, partyUpdateSchema } from "../schema/party";
+import { buildMeta, getPagination } from "../utils/paginationUtil";
 
 
 export const partyController = {
 
     async getAll(req: Request, res: Response) {
-
-        const {
-            search = '',
-            page = 1,
-            limit = 10
-        } = req.query
-
-        const pageNum = Number(page)
-        const limitNum = Number(limit)
-        const offset = (pageNum - 1) * limitNum
-
+        const { search = '' } = req.query
+        const { page, limit, offset } = getPagination(req.query);
         try {
             const filters = {
                 search: String(search)
             }
-            const [data, total] = await Promise.all([partyModel.getAll({ filters, offset, limit: limitNum }), partyModel.count({ filters })]);
+            const [data, total] = await Promise.all([
+                partyModel.getAll({ filters, offset, limit }),
+                partyModel.count({ filters })
+            ]);
             return res.success(
                 "Fetched Successfully",
                 data,
-                {
-                    total,
-                    page: pageNum,
-                    limit: limitNum,
-                    totalPages: Math.ceil(total / limitNum)
-                }
+                buildMeta(page, limit, total)
             )
         }
         catch (err) {

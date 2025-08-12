@@ -19,7 +19,9 @@
     "dotenv": "^17.2.1",
     "drizzle-kit": "^0.31.4",
     "drizzle-orm": "^0.44.2",
+    "exceljs": "^4.4.0",
     "express": "^5.1.0",
+    "multer": "^2.0.2",
     "pg": "^8.16.3",
     "postgres": "^3.4.7",
     "zod": "^3.25.76"
@@ -27,6 +29,7 @@
   "devDependencies": {
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.3",
+    "@types/multer": "^2.0.0",
     "@types/node": "^24.0.12",
     "nodemon": "^3.1.10",
     "ts-node": "^10.9.2",

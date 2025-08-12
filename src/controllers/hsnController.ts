@@ -1,30 +1,27 @@
 import { Request, Response } from "express";
 import { hsnModel } from '../model/hsn'
 import { hsnSchema, hsnUpdateSchema } from "../schema/hsn";
+import { buildMeta, getPagination } from "../utils/paginationUtil";
 
 export const hsnController = {
 
     async getAll(req: Request, res: Response) {
 
-        const {
-            search = '',
-            page = 1,
-            limit = 10
-        } = req.query
-
-        const pageNum = Number(page)
-        const limitNum = Number(limit)
-        const offset = (pageNum - 1) * limitNum
-
         try {
+            const { search = '' } = req.query
+            const { page, limit, offset } = getPagination(req.query);
+
             const filters = {
                 search: String(search)
             }
-            const data = await hsnModel.getAll({ filters, offset, limit: limitNum });
-            return res.success("Fetched Successfully", data)
+            const [data, total] = await Promise.all([
+                hsnModel.getAll({ filters, offset, limit }),
+                hsnModel.count({ filters })])
+            if (!data)
+                return res.error("Not Found", 404)
+            return res.success("Fetched Successfully", data, buildMeta(page, limit, total))
         }
         catch (err) {
-
             return res.error("Internal server error", 500, err)
         }
     },

@@ -1,27 +1,21 @@
 import { Request, Response } from "express";
 import { groupModel } from '../model/group'
 import { groupSchema } from "../schema/group";
+import { buildMeta, getPagination } from "../utils/paginationUtil";
 
 export const groupController = {
 
     async getAll(req: Request, res: Response) {
-        const {
-            page = 1,
-            limit = 10,
-            search = '',
-        } = req.query
-
-        const pageNum = Number(page)
-        const limitNum = Number(limit)
-        const offset = (pageNum - 1) * limitNum
-
         try {
+            const { search = '' } = req.query
+            const { page, limit, offset } = getPagination(req.query);
+
             const filters = {
                 search: String(search),
             };
 
             const [data, total] = await Promise.all([
-                await groupModel.getAll({ filters, offset, limit: limitNum }),
+                await groupModel.getAll({ filters, offset, limit }),
                 await groupModel.count({ filters })
             ]);
 
@@ -30,12 +24,7 @@ export const groupController = {
             return res.success(
                 "Fetched Successfully",
                 data,
-                {
-                    total,
-                    page: pageNum,
-                    limit: limitNum,
-                    totalPages: Math.ceil(total / limitNum)
-                }
+                buildMeta(page, limit, total)
             )
         }
         catch (err) {
