@@ -1,10 +1,11 @@
 import { relations } from "drizzle-orm"
-import { numeric, pgTable, uuid, varchar } from "drizzle-orm/pg-core"
+import { pgTable, uuid, varchar } from "drizzle-orm/pg-core"
 import { hsns } from "./hsn"
 import { categories } from "./category"
 import { taxes } from "./tax"
 import { units } from "./unit"
 import z from "zod"
+import { productVariants, productVariantSchema, productVariantUpdateSchema } from "./productVariant"
 // -------------------------------------------------------PRODUCT------------------------------------------------------------//
 
 export const products = pgTable("products", {
@@ -21,25 +22,6 @@ export const products = pgTable("products", {
 
 export type Product = typeof products.$inferSelect
 export type NewProduct = typeof products.$inferInsert
-
-
-// -------------------------------------------------------PRODUCT VARIANTS------------------------------------------------------------//
-
-export const productVariants = pgTable("productVariants", {
-  id: uuid().primaryKey().defaultRandom(),
-  modelId: uuid(),
-  size: varchar(),
-  finish: varchar(),
-  boxQty: numeric({ mode: "number", precision: 2 }),
-  mrp: numeric({ mode: "number" }),
-  purchaseDiscount: numeric({ mode: "number" }),
-  purchaseRate: numeric({ mode: "number" }),
-  saleDiscount: numeric({ mode: "number" }),
-  saleRate: numeric({ mode: "number" }),
-})
-
-export type ProductVariant = typeof productVariants.$inferSelect
-export type NewProductVariant = typeof productVariants.$inferInsert
 
 
 // --------------------------------------------------------PRODUCT RELATIONSHIPS----------------------------------------------------------------//
@@ -81,35 +63,6 @@ export const productRelations = relations(products, ({ one, many }) => ({
   }),
   variants: many(productVariants)
 }))
-
-
-export const productVariantRelation = relations(productVariants, ({ one }) => ({
-  product: one(products, {
-    fields: [productVariants.modelId],
-    references: [products.id]
-  })
-}))
-
-
-// validataion schemas
-export const productVariantSchema = z.object({
-  productId: z.string().nullable().optional(),
-  size: z.string(),
-  finish: z.string(),
-  boxQty: z.coerce.number({ coerce: true }).nullable().optional(),
-  mrp: z.coerce.number().nullable().optional(),
-  purchaseDiscount: z.coerce.number().nullable().optional(),
-  purchaseRate: z.coerce.number().nullable().optional(),
-  saleRate: z.coerce.number().nullable().optional(),
-  saleDiscount: z.coerce.number().nullable().optional(),
-})
-
-export const productVariantUpdateSchema = productVariantSchema.extend({
-  id: z.string().uuid()
-})
-
-export type ProductVariantUpdateInput = z.infer<typeof productVariantUpdateSchema>
-export type ProductVariantInput = z.infer<typeof productVariantSchema>
 
 // --------------------------------------------------------------------------------
 

@@ -7,8 +7,8 @@ import z from "zod"
 export const parties = pgTable("parties", {
   id: uuid().primaryKey().defaultRandom(),
   name: varchar().notNull(),
-  gstin: varchar(),
-  contact: numeric().notNull(),
+  gstin: varchar().unique(),
+  contact: varchar().notNull(),
   addressLine1: varchar(),
   addressLine2: varchar(),
   city: varchar().notNull(),
@@ -56,3 +56,4 @@ export const partyUpdateSchema = partySchema.extend({
 
 export type PartyUpdate = z.infer<typeof partyUpdateSchema>
 export type Party = z.infer<typeof partySchema>
+export type PartyRecord = PartyUpdate

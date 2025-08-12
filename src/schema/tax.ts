@@ -18,3 +18,4 @@ export const taxUpdateSchema = taxSchema.extend({
 
 export type TaxUpdate = z.infer<typeof taxUpdateSchema>
 export type Tax = z.infer<typeof taxSchema>
+export type TaxRecord = TaxUpdate

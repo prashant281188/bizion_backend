@@ -10,6 +10,5 @@ router.get('/:id', validateId(), Controller.getByID)
 router.delete('/:id', validateId(), Controller.delete)
 router.post('/', Controller.create)
 router.put('/:id', validateId(), Controller.update)
-router.patch('/:id', validateId(), Controller.updateSome)
 
 export default router

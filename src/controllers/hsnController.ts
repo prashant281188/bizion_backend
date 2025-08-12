@@ -112,11 +112,4 @@ export const Controller = {
         if (!updatedData) return res.status(404).send('not found')
         res.status(201).json(updatedData)
     },
-
-    async updateSome(req: Request, res: Response) {
-        const id = req.params.id
-        const body = req.body
-        const updatedData = await Model.update(body)
-        res.status(201).json(updatedData)
-    }
 }

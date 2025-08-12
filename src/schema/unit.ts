@@ -19,3 +19,4 @@ export const unitUpdateSchema = unitSchema.extend({
 
 export type UnitUpdate = z.infer<typeof unitUpdateSchema>
 export type Unit = z.infer<typeof unitSchema>
+export type UnitRecord = UnitUpdate

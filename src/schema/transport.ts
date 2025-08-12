@@ -30,3 +30,4 @@ export const transportUpdateSchema = transportSchema.extend({
 
 export type Transport = z.infer<typeof transportSchema>
 export type TrasnportUpdate = z.infer<typeof transportUpdateSchema>
+export type TransportRecord = TrasnportUpdate
