@@ -1,15 +1,15 @@
 import { Router } from "express";
-import { Controller } from "../controllers/categoryController";
+import { categoryController } from "../controllers/categoryController";
 import { validateId } from "../middlewares/validateId";
 
 const router = Router();
 
 
-router.get('/', Controller.getAll)
-router.get('/:id', validateId(), Controller.getByID)
-router.delete('/:id', validateId(), Controller.delete)
-router.post('/', Controller.create)
-router.put('/:id', validateId(), Controller.update)
-router.patch('/:id', validateId(), Controller.patch)
+router.get('/', categoryController.getAll)
+router.get('/:id', validateId(), categoryController.getByID)
+router.delete('/:id', validateId(), categoryController.delete)
+router.post('/', categoryController.create)
+router.put('/:id', validateId(), categoryController.update)
+router.patch('/:id', validateId(), categoryController.patch)
 
 export default router

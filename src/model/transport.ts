@@ -5,7 +5,7 @@ import {  transports, TransportRecord, TrasnportUpdate, Transport } from '../sch
 
 
 
-export const Model =
+export const transportModel =
 {
   async getAll({ filters, offset, limit }: {
     filters: {

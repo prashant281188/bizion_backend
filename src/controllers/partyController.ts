@@ -1,9 +1,9 @@
 import { Request, Response } from "express";
-import { Model } from '../model/party'
+import { partyModel } from '../model/party'
 import { partySchema, partyUpdateSchema } from "../schema/party";
 
 
-export const Controller = {
+export const partyController = {
 
     async getAll(req: Request, res: Response) {
 
@@ -21,7 +21,7 @@ export const Controller = {
             const filters = {
                 search: String(search)
             }
-            const [data, total] = await Promise.all([Model.getAll({ filters, offset, limit: limitNum }), Model.count({ filters })]);
+            const [data, total] = await Promise.all([partyModel.getAll({ filters, offset, limit: limitNum }), partyModel.count({ filters })]);
             res.json({
                 data: data,
                 pagination: {
@@ -42,7 +42,7 @@ export const Controller = {
 
     async getByID(req: Request, res: Response) {
         const id = req.params.id
-        const data = await Model.getByID(id);
+        const data = await partyModel.getByID(id);
         if (!data) return res.status(404).json({
             messagae: "Not found"
         })
@@ -53,7 +53,7 @@ export const Controller = {
 
         const id = req.params.id
 
-        const data = await Model.delete(id)
+        const data = await partyModel.delete(id)
         if (!data) return res.status(404).send("not found")
         res.status(204).send("deleted successfully")
     },
@@ -75,7 +75,7 @@ export const Controller = {
 
 
         if (gstin) {
-            const duplicate = await Model.getByName(gstin!)
+            const duplicate = await partyModel.getByName(gstin!)
 
             if (duplicate)
                 return res.status(400).json({
@@ -85,7 +85,7 @@ export const Controller = {
 
         try {
 
-            const newData = await Model.create(parsedData.data);
+            const newData = await partyModel.create(parsedData.data);
             res.status(201).json(newData)
         }
         catch (err) {
@@ -108,19 +108,19 @@ export const Controller = {
                 errors: parsedData.error.flatten().fieldErrors
             })
 
-        const existing = await Model.getByID(id);
+        const existing = await partyModel.getByID(id);
         if (!existing)
             return res.status(404).json({
                 message: "Record not found by this id"
             })
 
-        const duplicate = await Model.getByName(parsedData.data.gstin!);
+        const duplicate = await partyModel.getByName(parsedData.data.gstin!);
         if (duplicate) {
             return res.status(409).json({
                 message: "Duplicate entry"
             })
         }
-        const updatedData = await Model.update({ ...parsedData.data, id });
+        const updatedData = await partyModel.update({ ...parsedData.data, id });
         if (!updatedData) return res.status(404).send('not found')
         res.status(201).json(updatedData)
     },

@@ -1,9 +1,9 @@
 import { Request, Response } from "express";
-import { Model } from '../model/unit'
+import { unitModel } from '../model/unit'
 import { unitSchema, unitUpdateSchema } from "../schema/unit";
 
 
-export const Controller = {
+export const unitController = {
 
     async getAll(req: Request, res: Response) {
 
@@ -23,8 +23,8 @@ export const Controller = {
             }
             const [data, total] = await Promise.all([
 
-                Model.getAll({ filters, offset, limit: limitNum }),
-                Model.count({ filters })
+                unitModel.getAll({ filters, offset, limit: limitNum }),
+                unitModel.count({ filters })
             ])
             res.json({
                 data: data,
@@ -46,7 +46,7 @@ export const Controller = {
 
     async getByID(req: Request, res: Response) {
         const id = req.params.id
-        const data = await Model.getByID(id);
+        const data = await unitModel.getByID(id);
         if (!data) return res.status(404).json({
             messagae: "Not found"
         })
@@ -57,7 +57,7 @@ export const Controller = {
 
         const id = req.params.id
 
-        const data = await Model.delete(id)
+        const data = await unitModel.delete(id)
         if (!data) return res.status(404).send("not found")
         res.status(204).send("deleted successfully")
     },
@@ -77,7 +77,7 @@ export const Controller = {
 
         // Check for duplicate
 
-        const duplicate = await Model.getByName(unitLongName)
+        const duplicate = await unitModel.getByName(unitLongName)
 
         if (duplicate)
             return res.status(400).json({
@@ -86,7 +86,7 @@ export const Controller = {
 
         try {
 
-            const newData = await Model.create(parsedData.data);
+            const newData = await unitModel.create(parsedData.data);
             res.status(201).json(newData)
         }
         catch (err) {
@@ -109,19 +109,19 @@ export const Controller = {
                 errors: parsedData.error.flatten().fieldErrors
             })
 
-        const existing = await Model.getByID(id);
+        const existing = await unitModel.getByID(id);
         if (!existing)
             return res.status(404).json({
                 message: "Record not found by this id"
             })
 
-        const duplicate = await Model.getByName(parsedData.data.unitLongName!);
+        const duplicate = await unitModel.getByName(parsedData.data.unitLongName!);
         if (duplicate) {
             return res.status(409).json({
                 message: "Duplicate entry"
             })
         }
-        const updatedData = await Model.update({ ...parsedData.data, id });
+        const updatedData = await unitModel.update({ ...parsedData.data, id });
         if (!updatedData) return res.status(404).send('not found')
         res.status(201).json(updatedData)
     },

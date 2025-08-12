@@ -1,9 +1,9 @@
 import { Request, Response } from "express";
-import { Model } from '../model/group'
+import { groupModel } from '../model/group'
 import { groupSchema } from "../schema/group";
 
 
-export const Controller = {
+export const groupController = {
 
     async getAll(req: Request, res: Response) {
         const {
@@ -23,8 +23,8 @@ export const Controller = {
             };
 
 
-            const [data, total] = await Promise.all([await Model.getAll({ filters, offset, limit: limitNum }),
-            await Model.count({ filters })
+            const [data, total] = await Promise.all([await groupModel.getAll({ filters, offset, limit: limitNum }),
+            await groupModel.count({ filters })
             ]);
             if (!data) return res.status(404).send('not found any')
             return res.json({
@@ -44,7 +44,7 @@ export const Controller = {
 
     async getByID(req: Request, res: Response) {
         const id = req.params.id
-        const data = await Model.getByID(id);
+        const data = await groupModel.getByID(id);
         if (!data) return res.status(404).json({
             message: "Not found "
         })
@@ -55,7 +55,7 @@ export const Controller = {
 
         const id = req.params.id
 
-        const data = await Model.delete(id)
+        const data = await groupModel.delete(id)
         if (!data) return res.status(404).send("not found")
         res.status(204).send("deleted successfully")
 
@@ -76,7 +76,7 @@ export const Controller = {
         const { groupName } = parsedData.data;
 
         // Check for duplicate
-        const duplicate = await Model.getByName(groupName);
+        const duplicate = await groupModel.getByName(groupName);
 
         if (duplicate) {
             return res.status(409).json({ // Use 409 Conflict for duplicate
@@ -86,7 +86,7 @@ export const Controller = {
 
         // Create new entry
         try {
-            const newData = await Model.create(parsedData.data);
+            const newData = await groupModel.create(parsedData.data);
             return res.status(201).json(newData);
         } catch (err) {
             console.error("DB error:", err);
@@ -110,14 +110,14 @@ export const Controller = {
                 errors: parsedData.error.flatten().fieldErrors
             })
 
-        const existing = await Model.getByID(id)
+        const existing = await groupModel.getByID(id)
         if (!existing)
             return res.status(404).json({
                 message: "Record not found by this id"
             })
 
         // Check for duplicate
-        const duplicate = await Model.getByName(parsedData.data.groupName.trim());
+        const duplicate = await groupModel.getByName(parsedData.data.groupName.trim());
         if (duplicate) {
             return res.status(409).json({ // Use 409 Conflict for duplicate
                 message: "Duplicate entry",
@@ -125,7 +125,7 @@ export const Controller = {
             });
         }
 
-        const updateData = await Model.update({ ...parsedData.data, id });
+        const updateData = await groupModel.update({ ...parsedData.data, id });
 
         if (!updateData) return res.status(404).send('not found')
         res.status(201).json(updateData)

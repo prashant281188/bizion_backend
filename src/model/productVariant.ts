@@ -7,7 +7,7 @@ import { ProductVariantInput } from '../validators/validatorSchema'
 
 
 
-export const Model =
+export const productVariantModel =
 {
   async getAll() {
     return await db.query.productVariants.findMany()

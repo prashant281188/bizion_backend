@@ -2,7 +2,7 @@ import { db } from '../db/db'
 import { HSN, HsnRecord, hsns, HSNUpdate } from '../schema/schema'
 import { and, count, eq, ilike } from 'drizzle-orm'
 
-export const Model =
+export const hsnModel =
 {
   async getAll({ filters, offset, limit }: {
     filters: {

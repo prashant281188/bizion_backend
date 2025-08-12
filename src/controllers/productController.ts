@@ -1,23 +1,23 @@
 import { Request, Response } from "express";
-import { Model } from '../model/product'
+import { productModel } from '../model/product'
 
 import { productSchema, productUpdateSchema } from '../schema/product'
 
-export const Controller = {
+export const productController = {
 
     async getAll(req: Request, res: Response) {
-        const data = await Model.getAll();
+        const data = await productModel.getAll();
         res.json(data)
     },
 
     async getByID(req: Request, res: Response) {
-        const data = await Model.getByID(req.params.id);
+        const data = await productModel.getByID(req.params.id);
         if (!data) return res.status(404).send('not found')
         res.json(data)
     },
 
     async delete(req: Request, res: Response) {
-        const data = await Model.delete(req.params.id)
+        const data = await productModel.delete(req.params.id)
         if (!data) return res.status(404).send("not found")
         res.status(204).send("deleted successfully")
     },
@@ -29,7 +29,7 @@ export const Controller = {
                 message: 'Validation error',
                 errors: parsedData.error.flatten().fieldErrors
             })
-        const newData = await Model.createProductWithVariants(parsedData.data);
+        const newData = await productModel.createProductWithVariants(parsedData.data);
         res.status(201).json(newData)
 
     },
@@ -42,7 +42,7 @@ export const Controller = {
                 message: 'Validation error',
                 errors: parsedData.error.flatten().fieldErrors
             })
-        const updateData = await Model.update(parsedData.data);
+        const updateData = await productModel.update(parsedData.data);
         if (!updateData) return res.status(404).send('not found')
         res.status(201).json(updateData)
     },

@@ -1,8 +1,8 @@
 import { Request, Response } from "express";
-import { Model } from '../model/category'
+import { categoryModel } from '../model/category'
 import { categorySchema, categoryUpdateSchema } from "../schema/category";
 
-export const Controller = {
+export const categoryController = {
 
     async getAll(req: Request, res: Response) {
         const {
@@ -22,8 +22,8 @@ export const Controller = {
             };
 
 
-            const [data, total] = await Promise.all([await Model.getAll({ filters, offset, limit: limitNum }),
-            await Model.count({ filters })
+            const [data, total] = await Promise.all([await categoryModel.getAll({ filters, offset, limit: limitNum }),
+            await categoryModel.count({ filters })
             ]);
             if (!data) return res.status(404).send('not found any')
             return res.json({
@@ -43,7 +43,7 @@ export const Controller = {
 
     async getByID(req: Request, res: Response) {
         const id = req.params.id
-        const data = await Model.getByID(id);
+        const data = await categoryModel.getByID(id);
         if (!data) return res.status(404).json({
             message: "Not found "
         })
@@ -54,7 +54,7 @@ export const Controller = {
 
         const id = req.params.id
 
-        const data = await Model.delete(id)
+        const data = await categoryModel.delete(id)
         if (!data) return res.status(404).send("not found")
         res.status(204).send("deleted successfully")
 
@@ -75,7 +75,7 @@ export const Controller = {
         const { categoryName, categoryDescription } = parsedData.data;
 
         // Check for duplicate
-        const duplicate = await Model.getByName(categoryName);
+        const duplicate = await categoryModel.getByName(categoryName);
 
         if (duplicate) {
             return res.status(409).json({ // Use 409 Conflict for duplicate
@@ -85,7 +85,7 @@ export const Controller = {
 
         // Create new entry
         try {
-            const newData = await Model.create(parsedData.data);
+            const newData = await categoryModel.create(parsedData.data);
             return res.status(201).json(newData);
         } catch (err) {
             console.error("DB error:", err);
@@ -111,14 +111,14 @@ export const Controller = {
             })
 
 
-        const existing = await Model.getByID(id)
+        const existing = await categoryModel.getByID(id)
         if (!existing)
             return res.status(404).json({
                 message: "Record not found by this id"
             })
 
         // Check for duplicate
-        const duplicate = await Model.getByName(parsedData.data.categoryName.trim());
+        const duplicate = await categoryModel.getByName(parsedData.data.categoryName.trim());
         if (duplicate) {
             return res.status(409).json({ // Use 409 Conflict for duplicate
                 message: "Duplicate entry",
@@ -126,7 +126,7 @@ export const Controller = {
             });
         }
 
-        const updateData = await Model.update({ ...parsedData.data, id });
+        const updateData = await categoryModel.update({ ...parsedData.data, id });
 
         if (!updateData) return res.status(404).send('not found')
         res.status(201).json(updateData)
@@ -141,7 +141,7 @@ export const Controller = {
                 errors: patchData.error.flatten().fieldErrors
             })
 
-        const updateData = await Model.update({ ...patchData.data, id });
+        const updateData = await categoryModel.update({ ...patchData.data, id });
         if (!updateData) return res.status(404).send('not found')
         res.status(201).json(updateData)
 

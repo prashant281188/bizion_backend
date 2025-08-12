@@ -1,14 +1,14 @@
 import { Router } from "express";
-import { Controller } from "../controllers/productController";
+import { productController } from "../controllers/productController";
 import { validateId } from "../middlewares/validateId";
 
 const router = Router();
 
 
-router.get('/', Controller.getAll)
-router.get('/:id', validateId(), Controller.getByID)
-router.delete('/:id', validateId(), Controller.delete)
-router.post('/', Controller.create)
-router.put('/:id', validateId(), Controller.update)
+router.get('/', productController.getAll)
+router.get('/:id', validateId(), productController.getByID)
+router.delete('/:id', validateId(), productController.delete)
+router.post('/', productController.create)
+router.put('/:id', validateId(), productController.update)
 
 export default router

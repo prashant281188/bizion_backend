@@ -5,7 +5,7 @@ import { Tax, taxes, TaxRecord, TaxUpdate } from '../schema/schema'
 
 
 
-export const Model =
+export const taxModel =
 {
   async getAll({ filters, offset, limit }: {
     filters: {
@@ -57,7 +57,7 @@ export const Model =
   },
 
   async create(data: Tax): Promise<TaxRecord> {
-    const result = await db.insert(taxes).values({ taxName: data.taxName.trim(), taxValue: data.taxValue }).returning()
+    const result = await db.insert(taxes).values({ ...data, taxName: data.taxName.trim() }).returning()
     return result[0]
   },
 

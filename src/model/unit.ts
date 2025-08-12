@@ -2,7 +2,7 @@ import { and, count, eq, ilike } from 'drizzle-orm'
 import { db } from '../db/db'
 import { units, Unit, UnitUpdate, UnitRecord } from '../schema/schema'
 
-export const Model =
+export const unitModel =
 {
   async getAll({ filters, offset, limit }: {
     filters: {

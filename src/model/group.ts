@@ -2,7 +2,7 @@ import { db } from '../db/db'
 import { Group, GroupRecord, groups, GroupUpdate } from '../schema/schema'
 import { and, count, eq, ilike } from 'drizzle-orm'
 
-export const Model =
+export const groupModel =
 {
   async getAll({ filters, offset, limit }: {
     filters: { search?: string }

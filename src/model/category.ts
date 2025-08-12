@@ -4,7 +4,7 @@ import { categories, Category, CategoryRecord, CategoryUpdate } from '../schema/
 import { and, asc, count, desc, eq, ilike, sql } from 'drizzle-orm'
 
 
-export const Model =
+export const categoryModel =
 {
   async getAll({ filters, offset, limit }: {
     filters: {

@@ -6,7 +6,7 @@ import { products, Product, NewProduct, NewProductVariant, productVariants, Prod
 
 
 
-export const Model =
+export const productModel =
 {
   async getAll() {
     return await db.query.products.findMany({

@@ -5,7 +5,7 @@ import { Party, parties, PartyUpdate, PartyRecord } from '../schema/schema'
 
 
 
-export const Model =
+export const partyModel =
 {
   async getAll({ filters, offset, limit }: {
     filters: {

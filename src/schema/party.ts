@@ -8,7 +8,7 @@ export const parties = pgTable("parties", {
   id: uuid().primaryKey().defaultRandom(),
   name: varchar().notNull(),
   gstin: varchar().unique(),
-  contact: varchar().notNull(),
+  contact: varchar().unique().notNull(),
   addressLine1: varchar(),
   addressLine2: varchar(),
   city: varchar().notNull(),

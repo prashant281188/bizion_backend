@@ -1,8 +1,8 @@
 import { Request, Response } from "express";
-import { Model } from '../model/tax'
+import { taxModel } from '../model/tax'
 import { taxSchema, taxUpdateSchema } from "../schema/tax";
 
-export const Controller = {
+export const taxController = {
 
     async getAll(req: Request, res: Response) {
 
@@ -20,7 +20,7 @@ export const Controller = {
             const filters = {
                 search: String(search)
             }
-            const data = await Model.getAll({ filters, offset, limit: limitNum });
+            const data = await taxModel.getAll({ filters, offset, limit: limitNum });
             res.json(data)
         }
         catch (error) {
@@ -33,7 +33,7 @@ export const Controller = {
 
     async getByID(req: Request, res: Response) {
         const id = req.params.id
-        const data = await Model.getByID(id);
+        const data = await taxModel.getByID(id);
         if (!data) return res.status(404).json({
             messagae: "Not found"
         })
@@ -44,7 +44,7 @@ export const Controller = {
 
         const id = req.params.id
 
-        const data = await Model.delete(id)
+        const data = await taxModel.delete(id)
         if (!data) return res.status(404).send("not found")
         res.status(204).send("deleted successfully")
     },
@@ -60,11 +60,11 @@ export const Controller = {
             })
         // Now safely access the validated data
 
-        const { taxName, taxValue } = parsedData.data
+        const { taxName } = parsedData.data
 
         // Check for duplicate
 
-        const duplicate = await Model.getByName(taxName)
+        const duplicate = await taxModel.getByName(taxName)
 
         if (duplicate)
             return res.status(400).json({
@@ -73,7 +73,7 @@ export const Controller = {
 
         try {
 
-            const newData = await Model.create(parsedData.data);
+            const newData = await taxModel.create(parsedData.data);
             res.status(201).json(newData)
         }
         catch (err) {
@@ -96,19 +96,19 @@ export const Controller = {
                 errors: parsedData.error.flatten().fieldErrors
             })
 
-        const existing = await Model.getByID(id);
+        const existing = await taxModel.getByID(id);
         if (!existing)
             return res.status(404).json({
                 message: "Record not found by this id"
             })
 
-        const duplicate = await Model.getByName(parsedData.data.taxName);
+        const duplicate = await taxModel.getByName(parsedData.data.taxName);
         if (duplicate) {
             return res.status(409).json({
                 message: "Duplicate entry"
             })
         }
-        const updatedData = await Model.update({ ...parsedData.data, id });
+        const updatedData = await taxModel.update({ ...parsedData.data, id });
         if (!updatedData) return res.status(404).send('not found')
         res.status(201).json(updatedData)
     },

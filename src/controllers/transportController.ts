@@ -1,8 +1,8 @@
 import { Request, Response } from "express";
-import { Model } from '../model/transport'
+import { transportModel } from '../model/transport'
 import { transportSchema, transportUpdateSchema } from "../schema/transport";
 
-export const Controller = {
+export const transportController = {
 
     async getAll(req: Request, res: Response) {
 
@@ -20,7 +20,7 @@ export const Controller = {
             const filters = {
                 search: String(search)
             }
-            const [data, total] = await Promise.all([Model.getAll({ filters, offset, limit: limitNum }), Model.count({ filters })]);
+            const [data, total] = await Promise.all([transportModel.getAll({ filters, offset, limit: limitNum }), transportModel.count({ filters })]);
             res.json({
                 data: data,
                 pagination: {
@@ -41,7 +41,7 @@ export const Controller = {
 
     async getByID(req: Request, res: Response) {
         const id = req.params.id
-        const data = await Model.getByID(id);
+        const data = await transportModel.getByID(id);
         if (!data) return res.status(404).json({
             messagae: "Not found"
         })
@@ -52,7 +52,7 @@ export const Controller = {
 
         const id = req.params.id
 
-        const data = await Model.delete(id)
+        const data = await transportModel.delete(id)
         if (!data) return res.status(404).send("not found")
         res.status(204).send("deleted successfully")
     },
@@ -72,7 +72,7 @@ export const Controller = {
 
         // Check for duplicate
 
-        const duplicate = await Model.getByGstin(gstin!)
+        const duplicate = await transportModel.getByGstin(gstin!)
 
         if (duplicate)
             return res.status(400).json({
@@ -81,7 +81,7 @@ export const Controller = {
 
         try {
 
-            const newData = await Model.create(parsedData.data);
+            const newData = await transportModel.create(parsedData.data);
             res.status(201).json(newData)
         }
         catch (err) {
@@ -104,19 +104,19 @@ export const Controller = {
                 errors: parsedData.error.flatten().fieldErrors
             })
 
-        const existing = await Model.getByID(id);
+        const existing = await transportModel.getByID(id);
         if (!existing)
             return res.status(404).json({
                 message: "Record not found by this id"
             })
 
-        const duplicate = await Model.getByGstin(parsedData.data.gstin!);
+        const duplicate = await transportModel.getByGstin(parsedData.data.gstin!);
         if (duplicate) {
             return res.status(409).json({
                 message: "Duplicate entry"
             })
         }
-        const updatedData = await Model.update({ ...parsedData.data, id });
+        const updatedData = await transportModel.update({ ...parsedData.data, id });
         if (!updatedData) return res.status(404).send('not found')
         res.status(201).json(updatedData)
     },
