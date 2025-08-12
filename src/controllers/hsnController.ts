@@ -21,23 +21,19 @@ export const hsnController = {
                 search: String(search)
             }
             const data = await hsnModel.getAll({ filters, offset, limit: limitNum });
-            res.json(data)
+            return res.success("Fetched Successfully", data)
         }
-        catch (error) {
+        catch (err) {
 
-            res.status(400).json({
-                message: ""
-            })
+            return res.error("Internal server error", 500, err)
         }
     },
 
     async getByID(req: Request, res: Response) {
         const id = req.params.id
         const data = await hsnModel.getByID(id);
-        if (!data) return res.status(404).json({
-            messagae: "Not found"
-        })
-        res.json(data)
+        if (!data) return res.error("Not found", 404)
+        return res.success("Fetched", data)
     },
 
     async delete(req: Request, res: Response) {
@@ -45,8 +41,8 @@ export const hsnController = {
         const id = req.params.id
 
         const data = await hsnModel.delete(id)
-        if (!data) return res.status(404).send("not found")
-        res.status(204).send("deleted successfully")
+        if (!data) return res.error("not found", 404)
+        return res.success("deleted successfully", data)
     },
 
     async create(req: Request, res: Response) {
@@ -54,10 +50,7 @@ export const hsnController = {
         // First, validate the input
         const parsedData = hsnSchema.safeParse(req.body);
         if (!parsedData.success)
-            return res.status(400).json({
-                message: 'Validation error',
-                errors: parsedData.error.flatten().fieldErrors
-            })
+            return res.error('Validation error', 404, parsedData.error.flatten().fieldErrors)
         // Now safely access the validated data
 
         const { hsnCode, hsnDescription } = parsedData.data
@@ -67,21 +60,16 @@ export const hsnController = {
         const duplicate = await hsnModel.getByCode(hsnCode)
 
         if (duplicate)
-            return res.status(400).json({
-                message: "Dulicate entry"
-            })
+            return res.error("Dulicate entry", 409)
 
         try {
 
             const newData = await hsnModel.create(parsedData.data);
-            res.status(201).json(newData)
+            return res.success("Created Successfully", newData)
         }
         catch (err) {
             console.error("DB error:", err);
-            return res.status(500).json({
-                message: "Internal server error",
-                errors: err
-            });
+            return res.error("Internal server error", 500, err)
         }
 
     },
@@ -91,25 +79,18 @@ export const hsnController = {
         const body = req.body
         const parsedData = hsnUpdateSchema.safeParse({ ...body });
         if (!parsedData.success)
-            return res.status(400).json({
-                message: 'Validation error',
-                errors: parsedData.error.flatten().fieldErrors
-            })
+            return res.error('Validation error', 400, parsedData.error.flatten().fieldErrors)
 
         const existing = await hsnModel.getByID(id);
         if (!existing)
-            return res.status(404).json({
-                message: "Record not found by this id"
-            })
+            return res.error("Not Found", 404)
 
         const duplicate = await hsnModel.getByCode(parsedData.data.hsnCode);
         if (duplicate) {
-            return res.status(409).json({
-                message: "Duplicate entry"
-            })
+            return res.error("Duplicate entry", 409)
         }
         const updatedData = await hsnModel.update({ ...parsedData.data, id });
-        if (!updatedData) return res.status(404).send('not found')
-        res.status(201).json(updatedData)
+        if (!updatedData) return res.error('not found', 404)
+        return res.status(201).json(updatedData)
     },
 }

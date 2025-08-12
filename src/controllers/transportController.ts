@@ -3,95 +3,75 @@ import { transportModel } from '../model/transport'
 import { transportSchema, transportUpdateSchema } from "../schema/transport";
 
 export const transportController = {
-
     async getAll(req: Request, res: Response) {
-
         const {
             search = '',
             page = 1,
             limit = 10
         } = req.query
-
         const pageNum = Number(page)
         const limitNum = Number(limit)
         const offset = (pageNum - 1) * limitNum
-
         try {
             const filters = {
                 search: String(search)
             }
-            const [data, total] = await Promise.all([transportModel.getAll({ filters, offset, limit: limitNum }), transportModel.count({ filters })]);
-            res.json({
-                data: data,
-                pagination: {
+            const [data, total] = await Promise.all([
+                transportModel.getAll({ filters, offset, limit: limitNum }),
+                transportModel.count({ filters })
+            ]);
+            return res.success(
+                "Fetched Successfully",
+                data,
+                {
                     total,
                     page: pageNum,
                     limit: limitNum,
                     totalPages: Math.ceil(total / limitNum)
                 }
-            })
+            )
         }
-        catch (error) {
-
-            res.status(400).json({
-                message: ""
-            })
+        catch (err) {
+            return res.error("Internal Server Error", 500, err)
         }
     },
 
     async getByID(req: Request, res: Response) {
         const id = req.params.id
         const data = await transportModel.getByID(id);
-        if (!data) return res.status(404).json({
-            messagae: "Not found"
-        })
-        res.json(data)
+        if (!data) 
+            return res.error("Not Found", 404)
+        return res.success("Fetched successfully", data)
     },
 
     async delete(req: Request, res: Response) {
-
         const id = req.params.id
-
         const data = await transportModel.delete(id)
-        if (!data) return res.status(404).send("not found")
-        res.status(204).send("deleted successfully")
+        if (!data)
+            return res.error("not found", 404)
+        return res.success("Deleted Successfully", data)
     },
 
     async create(req: Request, res: Response) {
-
         // First, validate the input
         const parsedData = transportSchema.safeParse(req.body);
         if (!parsedData.success)
-            return res.status(400).json({
-                message: 'Validation error',
-                errors: parsedData.error.flatten().fieldErrors
-            })
+            return res.error('Validation error', 400, parsedData.error.flatten().fieldErrors)
         // Now safely access the validated data
 
         const { gstin } = parsedData.data
-
         // Check for duplicate
-
         const duplicate = await transportModel.getByGstin(gstin!)
-
         if (duplicate)
-            return res.status(400).json({
-                message: "Dulicate entry"
-            })
+            return res.error("Dulicate entry", 409)
 
         try {
-
             const newData = await transportModel.create(parsedData.data);
-            res.status(201).json(newData)
+            return res.status(201).json(newData)
         }
         catch (err) {
-            console.error("DB error:", err);
-            return res.status(500).json({
-                message: "Internal server error",
-                errors: err
-            });
+            return res.error("Internal server error", 500, err);
         }
-
     },
 
     async update(req: Request, res: Response) {
@@ -99,25 +79,19 @@ export const transportController = {
         const body = req.body
         const parsedData = transportUpdateSchema.safeParse({ ...body });
         if (!parsedData.success)
-            return res.status(400).json({
-                message: 'Validation error',
-                errors: parsedData.error.flatten().fieldErrors
-            })
+            return res.error('Validation error', 409, parsedData.error.flatten().fieldErrors)
 
         const existing = await transportModel.getByID(id);
         if (!existing)
-            return res.status(404).json({
-                message: "Record not found by this id"
-            })
+            return res.error("Not Found", 404)
 
         const duplicate = await transportModel.getByGstin(parsedData.data.gstin!);
         if (duplicate) {
-            return res.status(409).json({
-                message: "Duplicate entry"
-            })
+            return res.error("Duplicate entry", 409)
         }
         const updatedData = await transportModel.update({ ...parsedData.data, id });
-        if (!updatedData) return res.status(404).send('not found')
-        res.status(201).json(updatedData)
+        if (!updatedData)
+            return res.error('Not Found', 404)
+        return res.success("Updated Successfully", updatedData)
     },
 }

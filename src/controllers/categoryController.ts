@@ -9,9 +9,7 @@ export const categoryController = {
             page = 1,
             limit = 10,
             search = '',
-
         } = req.query
-
         const pageNum = Number(page)
         const limitNum = Number(limit)
         const offset = (pageNum - 1) * limitNum
@@ -21,22 +19,23 @@ export const categoryController = {
                 search: String(search),
             };
 
-
             const [data, total] = await Promise.all([await categoryModel.getAll({ filters, offset, limit: limitNum }),
             await categoryModel.count({ filters })
             ]);
-            if (!data) return res.status(404).send('not found any')
-            return res.json({
-                data: data,
-                pagination: {
+            if (!data) return res.error("Not found", 404)
+            return res.success(
+                "Fetched successfully",
+                data,
+                {
                     total,
                     page: pageNum,
                     limit: limitNum,
                     totalPages: Math.ceil(total / limitNum)
                 }
-            })
+            )
         }
-        catch (error) {
+        catch (err) {
+            return res.error("Internal server error", 500, err)
 
         }
     },
@@ -44,10 +43,8 @@ export const categoryController = {
     async getByID(req: Request, res: Response) {
         const id = req.params.id
         const data = await categoryModel.getByID(id);
-        if (!data) return res.status(404).json({
-            message: "Not found "
-        })
-        res.json(data)
+        if (!data) return res.error("Not found", 404)
+        res.success("Fetched Successfully", data)
     },
 
     async delete(req: Request, res: Response) {
@@ -55,8 +52,8 @@ export const categoryController = {
         const id = req.params.id
 
         const data = await categoryModel.delete(id)
-        if (!data) return res.status(404).send("not found")
-        res.status(204).send("deleted successfully")
+        if (!data) return res.error("Not Found", 404)
+        return res.success("Deleted Successfully", data)
 
     },
 
@@ -65,34 +62,25 @@ export const categoryController = {
         const parsedData = categorySchema.safeParse(req.body);
 
         if (!parsedData.success) {
-            return res.status(400).json({
-                message: 'Validation error',
-                errors: parsedData.error.flatten().fieldErrors
-            });
+            return res.error("Validation Error", 404, parsedData.error.flatten().fieldErrors)
         }
 
         // Now safely access the validated data
-        const { categoryName, categoryDescription } = parsedData.data;
+        const { categoryName } = parsedData.data;
 
         // Check for duplicate
         const duplicate = await categoryModel.getByName(categoryName);
 
         if (duplicate) {
-            return res.status(409).json({ // Use 409 Conflict for duplicate
-                message: "Duplicate entry"
-            });
+            return res.error("Duplicate Data", 409)
         }
 
         // Create new entry
         try {
             const newData = await categoryModel.create(parsedData.data);
-            return res.status(201).json(newData);
+            return res.success("Created Successfully", newData);
         } catch (err) {
-            console.error("DB error:", err);
-            return res.status(500).json({
-                message: "Internal server error",
-                errors: err
-            });
+            return res.error("Internal server error", 500, err)
         }
     },
 
@@ -105,45 +93,34 @@ export const categoryController = {
         const parsedData = categorySchema.safeParse({ ...body });
 
         if (!parsedData.success)
-            return res.status(400).json({
-                message: 'Validation error',
-                errors: parsedData.error.flatten().fieldErrors
-            })
+            return res.error("Validation Error", 400, parsedData.error.flatten().fieldErrors)
 
 
         const existing = await categoryModel.getByID(id)
         if (!existing)
-            return res.status(404).json({
-                message: "Record not found by this id"
-            })
+            return res.error("Not found", 404)
 
         // Check for duplicate
         const duplicate = await categoryModel.getByName(parsedData.data.categoryName.trim());
         if (duplicate) {
-            return res.status(409).json({ // Use 409 Conflict for duplicate
-                message: "Duplicate entry",
-
-            });
+            return res.error("Duplicate Entry", 409)
         }
 
         const updateData = await categoryModel.update({ ...parsedData.data, id });
 
-        if (!updateData) return res.status(404).send('not found')
-        res.status(201).json(updateData)
+        if (!updateData) return res.error("Not Found", 400)
+        res.success("Updated Successfully", 202, updateData)
     },
 
     async patch(req: Request, res: Response) {
         const id = req.params.id
         const patchData = categoryUpdateSchema.partial().safeParse(req.body);
         if (!patchData.success)
-            return res.status(400).json({
-                message: 'validation error',
-                errors: patchData.error.flatten().fieldErrors
-            })
+            return res.error("Validation Error", 400, patchData.error.flatten().fieldErrors)
 
         const updateData = await categoryModel.update({ ...patchData.data, id });
-        if (!updateData) return res.status(404).send('not found')
-        res.status(201).json(updateData)
+        if (!updateData) return res.error('Not found', 404)
+        return res.success("Updated successfully", updateData)
 
 
     }

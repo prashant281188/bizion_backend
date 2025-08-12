@@ -10,6 +10,7 @@ import taxRoutes from "./routes/tax"
 import unitRoutes from "./routes/unit"
 import transportRoutes from "./routes/transport"
 import partyRoutes from "./routes/party"
+import { responseHandler } from "./utils/responseHandler";
 
 const app = express();
 
@@ -34,6 +35,7 @@ const corsOptions: cors.CorsOptions = {
 app.use(cors(corsOptions));
 
 app.use(express.json());
+app.use(responseHandler)
 
 
 app.get("/", (req, res) => {
