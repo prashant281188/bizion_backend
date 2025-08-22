@@ -7,3 +7,5 @@ export * from './hsn';
 export * from './tax';
 export * from './group';
 export * from './category';
+export * from './productImage';
+

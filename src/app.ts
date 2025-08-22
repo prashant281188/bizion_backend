@@ -11,12 +11,13 @@ import unitRoutes from "./routes/unit"
 import transportRoutes from "./routes/transport"
 import partyRoutes from "./routes/party"
 import { responseHandler } from "./utils/responseHandler";
+import path from "path";
 
 const app = express();
 
 const PORT = process.env.PORT
 
-const allowedOrigin = ["http://localhost:3000", "https://192.168.29.120:3000", "*"];
+const allowedOrigin = ["http://localhost:3000", "http://192.168.29.120:3000", "http://192.168.31.216:3000", "*"];
 
 const corsOptions: cors.CorsOptions = {
   origin: (origin, callback) => {
@@ -33,12 +34,12 @@ const corsOptions: cors.CorsOptions = {
 }
 
 app.use(cors(corsOptions));
-
 app.use(express.json());
 app.use(responseHandler)
 
+
 app.get("/", (req, res) => {
-  res.send("Hellow from your Express server");
+  res.send("Hello from your Express server");
 });
 
 
@@ -51,7 +52,7 @@ app.use('/api/v1/tax', taxRoutes)
 app.use('/api/v1/transport', transportRoutes)
 app.use('/api/v1/unit', unitRoutes)
 
-
+app.use('/img',express.static(path.join(__dirname, 'uploads/products')));
 
 
 app.listen(PORT, () => {

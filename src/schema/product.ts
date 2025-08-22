@@ -6,6 +6,7 @@ import { taxes } from "./tax"
 import { units } from "./unit"
 import z from "zod"
 import { productVariants, productVariantSchema, productVariantUpdateSchema } from "./productVariant"
+import { productImages } from "./productImage"
 // -------------------------------------------------------PRODUCT------------------------------------------------------------//
 
 export const products = pgTable("products", {
@@ -19,10 +20,6 @@ export const products = pgTable("products", {
   unitId: uuid().notNull(),
   metal: varchar(),
 })
-
-export type Product = typeof products.$inferSelect
-export type NewProduct = typeof products.$inferInsert
-
 
 // --------------------------------------------------------PRODUCT RELATIONSHIPS----------------------------------------------------------------//
 
@@ -61,7 +58,8 @@ export const productRelations = relations(products, ({ one, many }) => ({
     fields: [products.unitId],
     references: [units.id]
   }),
-  variants: many(productVariants)
+  variants: many(productVariants),
+  images: many(productImages)
 }))
 
 // --------------------------------------------------------------------------------
@@ -75,14 +73,20 @@ export const productSchema = z.object({
   metal: z.string().nullable().optional(),
   brand: z.string().nullable().optional(),
   manufacture: z.string().nullable().optional(),
-  variants: z.array(productVariantSchema).min(1, { message: "at least one variant is required" })
 })
 
 export const productUpdateSchema = productSchema.extend({
   id: z.string().uuid(),
-  variants: z.array(productVariantUpdateSchema).min(1, { message: "at lease on variant is required" })
-
 })
 
-export type ProductUpdateInput = z.infer<typeof productUpdateSchema>
-export type ProductInput = z.infer<typeof productSchema>
+export const productWithVariantSchema = productSchema.extend({
+  variants: z.array(productVariantSchema).min(1, { message: "At least one varinat is required" })
+})
+export const productWithVariantUpdateSchema = productUpdateSchema.extend({
+  variants: z.array(z.union([productVariantSchema, productVariantUpdateSchema])).min(1, { message: "at lease on variant is required" }),
+})
+
+export type ProducInput = z.infer<typeof productSchema>
+export type ProductUpdate = z.infer<typeof productUpdateSchema>
+export type ProductWithVariantInput = z.infer<typeof productWithVariantSchema>
+export type ProductWithVariantUpdate = z.infer<typeof productWithVariantUpdateSchema>

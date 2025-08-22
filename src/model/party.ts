@@ -1,4 +1,4 @@
-import { eq, ilike, and, count } from 'drizzle-orm'
+import { eq, ilike, and, count, asc } from 'drizzle-orm'
 import { db } from '../db/db'
 
 import { Party, parties, PartyUpdate, PartyRecord } from '../schema/schema'
@@ -10,21 +10,33 @@ export const partyModel =
   async getAll({ filters, offset, limit }: {
     filters: {
       search?: string;
+      contact?: string;
+      gstin?: string;
+      city?: string;
     }
-    offset: number;
-    limit: number;
+    offset?: number;
+    limit?: number;
   }): Promise<PartyRecord[]> {
 
     const conditions = []
 
     if (filters.search)
       conditions.push(ilike(parties.name, `%${filters.search.trim()}%`))
+    if (filters.contact)
+      conditions.push(eq(parties.contact, filters.contact))
+    if (filters.gstin)
+      conditions.push(eq(parties.gstin, filters.gstin))
+    if (filters.city)
+      conditions.push(ilike(parties.city, `%${filters.city.trim()}%`))
 
     return await db.query.parties.findMany({
       where: conditions.length ? and(...conditions) : undefined,
       offset,
-      limit
-    })
+      limit,
+      orderBy: asc(parties.name)
+    },
+
+    )
   },
 
   async count({ filters }: { filters: { search: string } }) {
@@ -40,7 +52,7 @@ export const partyModel =
     return Number(result[0]?.count ?? 0)
   },
 
-  async getByName(gstin: string): Promise<PartyRecord | null> {
+  async getByGstin(gstin: string): Promise<PartyRecord | null> {
     return await db.query.parties.findFirst({
       where: (eq(parties.gstin, gstin))
     }) || null

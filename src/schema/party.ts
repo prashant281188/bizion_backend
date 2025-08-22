@@ -8,7 +8,7 @@ export const parties = pgTable("parties", {
   id: uuid().primaryKey().defaultRandom(),
   name: varchar().notNull(),
   gstin: varchar().unique(),
-  contact: varchar().unique().notNull(),
+  contact: varchar(),
   addressLine1: varchar(),
   addressLine2: varchar(),
   city: varchar().notNull(),
@@ -36,7 +36,7 @@ export const partyRelation = relations(parties, ({ one }) => ({
 export const partySchema = z.object({
   name: z.string().min(1, { message: "Party Name is required" }),
   gstin: z.string().nullable().optional(),
-  contact: z.string(),
+  contact: z.string().nullable(),
   email: z.string().email({ message: " Invalid Email" }).nullable().optional(),
   addressLine1: z.string().nullable().optional(),
   addressLine2: z.string().nullable().optional(),

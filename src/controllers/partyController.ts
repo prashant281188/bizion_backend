@@ -1,17 +1,27 @@
 import { Request, Response } from "express";
 import { partyModel } from '../model/party'
-import { partySchema, partyUpdateSchema } from "../schema/party";
+import { PartyRecord, partySchema, partyUpdateSchema } from "../schema/party";
 import { buildMeta, getPagination } from "../utils/paginationUtil";
 
 
-export const partyController = {
+export type PartyResponse = {
+    message?: string,
+    success?: any,
+    statusCode?: number,
+    err?: any
+    pagination?: any,
+}
 
-    async getAll(req: Request, res: Response) {
-        const { search = '' } = req.query
-        const { page, limit, offset } = getPagination(req.query);
+export const partyController = {
+    async getAll(req: Request, res: Response): Promise<PartyResponse & { data?: PartyRecord[] }> {
         try {
+            const { search = '', gstin = '', contact = '', city = '' } = req.query
+            const { page, limit, offset } = getPagination(req.query);
             const filters = {
-                search: String(search)
+                search: String(search),
+                gstin: String(gstin),
+                contact: String(contact),
+                city: String(city)
             }
             const [data, total] = await Promise.all([
                 partyModel.getAll({ filters, offset, limit }),
@@ -24,7 +34,6 @@ export const partyController = {
             )
         }
         catch (err) {
-
             return res.error("Internal Server Error", 500, err)
         }
     },
@@ -37,9 +46,7 @@ export const partyController = {
     },
 
     async delete(req: Request, res: Response) {
-
         const id = req.params.id
-
         const data = await partyModel.delete(id)
         if (!data) return res.error("Not Found", 404)
         return res.success("deleted successfully", data)
@@ -53,17 +60,23 @@ export const partyController = {
             return res.error("Validation error", 400, parsedData.error.flatten().fieldErrors)
         // Now safely access the validated data
 
-        const { gstin } = parsedData.data
+        const { gstin, contact } = parsedData.data
 
         // Check for duplicate
 
 
         if (gstin) {
-            const duplicate = await partyModel.getByName(gstin!)
-
-            if (duplicate)
-                return res.error("Duplicate Entry", 409)
+            const duplicate = await partyModel.getAll({ filters: { gstin } })
+            if (duplicate.length > 0)
+                return res.error("GSTIN already exists", 409)
         }
+
+        if (contact) {
+            const duplicate = await partyModel.getAll({ filters: { contact } })
+            if (duplicate.length > 0)
+                return res.error("Contact already exists", 409)
+        }
+
 
         try {
 
@@ -87,9 +100,9 @@ export const partyController = {
         if (!existing)
             return res.error("Not Found", 404)
 
-        const duplicate = await partyModel.getByName(parsedData.data.gstin!);
+        const duplicate = await partyModel.getByGstin(parsedData.data.gstin!);
         if (duplicate) {
-            return res.error("Duplicate Entry", 409)
+            return res.error("GSTIN already exists", 409)
         }
         const updatedData = await partyModel.update({ ...parsedData.data, id });
         if (!updatedData) return res.error("Not Found", 404)

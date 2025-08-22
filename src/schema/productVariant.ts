@@ -1,12 +1,13 @@
 import z from "zod"
-import { numeric, pgTable, uuid, varchar } from "drizzle-orm/pg-core"
+import { numeric, pgTable, text, uuid, varchar } from "drizzle-orm/pg-core"
 import { relations } from "drizzle-orm"
 
 import { products } from "./product"
+import slugify from "slugify"
 
 export const productVariants = pgTable("productVariants", {
   id: uuid().primaryKey().defaultRandom(),
-  modelId: uuid(),
+  modelId: uuid().notNull().references(() => products.id, { onDelete: "cascade" }),
   size: varchar(),
   finish: varchar(),
   boxQty: numeric({ mode: "number", precision: 2 }),
@@ -15,10 +16,9 @@ export const productVariants = pgTable("productVariants", {
   purchaseRate: numeric({ mode: "number" }),
   saleDiscount: numeric({ mode: "number" }),
   saleRate: numeric({ mode: "number" }),
+  // slug: text("slug").notNull().unique()
 })
 
-export type ProductVariant = typeof productVariants.$inferSelect
-export type NewProductVariant = typeof productVariants.$inferInsert
 
 
 export const productVariantRelation = relations(productVariants, ({ one }) => ({
@@ -46,5 +46,13 @@ export const productVariantUpdateSchema = productVariantSchema.extend({
   id: z.string().uuid()
 })
 
-export type ProductVariantUpdateInput = z.infer<typeof productVariantUpdateSchema>
+export type ProductVariantUpdate = z.infer<typeof productVariantUpdateSchema>
 export type ProductVariantInput = z.infer<typeof productVariantSchema>
+
+
+export const generateVariantSlug = (
+  productName: string,
+  size?: string,
+  finish?: string
+) => slugify(`${productName}-${size}-${finish}`, { lower: true, strict: true })
+
