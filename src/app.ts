@@ -1,60 +1,30 @@
 import express from "express";
+import helmet from "helmet";
+import cors from "cors";
+import cookieParser from "cookie-parser";
+import morgan from "morgan";
 
-import cors from 'cors'
+import routes from "./routes";
+import { errorHandler } from "./middlewares/errorHandler";
+import { globalLimiter } from "./middlewares/rateLimit";
 
-import categoryRoutes from "./routes/category"
-import hsnRoutes from "./routes/hsn"
-import groupRoutes from "./routes/group"
-import productRoutes from "./routes/product"
-import taxRoutes from "./routes/tax"
-import unitRoutes from "./routes/unit"
-import transportRoutes from "./routes/transport"
-import partyRoutes from "./routes/party"
-import { responseHandler } from "./utils/responseHandler";
-import path from "path";
+export const app = express();
 
-const app = express();
+app.disable("x-powered-by");
 
-const PORT = process.env.PORT
+app.use(helmet({ contentSecurityPolicy: false }));
+app.use(globalLimiter);
 
-const allowedOrigin = ["http://localhost:3000", "http://192.168.29.120:3000", "http://192.168.31.216:3000", "*"];
-
-const corsOptions: cors.CorsOptions = {
-  origin: (origin, callback) => {
-    if (!origin || allowedOrigin.indexOf(origin) !== -1) {
-      callback(null, true)
-    }
-    else {
-      callback(new Error('not allowed'))
-    }
-  },
-  methods: 'GET, HEAD, PUT, PATCH, POST, DELETE',
+app.use(cors({
+  origin: ["http://localhost:3000"],
   credentials: true,
-  optionsSuccessStatus: 204
-}
+}));
 
-app.use(cors(corsOptions));
-app.use(express.json());
-app.use(responseHandler)
+app.use(express.json({ limit: "1mb" }));
+app.use(express.urlencoded({ extended: true, limit: "1mb" }));
+app.use(cookieParser());
+app.use(morgan("dev"));
 
+app.use("/api", routes);
 
-app.get("/", (req, res) => {
-  res.send("Hello from your Express server");
-});
-
-
-app.use('/api/v1/category', categoryRoutes)
-app.use('/api/v1/group', groupRoutes)
-app.use('/api/v1/hsn', hsnRoutes)
-app.use('/api/v1/party', partyRoutes)
-app.use('/api/v1/product', productRoutes)
-app.use('/api/v1/tax', taxRoutes)
-app.use('/api/v1/transport', transportRoutes)
-app.use('/api/v1/unit', unitRoutes)
-
-app.use('/img',express.static(path.join(__dirname, 'uploads/products')));
-
-
-app.listen(PORT, () => {
-  console.log(`server is running on port ${PORT}`);
-});
+app.use(errorHandler);

@@ -1,6 +1,6 @@
 {
-  "id": "d4d29615-0939-4310-9004-4313e73058f3",
-  "prevId": "00000000-0000-0000-0000-000000000000",
+  "id": "0dd4b0d3-d241-4327-a4f8-b4235e72b488",
+  "prevId": "d4d29615-0939-4310-9004-4313e73058f3",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -220,58 +220,58 @@
           "primaryKey": false,
           "notNull": false
         },
-        "hsnId": {
-          "name": "hsnId",
+        "hsn_id": {
+          "name": "hsn_id",
           "type": "uuid",
           "primaryKey": false,
           "notNull": true
         },
-        "categoryId": {
-          "name": "categoryId",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "subCategoryId": {
-          "name": "subCategoryId",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "unitId": {
-          "name": "unitId",
+        "unit_id": {
+          "name": "unit_id",
           "type": "uuid",
           "primaryKey": false,
           "notNull": true
         },
-        "baseSlug": {
-          "name": "baseSlug",
+        "category_id": {
+          "name": "category_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "sub_category_id": {
+          "name": "sub_category_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "base_slug": {
+          "name": "base_slug",
           "type": "varchar",
           "primaryKey": false,
           "notNull": true
         },
-        "isDeleted": {
-          "name": "isDeleted",
+        "is_deleted": {
+          "name": "is_deleted",
           "type": "boolean",
           "primaryKey": false,
           "notNull": false,
           "default": false
         },
-        "deletedAt": {
-          "name": "deletedAt",
+        "deleted_at": {
+          "name": "deleted_at",
           "type": "timestamp",
           "primaryKey": false,
           "notNull": false
         },
-        "createdAt": {
-          "name": "createdAt",
+        "created_at": {
+          "name": "created_at",
           "type": "timestamp",
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
         },
-        "updatedAt": {
-          "name": "updatedAt",
+        "updated_at": {
+          "name": "updated_at",
           "type": "timestamp",
           "primaryKey": false,
           "notNull": true
@@ -279,12 +279,12 @@
       },
       "indexes": {},
       "foreignKeys": {
-        "products_hsnId_hsns_id_fk": {
-          "name": "products_hsnId_hsns_id_fk",
+        "products_hsn_id_hsns_id_fk": {
+          "name": "products_hsn_id_hsns_id_fk",
           "tableFrom": "products",
           "tableTo": "hsns",
           "columnsFrom": [
-            "hsnId"
+            "hsn_id"
           ],
           "columnsTo": [
             "id"
@@ -292,38 +292,38 @@
           "onDelete": "no action",
           "onUpdate": "no action"
         },
-        "products_categoryId_categories_id_fk": {
-          "name": "products_categoryId_categories_id_fk",
-          "tableFrom": "products",
-          "tableTo": "categories",
-          "columnsFrom": [
-            "categoryId"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "products_subCategoryId_categories_id_fk": {
-          "name": "products_subCategoryId_categories_id_fk",
-          "tableFrom": "products",
-          "tableTo": "categories",
-          "columnsFrom": [
-            "subCategoryId"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "products_unitId_units_id_fk": {
-          "name": "products_unitId_units_id_fk",
+        "products_unit_id_units_id_fk": {
+          "name": "products_unit_id_units_id_fk",
           "tableFrom": "products",
           "tableTo": "units",
           "columnsFrom": [
-            "unitId"
+            "unit_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "products_category_id_categories_id_fk": {
+          "name": "products_category_id_categories_id_fk",
+          "tableFrom": "products",
+          "tableTo": "categories",
+          "columnsFrom": [
+            "category_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "products_sub_category_id_categories_id_fk": {
+          "name": "products_sub_category_id_categories_id_fk",
+          "tableFrom": "products",
+          "tableTo": "categories",
+          "columnsFrom": [
+            "sub_category_id"
           ],
           "columnsTo": [
             "id"
@@ -341,11 +341,11 @@
             "model"
           ]
         },
-        "products_baseSlug_unique": {
-          "name": "products_baseSlug_unique",
+        "products_base_slug_unique": {
+          "name": "products_base_slug_unique",
           "nullsNotDistinct": false,
           "columns": [
-            "baseSlug"
+            "base_slug"
           ]
         }
       },
@@ -376,67 +376,67 @@
           "primaryKey": false,
           "notNull": false
         },
-        "purRate": {
-          "name": "purRate",
+        "purchase_rate": {
+          "name": "purchase_rate",
           "type": "numeric(12, 2)",
           "primaryKey": false,
           "notNull": false
         },
-        "saleRate": {
-          "name": "saleRate",
+        "sale_rate": {
+          "name": "sale_rate",
           "type": "numeric(12, 2)",
           "primaryKey": false,
           "notNull": false
         },
-        "purDisc": {
-          "name": "purDisc",
+        "purchase_discount": {
+          "name": "purchase_discount",
           "type": "numeric(5, 2)",
           "primaryKey": false,
           "notNull": false,
           "default": "'0.00'"
         },
-        "saleDisc": {
-          "name": "saleDisc",
+        "sale_discount": {
+          "name": "sale_discount",
           "type": "numeric(5, 2)",
           "primaryKey": false,
           "notNull": false,
           "default": "'0.00'"
         },
-        "fromDate": {
-          "name": "fromDate",
+        "from_date": {
+          "name": "from_date",
           "type": "timestamp",
           "primaryKey": false,
           "notNull": false,
           "default": "now()"
         },
-        "toDate": {
-          "name": "toDate",
+        "to_date": {
+          "name": "to_date",
           "type": "timestamp",
           "primaryKey": false,
           "notNull": false
         },
-        "isDeleted": {
-          "name": "isDeleted",
+        "is_deleted": {
+          "name": "is_deleted",
           "type": "boolean",
           "primaryKey": false,
           "notNull": false,
           "default": false
         },
-        "deletedAt": {
-          "name": "deletedAt",
+        "deleted_at": {
+          "name": "deleted_at",
           "type": "timestamp",
           "primaryKey": false,
           "notNull": false
         },
-        "createdAt": {
-          "name": "createdAt",
+        "created_at": {
+          "name": "created_at",
           "type": "timestamp",
           "primaryKey": false,
           "notNull": false,
           "default": "now()"
         },
-        "updatedAt": {
-          "name": "updatedAt",
+        "updated_at": {
+          "name": "updated_at",
           "type": "timestamp",
           "primaryKey": false,
           "notNull": false,
@@ -476,8 +476,8 @@
           "notNull": true,
           "default": "gen_random_uuid()"
         },
-        "modelId": {
-          "name": "modelId",
+        "model_id": {
+          "name": "model_id",
           "type": "uuid",
           "primaryKey": false,
           "notNull": true
@@ -488,8 +488,8 @@
           "primaryKey": false,
           "notNull": false
         },
-        "sizeType": {
-          "name": "sizeType",
+        "size_type": {
+          "name": "size_type",
           "type": "sizeType",
           "typeSchema": "public",
           "primaryKey": false,
@@ -504,38 +504,52 @@
         },
         "packing": {
           "name": "packing",
-          "type": "numeric(2)",
+          "type": "numeric(10, 2)",
           "primaryKey": false,
           "notNull": false
         },
-        "variantSlug": {
-          "name": "variantSlug",
+        "varinat_slug": {
+          "name": "varinat_slug",
           "type": "varchar",
           "primaryKey": false,
           "notNull": false
         },
-        "isDeleted": {
-          "name": "isDeleted",
+        "is_deleted": {
+          "name": "is_deleted",
           "type": "boolean",
           "primaryKey": false,
           "notNull": false,
           "default": false
         },
-        "deletedAt": {
-          "name": "deletedAt",
+        "deleted_at": {
+          "name": "deleted_at",
           "type": "timestamp",
           "primaryKey": false,
           "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "now()"
         }
       },
       "indexes": {},
       "foreignKeys": {
-        "product_variants_modelId_products_id_fk": {
-          "name": "product_variants_modelId_products_id_fk",
+        "product_variants_model_id_products_id_fk": {
+          "name": "product_variants_model_id_products_id_fk",
           "tableFrom": "product_variants",
           "tableTo": "products",
           "columnsFrom": [
-            "modelId"
+            "model_id"
           ],
           "columnsTo": [
             "id"
@@ -546,11 +560,11 @@
       },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
-        "product_variants_variantSlug_unique": {
-          "name": "product_variants_variantSlug_unique",
+        "product_variants_varinat_slug_unique": {
+          "name": "product_variants_varinat_slug_unique",
           "nullsNotDistinct": false,
           "columns": [
-            "variantSlug"
+            "varinat_slug"
           ]
         }
       },
@@ -688,31 +702,27 @@
         },
         "taxValue": {
           "name": "taxValue",
-          "type": "numeric",
+          "type": "numeric(5, 2)",
           "primaryKey": false,
-          "notNull": true,
-          "default": 0
+          "notNull": true
         },
         "cgst": {
           "name": "cgst",
-          "type": "numeric",
+          "type": "numeric(5, 2)",
           "primaryKey": false,
-          "notNull": true,
-          "default": 0
+          "notNull": true
         },
         "igst": {
           "name": "igst",
-          "type": "numeric",
+          "type": "numeric(5, 2)",
           "primaryKey": false,
-          "notNull": true,
-          "default": 0
+          "notNull": true
         },
         "sgst": {
           "name": "sgst",
-          "type": "numeric",
+          "type": "numeric(5, 2)",
           "primaryKey": false,
-          "notNull": true,
-          "default": 0
+          "notNull": true
         }
       },
       "indexes": {},
