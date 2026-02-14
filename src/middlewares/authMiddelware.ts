@@ -11,19 +11,26 @@ export const authMiddleware = (
   _res: Response,
   next: NextFunction
 ) => {
-  const token = req.cookies.token;
+  const token = req.cookies?.token;
+
+  console.log("Cookies :", req.cookies)
 
   if (!token) throw new AppError("Unauthorized", 401);
+  try {
 
-  const decoded = jwt.verify(
-    token,
-    process.env.JWT_SECRET!
-  ) as any;
+    const decoded = jwt.verify(
+      token,
+      process.env.JWT_SECRET!
+    ) as any;
 
-  req.user = {
-    userId: decoded.userId,
-    roleId: decoded.roleId,
-  };
+    req.user = {
+      userId: decoded.userId,
+      roleId: decoded.roleId,
+    };
 
-  next();
+    next();
+  }
+  catch {
+    return next(new AppError("Unauthorized", 401))
+  }
 };

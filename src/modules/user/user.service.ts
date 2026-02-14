@@ -7,7 +7,7 @@ import { db } from "../../config/db";
 const SALT_ROUNDS = 10;
 
 export const userService = {
-  async list({ page = 1, limit = 10, search }) {
+  async list({ page = 1, limit = 10, search = "" }) {
     const offset = (page - 1) * limit;
 
     const where = search
@@ -16,7 +16,7 @@ export const userService = {
 
     const items = await db
       .select({
-        ...users,
+        users,
         roleName: roles.name,
       })
       .from(users)
@@ -44,7 +44,7 @@ export const userService = {
   async getById(id: string) {
     return db
       .select({
-        ...users,
+        users,
         roleName: roles.name,
       })
       .from(users)
@@ -91,6 +91,6 @@ export const userService = {
       .delete(users)
       .where(eq(users.id, id));
 
-    return result.rowCount > 0;
+    return result;
   },
 };

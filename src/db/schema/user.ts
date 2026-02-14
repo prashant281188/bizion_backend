@@ -7,6 +7,7 @@ import {
   index,
 } from "drizzle-orm/pg-core";
 import { roles } from "./role";
+import { relations } from "drizzle-orm";
 
 export const users = pgTable(
   "users",
@@ -29,3 +30,10 @@ export const users = pgTable(
     index("email_id_idx").on(table.email),
   ]
 );
+
+export const userRelations = relations(users, ({ one }) => ({
+  role: one(roles, {
+    fields: [users.roleId],
+    references: [roles.id],
+  }),
+}));

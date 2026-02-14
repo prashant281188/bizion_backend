@@ -1,8 +1,8 @@
 import { Response } from "express";
-import { userService } from "../../services/user.service";
 import { logAudit } from "../../services/audit.service";
 import { AppError } from "../../middlewares/errorHandler";
-import { AuthRequest } from "../../middlewares/authMiddleware";
+import { userService } from "./user.service";
+import { AuthRequest } from "../../middlewares/authMiddelware";
 
 export const userController = {
   /* ================= LIST ================= */
