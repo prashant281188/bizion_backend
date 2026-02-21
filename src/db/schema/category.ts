@@ -1,3 +1,4 @@
+import { relations } from "drizzle-orm";
 import {
   pgTable,
   uuid,
@@ -5,6 +6,7 @@ import {
   timestamp,
   boolean,
 } from "drizzle-orm/pg-core";
+import { products } from "./product";
 
 export const categories = pgTable(
   "categories",
@@ -13,6 +15,7 @@ export const categories = pgTable(
 
     name: text("name").notNull(),
     parentId: uuid("parent_id"),
+    description: text("description"),
 
     isActive: boolean("is_active").default(true).notNull(),
 
@@ -20,3 +23,7 @@ export const categories = pgTable(
     updatedAt: timestamp("updated_at").defaultNow().notNull(),
   }
 );
+
+export const categoriesRelations = relations(categories, ({ many }) => ({
+  products: many(products),
+}));

@@ -7,6 +7,8 @@ import {
   boolean,
 } from "drizzle-orm/pg-core";
 import { categories } from "./category";
+import { relations } from "drizzle-orm";
+import { productVariants } from "./productVariant";
 
 export const products = pgTable(
   "products",
@@ -24,6 +26,8 @@ export const products = pgTable(
 
     isActive: boolean("is_active").default(true).notNull(),
 
+
+
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at").defaultNow().notNull(),
   },
@@ -32,3 +36,12 @@ export const products = pgTable(
     index("products_category_idx").on(table.categoryId),
   ]
 );
+
+export const productsRelations = relations(products, ({ one, many }) => ({
+  category: one(categories, {
+    fields: [products.categoryId],
+    references: [categories.id],
+  }),
+  variants: many(productVariants)
+
+}));

@@ -6,5 +6,7 @@ export * from "./product"
 export * from "./productVariant";
 export * from "./auditLog";
 export * from "./permission"
-export * from "./productRate"
-export * from "./passwordResetToken"
+export * from "./productRate";
+export * from "./passwordResetToken";
+export * from "./brand";
+export * from "./carousel"

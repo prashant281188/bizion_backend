@@ -6,6 +6,7 @@ import {
   index,
 } from "drizzle-orm/pg-core";
 import { productVariants } from "./productVariant";
+import { relations } from "drizzle-orm";
 
 export const productRates = pgTable(
   "product_rates",
@@ -26,3 +27,10 @@ export const productRates = pgTable(
     index("rates_variant_idx").on(table.variantId),
   ]
 );
+
+export const productRatesRelations = relations(productRates, ({ one }) => ({
+  productVariant: one(productVariants, {
+    fields: [productRates.variantId],
+    references: [productVariants.id]
+  })
+}))

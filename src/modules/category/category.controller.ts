@@ -15,7 +15,6 @@ export const categoryController = {
       limit: limit ? Number(limit) : 10,
       search:String(search),
     });
-
     res.json({ success: true, data });
   },
 

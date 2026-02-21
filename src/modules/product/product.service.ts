@@ -4,7 +4,7 @@ import { db } from "../../config/db";
 import { categories, products } from "../../db/schema";
 
 export const productService = {
-  async list({ page = 1, limit = 10, search }) {
+  async list({ page = 1, limit = 10, search="" }) {
     const offset = (page - 1) * limit;
 
     const where = search

@@ -81,7 +81,7 @@ export const authService = {
 
     if (!user) {
       // Don't reveal if user exists
-      return;
+      return null;
     }
 
     // Generate random token

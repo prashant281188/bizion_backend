@@ -15,9 +15,6 @@ const router = Router();
 
 router.get(
   "/",
-  authMiddleware,
-  validateSchema(listSchema, "query"),
-  requirePermission("category:read"),
   categoryController.list
 );
 

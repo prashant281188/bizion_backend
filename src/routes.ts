@@ -2,6 +2,7 @@ import { Router, Request, Response } from "express";
 
 import authRoutes from "./modules/auth/auth.routes";
 import categoryRoutes from "./modules/category/category.routes";
+import publicRoutes from "./modules/public/public.routes"
 
 
 const router = Router();
@@ -20,6 +21,12 @@ router.get("/health", (_req: Request, res: Response) => {
 
 const v1 = Router();
 
+/* ================= REGISTER VERSION ================= */
+
+router.use("/v1", v1);
+
+v1.use("/public", publicRoutes)
+
 /* -------- AUTH -------- */
 v1.use("/auth", authRoutes);
 
@@ -31,10 +38,6 @@ v1.use("/categories", categoryRoutes);
 
 // /* -------- PRODUCTS -------- */
 // v1.use("/products", productRoutes);
-
-/* ================= REGISTER VERSION ================= */
-
-router.use("/v1", v1);
 
 /* ================= 404 HANDLER ================= */
 

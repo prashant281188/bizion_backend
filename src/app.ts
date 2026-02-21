@@ -14,9 +14,20 @@ app.disable("x-powered-by");
 
 app.use(helmet({ contentSecurityPolicy: false }));
 app.use(globalLimiter);
+const allowedOrigins = [
+  "http://localhost:3000",
+  "http://192.168.29.120:3000",
+  "http://192.168.31.216:3000"
+];
 
 app.use(cors({
-  origin: ["http://localhost:3000"],
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
   credentials: true,
 }));
 

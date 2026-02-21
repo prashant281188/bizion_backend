@@ -9,10 +9,12 @@ export const listSchema = z.object({
 export const createSchema = z.object({
   name: z.string().trim().min(1),
   parentId: z.string().uuid().optional().nullable(),
+  description: z.string().optional()
 });
 
 
 export const updateSchema = z.object({
   name: z.string().trim().min(1),
   parentId: z.string().uuid().optional().nullable(),
+  description: z.string().optional()
 });
