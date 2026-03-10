@@ -1,5 +1,5 @@
 
-import { eq, ilike, sql } from "drizzle-orm";
+import { and, eq, ilike, sql } from "drizzle-orm";
 import { brands, carousel, categories, products } from "../../db/schema";
 import { db } from "../../config/db";
 
@@ -9,6 +9,7 @@ export const publicService = {
   async getActiveCategories() {
     return db.query.categories.findMany({
       where: eq(categories.isActive, true),
+      orderBy: categories.name,
       columns: {
         id: true,
         name: true
@@ -17,31 +18,62 @@ export const publicService = {
   },
 
   async getBrands() {
-    return db.select().from(brands)
+    return db.select().from(brands).orderBy(brands.name)
   },
 
-  async getProducts({ page = 1, limit = 10, search = "" }) {
+  async getProducts({ page = 1, limit = 10, search = "", category = "", brand = "" }) {
 
     const offset = (page - 1) * limit;
-    const where = search
-      ? ilike(products.model, `%${search}%`)
-      : undefined;
+
+    const conditions = []
+ 
+    if(category){
+      conditions.push(eq(products.categoryId, category))
+    }
+
+    if (brand) {
+      conditions.push(eq(products.brandId, brand))
+
+    }
+    if (search) {
+      conditions.push(ilike(products.model, `%${search}%`))
+    }
+
+    const whereClause =
+      conditions.length > 0 ? and(...conditions) : undefined
+
+
 
     const data = await db.query.products.findMany({
-      where: where,
+      where: whereClause,
       limit,
       offset,
+      orderBy: products.model,
       columns: {
-        brand: true,
         isActive: true,
         metal: true,
         model: true,
         id: true,
       },
       with: {
-        category: { columns: { name: true } },
+        brand: {
+          columns: {
+            name: true,
+            logo: true
+          }
+        },
+        category: {
+          columns: {
+            name: true
+          }
+        },
         variants: {
-          columns: { size: true, packing: true },
+          columns: {
+            id: true,
+            size: true,
+            packing: true,
+            finish: true
+          },
           with: {
             rates: {
               columns: {
@@ -56,8 +88,8 @@ export const publicService = {
     const [{ count }] = await db
       .select({ count: sql<number>`count(*)` })
       .from(products)
-      .where(where);
-      
+      .where(whereClause);
+
     return {
       data,
       meta: {
@@ -73,7 +105,6 @@ export const publicService = {
     return db.query.products.findFirst({
       where: eq(products.id, id),
       columns: {
-        brand: true,
         isActive: true,
         metal: true,
         model: true,
@@ -81,6 +112,12 @@ export const publicService = {
       },
       with: {
         category: { columns: { name: true } },
+        brand: {
+          columns: {
+            name: true,
+            logo: true
+          }
+        },
         variants: {
           columns: { size: true, packing: true, finish: true },
           with: {

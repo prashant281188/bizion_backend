@@ -1,11 +1,7 @@
 import { Router } from "express";
 import { requirePermission } from "../../middlewares/requirePermission";
 import { validateSchema } from "../../middlewares/validateSchema";
-import {
-  listSchema,
-  createSchema,
-  updateSchema,
-} from "./product.schema";
+
 import { authMiddleware } from "../../middlewares/authMiddelware";
 import { productController } from "./product.controller";
 
@@ -16,8 +12,6 @@ const router = Router();
 router.get(
   "/",
   authMiddleware,
-  validateSchema(listSchema, "query"),
-  requirePermission("product:read"),
   productController.list
 );
 
@@ -30,33 +24,33 @@ router.get(
   productController.getById
 );
 
-/* ================= CREATE ================= */
+// /* ================= CREATE ================= */
 
-router.post(
-  "/",
-  authMiddleware,
-  validateSchema(createSchema),
-  requirePermission("product:create"),
-  productController.create
-);
+// router.post(
+//   "/",
+//   authMiddleware,
+//   validateSchema(createSchema),
+//   requirePermission("product:create"),
+//   productController.create
+// );
 
-/* ================= UPDATE ================= */
+// /* ================= UPDATE ================= */
 
-router.put(
-  "/:id",
-  authMiddleware,
-  validateSchema(updateSchema),
-  requirePermission("product:update"),
-  productController.update
-);
+// router.put(
+//   "/:id",
+//   authMiddleware,
+//   validateSchema(updateSchema),
+//   requirePermission("product:update"),
+//   productController.update
+// );
 
-/* ================= DELETE ================= */
+// /* ================= DELETE ================= */
 
-router.delete(
-  "/:id",
-  authMiddleware,
-  requirePermission("product:delete"),
-  productController.remove
-);
+// router.delete(
+//   "/:id",
+//   authMiddleware,
+//   requirePermission("product:delete"),
+//   productController.remove
+// );
 
 export default router;

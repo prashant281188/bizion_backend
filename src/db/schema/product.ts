@@ -9,6 +9,8 @@ import {
 import { categories } from "./category";
 import { relations } from "drizzle-orm";
 import { productVariants } from "./productVariant";
+import { brands } from "./brand";
+import { hsnCodes } from "./hsnCodes";
 
 export const products = pgTable(
   "products",
@@ -16,17 +18,20 @@ export const products = pgTable(
     id: uuid("id").defaultRandom().primaryKey(),
 
     model: text("model").notNull(),
-    brand: text("brand"),
     metal: text("metal"),
     description: text("description"),
+
+    brandId: uuid("brand_id")
+      .references(() => brands.id, { onDelete: "no action" }),
 
     categoryId: uuid("category_id")
       .references(() => categories.id, { onDelete: "restrict" })
       .notNull(),
 
+    hsnId: uuid("hsn_id")
+      .references(() => hsnCodes.id, { onDelete: "set null" }),
+
     isActive: boolean("is_active").default(true).notNull(),
-
-
 
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at").defaultNow().notNull(),
@@ -41,6 +46,14 @@ export const productsRelations = relations(products, ({ one, many }) => ({
   category: one(categories, {
     fields: [products.categoryId],
     references: [categories.id],
+  }),
+  hsn: one(hsnCodes, {
+    fields: [products.hsnId],
+    references: [hsnCodes.id]
+  }),
+  brand: one(brands, {
+    fields: [products.brandId],
+    references: [brands.id]
   }),
   variants: many(productVariants)
 

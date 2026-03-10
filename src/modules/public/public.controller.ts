@@ -25,12 +25,14 @@ export const publicController = {
     },
 
     async getProducts(req: Request, res: Response) {
-        const { page, limit, search = "" } = req.query;
+        const { page, limit, search = "", category = "", brand = "" } = req.query;
 
         const data = await publicService.getProducts({
             page: page ? Number(page) : 1,
             limit: limit ? Number(limit) : 10,
-            search: String(search)
+            search: String(search),
+            brand: String(brand),
+            category: String(category)
         });
         res.json({
             success: true,

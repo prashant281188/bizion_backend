@@ -19,7 +19,8 @@ export const productVariants = pgTable(
       .references(() => products.id, { onDelete: "cascade" })
       .notNull(),
 
-    size: text("size"),
+    size: integer("size"),
+    sizeType: text("size_type"),
     finish: text("finish"),
     packing: integer("packing"),
 

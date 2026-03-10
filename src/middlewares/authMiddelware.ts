@@ -13,8 +13,6 @@ export const authMiddleware = (
 ) => {
   const token = req.cookies?.token;
 
-  console.log("Cookies :", req.cookies)
-
   if (!token) throw new AppError("Unauthorized", 401);
   try {
 
