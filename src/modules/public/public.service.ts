@@ -26,8 +26,8 @@ export const publicService = {
     const offset = (page - 1) * limit;
 
     const conditions = []
- 
-    if(category){
+
+    if (category) {
       conditions.push(eq(products.categoryId, category))
     }
 
@@ -50,12 +50,19 @@ export const publicService = {
       offset,
       orderBy: products.model,
       columns: {
-        isActive: true,
-        metal: true,
-        model: true,
         id: true,
+        model: true,
+        sizeType: true,
+        metal: true,
+        isActive: true,
       },
       with: {
+        unit: {
+          columns: {
+            name: true,
+            symbol: true
+          }
+        },
         brand: {
           columns: {
             name: true,
@@ -72,15 +79,18 @@ export const publicService = {
             id: true,
             size: true,
             packing: true,
-            finish: true
+            finish: true,
           },
+
           with: {
             rates: {
               columns: {
                 mrp: true
               }
-            }
-          }
+            },
+          },
+
+
         }
       }
     })
@@ -109,9 +119,20 @@ export const publicService = {
         metal: true,
         model: true,
         id: true,
+        sizeType: true,
       },
       with: {
-        category: { columns: { name: true } },
+        unit: {
+          columns: {
+            name: true,
+            symbol: true
+          }
+        },
+        category: {
+          columns: {
+            name: true
+          }
+        },
         brand: {
           columns: {
             name: true,

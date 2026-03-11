@@ -11,6 +11,7 @@ import { relations } from "drizzle-orm";
 import { productVariants } from "./productVariant";
 import { brands } from "./brand";
 import { hsnCodes } from "./hsnCodes";
+import { units } from "./unit";
 
 export const products = pgTable(
   "products",
@@ -30,6 +31,11 @@ export const products = pgTable(
 
     hsnId: uuid("hsn_id")
       .references(() => hsnCodes.id, { onDelete: "set null" }),
+
+    unitId: uuid("unit_id")
+      .references(() => units.id),
+
+    sizeType: text("size_type").default("mm"),
 
     isActive: boolean("is_active").default(true).notNull(),
 
@@ -54,6 +60,10 @@ export const productsRelations = relations(products, ({ one, many }) => ({
   brand: one(brands, {
     fields: [products.brandId],
     references: [brands.id]
+  }),
+  unit: one(units, {
+    fields: [products.unitId],
+    references: [units.id]
   }),
   variants: many(productVariants)
 

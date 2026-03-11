@@ -5,6 +5,7 @@ export * from "./category";
 export * from "./gstGroup";
 export * from "./gstRate";
 export * from "./hsnCodes";
+export * from "./hsnGstHistory"
 export * from "./passwordResetToken";
 export * from "./permission"
 export * from "./product"
@@ -12,4 +13,5 @@ export * from "./productRate";
 export * from "./productVariant";
 export * from "./role";
 export * from "./rolePermission";
+export * from "./unit"
 export * from "./user";

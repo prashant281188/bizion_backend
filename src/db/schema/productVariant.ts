@@ -9,6 +9,7 @@ import {
 import { products } from "./product";
 import { relations } from "drizzle-orm";
 import { productRates } from "./productRate";
+import { units } from "./unit";
 
 export const productVariants = pgTable(
   "product_variants",
@@ -20,7 +21,6 @@ export const productVariants = pgTable(
       .notNull(),
 
     size: integer("size"),
-    sizeType: text("size_type"),
     finish: text("finish"),
     packing: integer("packing"),
 
