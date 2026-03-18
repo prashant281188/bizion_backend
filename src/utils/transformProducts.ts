@@ -23,7 +23,7 @@ export function transformProduct(product: any) {
 
         variants.push({
             sku: variant.sku,
-            packing: String(variant.packing + " " + product.unit.symbol),
+            packing: String(variant.packing),
         })
     }
 

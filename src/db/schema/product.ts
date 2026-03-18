@@ -38,6 +38,9 @@ export const products = pgTable(
     unitId: uuid("unit_id")
       .references(() => units.id),
 
+    imageId: uuid("image_id")
+      .references(() => productImages.id),
+
     sizeType: text("size_type").default("mm"),
 
     isActive: boolean("is_active").default(true).notNull(),
@@ -68,7 +71,10 @@ export const productsRelations = relations(products, ({ one, many }) => ({
     fields: [products.unitId],
     references: [units.id]
   }),
+  image: one(productImages, {
+    fields: [products.imageId],
+    references: [productImages.id]
+  }),
   variants: many(productVariants),
-  images: many(productImages)
 
 }));

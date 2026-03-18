@@ -1,6 +1,29 @@
 import { db } from "../config/db"
-import { brands, categories, options, optionValues,  } from "../db/schema"
+import { brands, categories, options, optionValues, } from "../db/schema"
+
+
+
 import { eq, and } from "drizzle-orm"
+
+
+export function createSku(model: string, size?: string, size_type?: string, finish?: string) {
+
+  let sku = model
+  if (size) {
+    sku = sku + " " + size
+  }
+  if (size_type) {
+    sku = sku + "" + size_type
+  }
+  if (finish) {
+    sku = sku + " " + finish.replace(" ", "-")
+  }
+  return trimAndLower(sku)
+}
+
+export function trimAndLower(value: string) {
+  return String(value).trim().toLocaleLowerCase()
+}
 
 export async function findOrCreateBrand(name: string) {
 
@@ -23,6 +46,7 @@ export async function findOrCreateCategory(name: string) {
   const existing = await db.query.categories.findFirst({
     where: eq(categories.name, name)
   })
+
 
   if (existing) return existing
 
@@ -60,6 +84,7 @@ export async function findOrCreateOptionValue(optionId: string, value: string) {
   })
 
   if (existing) return existing
+
 
   const inserted = await db.insert(optionValues)
     .values({

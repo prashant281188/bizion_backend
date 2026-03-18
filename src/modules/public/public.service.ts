@@ -2,7 +2,7 @@
 import { and, eq, ilike, sql } from "drizzle-orm";
 import { brands, carousel, categories, products } from "../../db/schema";
 import { db } from "../../config/db";
-import { transformProduct } from "../../utils/transformProduct";
+import { transformProduct } from "../../utils/transformProducts";
 
 export const publicService = {
 
@@ -53,22 +53,13 @@ export const publicService = {
       columns: {
         id: true,
         model: true,
-        sizeType: true,
         metal: true,
         isActive: true,
       },
       with: {
         unit: {
           columns: {
-            name: true,
             symbol: true
-          }
-        },
-
-
-        images: {
-          columns: {
-            path: true,
           }
         },
         brand: {
@@ -82,38 +73,12 @@ export const publicService = {
             name: true
           }
         },
-        variants: {
+        image: {
           columns: {
-            id: true,
-            packing: true,
-            sku: true
-          },
-
-          with: {
-            optionValues: {
-              columns: {},
-              with: {
-                optionValue: {
-                  columns: {
-                    value: true
-                  },
-                  with: {
-                    option: {
-                      columns: {
-                        name: true
-                      }
-                    }
-                  }
-                }
-              }
-            },
-            rates: {
-              columns: {
-                mrp: true
-              }
-            },
-          },
+            path: true
+          }
         }
+
       }
     })
 
@@ -161,11 +126,7 @@ export const publicService = {
             logo: true
           }
         },
-        images: {
-          columns: {
-            path: true
-          }
-        },
+
         variants: {
           columns: {
             id: true,
@@ -202,8 +163,7 @@ export const publicService = {
 
     },))
 
-    const response = transformProduct(data)
-    return response
+    return transformProduct(data)
   },
 
   async getCarouselData() {

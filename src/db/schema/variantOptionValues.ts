@@ -7,7 +7,7 @@ export const variantOptionValues = pgTable(
     "variant_option_values",
     {
         variantId: uuid("variant_id").notNull(),
-        optionValueId: uuid("option_value_id").notNull(),
+        optionValueId: uuid("option_value_id"),
     },
     (table) => [
         uniqueIndex("variant_option_values_pk")

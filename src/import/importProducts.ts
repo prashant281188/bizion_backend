@@ -1,4 +1,3 @@
-
 import { parseExcel } from "./parseExcel"
 
 import {
@@ -10,16 +9,35 @@ import {
 } from "../db/schema"
 
 import {
+  createSku,
   findOrCreateBrand,
   findOrCreateCategory,
   findOrCreateOption,
-  findOrCreateOptionValue
+  findOrCreateOptionValue,
+  trimAndLower
 } from "./helpers"
+
 import { db } from "../config/db"
+
+type productData = {
+  model: string
+  brand: string
+  category: string
+  size?: string
+  size_type?: string
+  finish?: string
+  packing: number
+  unit: string
+  metal?: string
+  manufacure?: string
+  mrp?: string
+  purchase?: string
+  sale?: string
+}
 
 export async function importProducts() {
 
-  const rows: any[] = parseExcel("src/data/products.xlsx")
+  const rows: productData[] = parseExcel("src/data/products.xlsx")
 
   const results = {
     success: 0,
@@ -27,96 +45,170 @@ export async function importProducts() {
     errors: [] as any[]
   }
 
+  // 🔥 Cache (performance boost)
+  const optionCache = new Map<string, any>()
+  const optionValueCache = new Map<string, any>()
+
   for (let i = 0; i < rows.length; i++) {
 
     const row = rows[i]
-
 
     try {
 
       await db.transaction(async (tx) => {
 
-        const brand = await findOrCreateBrand(row.brand)
+        const normalizedModel = trimAndLower(row.model)
+        const normalizedBrand = trimAndLower(row.brand)
+        const normalizedCategory = trimAndLower(row.category)
 
-        const category = await findOrCreateCategory(row.category)
+        // ✅ Brand & Category
+        const brand = await findOrCreateBrand(normalizedBrand)
+        const category = await findOrCreateCategory(normalizedCategory)
 
+        // ✅ Find or Create Product
         let product = await tx.query.products.findFirst({
-          where: (p, { eq }) => eq(p.model, String(row.model).trim().toLocaleLowerCase())
+          where: (p, { eq }) => eq(p.model, normalizedModel)
         })
-
-        if (product) {
-          await tx.update(products).set({
-            metal: row.metal
-          })
-        }
 
         if (!product) {
 
+          const image = await tx.insert(productImages).values({
+            path: `products/${normalizedBrand}/${normalizedModel}.jpg`,
+            alt: normalizedModel,
+            isPrimary: true
+          }).returning()
+
           const inserted = await tx.insert(products)
             .values({
-              model: String(row.model).trim().toLocaleLowerCase(),
+              model: normalizedModel,
+              imageId: image[0].id,
               brandId: brand.id,
               categoryId: category.id,
-              metal: String(row.metal).trim().toLocaleLowerCase()
+              metal: row.metal?.toLowerCase()
             })
             .returning()
 
           product = inserted[0]
-
         }
-        
 
-        const sizeOption = await findOrCreateOption("Size")
-        const finishOption = await findOrCreateOption("Finish")
+        // =========================
+        // 🔥 OPTIONS + VALUES (CACHED)
+        // =========================
 
-        const sizeValue = await findOrCreateOptionValue(
-          sizeOption.id,
-          row.size
-        )
+        let sizeOption = optionCache.get("size")
+        if (!sizeOption) {
+          sizeOption = await findOrCreateOption("Size")
+          optionCache.set("size", sizeOption)
+        }
 
-        const finishValue = await findOrCreateOptionValue(
-          finishOption.id,
-          row.finish
-        )
+        let finishOption = optionCache.get("finish")
+        if (!finishOption) {
+          finishOption = await findOrCreateOption("Finish")
+          optionCache.set("finish", finishOption)
+        }
 
-        const variant = await tx.insert(productVariants)
-          .values({
-            productId: product.id,
-            packing: row.packing,
-            sku: `${row.model}-${row.size}${row.size_type}-${row.finish}`.trim().toLocaleLowerCase()
-          })
-          .returning()
+        let sizeValue = null
+        let finishValue = null
 
-        const variantId = variant[0].id
+        if (row.size) {
+          const key = `size-${row.size}`
+          sizeValue = optionValueCache.get(key)
 
-        await tx.insert(variantOptionValues).values([
-          {
-            variantId,
-            optionValueId: sizeValue.id
-          },
-          {
-            variantId,
-            optionValueId: finishValue.id
+          if (!sizeValue) {
+            sizeValue = await findOrCreateOptionValue(sizeOption.id, row.size)
+            optionValueCache.set(key, sizeValue)
           }
-        ])
+        }
 
-        await tx.insert(productRates).values({
-          variantId,
-          mrp: row.mrp,
-          saleRate: row.sale_rate,
-          purchaseRate: row.purchase_rate
+        if (row.finish) {
+          const key = `finish-${row.finish}`
+          finishValue = optionValueCache.get(key)
+
+          if (!finishValue) {
+            finishValue = await findOrCreateOptionValue(finishOption.id, row.finish)
+            optionValueCache.set(key, finishValue)
+          }
+        }
+
+        const optionValueIds = [
+          sizeValue?.id,
+          finishValue?.id
+        ].filter(Boolean) as string[]
+
+        // =========================
+        // 🔥 CHECK EXISTING VARIANT
+        // =========================
+
+        let existingVariant = null
+
+        const variants = await tx.query.productVariants.findMany({
+          where: (v, { eq }) => eq(v.productId, product.id),
+          with: {
+            optionValues: true
+          }
         })
 
-        await tx.insert(productImages).values({
-          productId: product.id,
-          path: `products/${String(row.brand).trim().toLocaleLowerCase()}/${String(row.model).trim().toLocaleLowerCase()}.jpg`,
-          isPrimary: true
+        existingVariant = variants.find(v => {
+          const existingIds = v.optionValues.map(ov => ov.optionValueId).sort()
+          const incomingIds = [...optionValueIds].sort()
+          return JSON.stringify(existingIds) === JSON.stringify(incomingIds)
         })
+
+        let variantId: string
+
+        // =========================
+        // 🔥 INSERT VARIANT IF MISSING
+        // =========================
+
+        if (existingVariant) {
+
+          variantId = existingVariant.id
+          console.log(`⚠ Row ${i + 1}: Variant exists → skipped`)
+
+        } else {
+
+          const variant = await tx.insert(productVariants)
+            .values({
+              productId: product.id,
+              packing: row.packing,
+              sku: createSku(row.model, row.size, row.size_type, row.finish)
+            })
+            .returning()
+
+          variantId = variant[0].id
+
+          if (optionValueIds.length > 0) {
+            await tx.insert(variantOptionValues).values(
+              optionValueIds.map(id => ({
+                variantId,
+                optionValueId: id
+              }))
+            )
+          }
+
+          console.log(`✅ Row ${i + 1}: Variant created`)
+        }
+
+        // =========================
+        // 🔥 INSERT RATE (IF NOT EXISTS)
+        // =========================
+
+        const existingRate = await tx.query.productRates.findFirst({
+          where: (r, { eq }) => eq(r.variantId, variantId)
+        })
+
+        if (!existingRate) {
+          await tx.insert(productRates).values({
+            variantId,
+            mrp: row.mrp,
+            saleRate: row.sale,
+            purchaseRate: row.purchase
+          })
+        }
 
       })
 
       results.success++
-
       console.log(`✔ Row ${i + 1} imported`)
 
     } catch (error: any) {
@@ -130,11 +222,8 @@ export async function importProducts() {
       })
 
       console.error(`✖ Row ${i + 1} failed:`, error.message)
-
     }
-
   }
 
   return results
-
 }
