@@ -13,8 +13,8 @@ export const categories = pgTable(
   {
     id: uuid("id").defaultRandom().primaryKey(),
 
-    name: text("name").notNull(),
-    parentId: uuid("parent_id"),
+    name: text("name").notNull().unique(),
+    parentId: uuid("parent_id").references(():any => categories.id),
     description: text("description"),
 
     isActive: boolean("is_active").default(true).notNull(),
@@ -24,6 +24,10 @@ export const categories = pgTable(
   }
 );
 
-export const categoriesRelations = relations(categories, ({ many }) => ({
+export const categoriesRelations = relations(categories, ({ many, one }) => ({
   products: many(products),
+  parentCategory: one(categories, {
+    fields: [categories.parentId],
+    references: [categories.id]
+  })
 }));

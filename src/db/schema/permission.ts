@@ -34,12 +34,7 @@ export const permissions = pgTable(
    RELATIONS
 ===================================================== */
 
-export const permissionRelations = relations(
-    permissions,
-    ({ many }) => ({
-        rolePermissions: many(rolePermissions),
-    })
-);
+
 
 /* =====================================================
    TYPES

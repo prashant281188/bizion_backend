@@ -14,7 +14,7 @@ import { hsnGstHistory } from "./hsnGstHistory";
 export const gstGroups = pgTable("gst_groups", {
     id: uuid("id").defaultRandom().primaryKey(),
 
-    name: varchar("name", { length: 50 }).notNull(), // GST 18%
+    name: varchar("name", { length: 50 }).notNull().unique(), // GST 18%
 
     isActive: boolean("is_active").default(true),
 

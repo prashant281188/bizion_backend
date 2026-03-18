@@ -87,9 +87,6 @@ async function seed() {
   // }))
   // await db.insert(brands).values(brandIds)
 
-
-  
-
   await db.insert(products).values(productList)
 
   console.log("✅ Seed completed");

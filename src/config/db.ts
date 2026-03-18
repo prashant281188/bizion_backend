@@ -6,5 +6,5 @@ import postgres from 'postgres'
 dotenv.config();
 
 const connection = postgres(process.env.DATABASE_URL!)
-    export const db = drizzle(connection, { schema });
+export const db = drizzle(connection, { schema });
 

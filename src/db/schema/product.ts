@@ -5,6 +5,7 @@ import {
   timestamp,
   index,
   boolean,
+  uniqueIndex,
 } from "drizzle-orm/pg-core";
 import { categories } from "./category";
 import { relations } from "drizzle-orm";
@@ -12,6 +13,7 @@ import { productVariants } from "./productVariant";
 import { brands } from "./brand";
 import { hsnCodes } from "./hsnCodes";
 import { units } from "./unit";
+import { productImages } from "./productImage";
 
 export const products = pgTable(
   "products",
@@ -21,6 +23,7 @@ export const products = pgTable(
     model: text("model").notNull(),
     metal: text("metal"),
     description: text("description"),
+    slug: text("slug"),
 
     brandId: uuid("brand_id")
       .references(() => brands.id, { onDelete: "no action" }),
@@ -43,10 +46,10 @@ export const products = pgTable(
     updatedAt: timestamp("updated_at").defaultNow().notNull(),
   },
   (table) => [
+    uniqueIndex("products_slug_unique").on(table.slug, table.model, table.brandId),
     index("products_model_idx").on(table.model),
     index("products_category_idx").on(table.categoryId),
-  ]
-);
+  ])
 
 export const productsRelations = relations(products, ({ one, many }) => ({
   category: one(categories, {
@@ -65,6 +68,7 @@ export const productsRelations = relations(products, ({ one, many }) => ({
     fields: [products.unitId],
     references: [units.id]
   }),
-  variants: many(productVariants)
+  variants: many(productVariants),
+  images: many(productImages)
 
 }));

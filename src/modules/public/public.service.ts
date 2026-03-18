@@ -2,6 +2,7 @@
 import { and, eq, ilike, sql } from "drizzle-orm";
 import { brands, carousel, categories, products } from "../../db/schema";
 import { db } from "../../config/db";
+import { transformProduct } from "../../utils/transformProduct";
 
 export const publicService = {
 
@@ -48,7 +49,7 @@ export const publicService = {
       where: whereClause,
       limit,
       offset,
-      orderBy: products.model,
+      orderBy: [products.categoryId, products.model],
       columns: {
         id: true,
         model: true,
@@ -61,6 +62,13 @@ export const publicService = {
           columns: {
             name: true,
             symbol: true
+          }
+        },
+
+
+        images: {
+          columns: {
+            path: true,
           }
         },
         brand: {
@@ -77,20 +85,34 @@ export const publicService = {
         variants: {
           columns: {
             id: true,
-            size: true,
             packing: true,
-            finish: true,
+            sku: true
           },
 
           with: {
+            optionValues: {
+              columns: {},
+              with: {
+                optionValue: {
+                  columns: {
+                    value: true
+                  },
+                  with: {
+                    option: {
+                      columns: {
+                        name: true
+                      }
+                    }
+                  }
+                }
+              }
+            },
             rates: {
               columns: {
                 mrp: true
               }
             },
           },
-
-
         }
       }
     })
@@ -112,7 +134,7 @@ export const publicService = {
   },
 
   async getProductDetail(id: string) {
-    return db.query.products.findFirst({
+    const data = await (db.query.products.findFirst({
       where: eq(products.id, id),
       columns: {
         isActive: true,
@@ -139,19 +161,49 @@ export const publicService = {
             logo: true
           }
         },
+        images: {
+          columns: {
+            path: true
+          }
+        },
         variants: {
-          columns: { size: true, packing: true, finish: true },
+          columns: {
+            id: true,
+            packing: true,
+            sku: true
+          },
+
           with: {
+            optionValues: {
+              columns: {},
+              with: {
+                optionValue: {
+                  columns: {
+                    value: true
+                  },
+                  with: {
+                    option: {
+                      columns: {
+                        name: true
+                      }
+                    }
+                  }
+                }
+              }
+            },
             rates: {
               columns: {
                 mrp: true
               }
-            }
-          }
+            },
+          },
         }
       },
 
-    },)
+    },))
+
+    const response = transformProduct(data)
+    return response
   },
 
   async getCarouselData() {
