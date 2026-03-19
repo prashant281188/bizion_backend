@@ -30,7 +30,7 @@ export function transformProduct(product: any) {
     const options = Object.entries(optionsMap).map(
         ([name, values]) => ({
             name,
-            values: Array.from(values)
+            values: Array.from(values).sort()
         })
     )
 

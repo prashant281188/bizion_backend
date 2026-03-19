@@ -44,7 +44,7 @@ export const publicController = {
 
     async getProductDetail(req: Request, res: Response) {
         const id = req.params.id
-        const data = await publicService.getProductDetail(id);
+        const data = await publicService.getProductDetailNew(id);
         res.json({
             success: true,
             message: "Product Detail fetched successfully",

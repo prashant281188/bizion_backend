@@ -41,7 +41,7 @@ export const products = pgTable(
     imageId: uuid("image_id")
       .references(() => productImages.id),
 
-    sizeType: text("size_type").default("mm"),
+    sizeType: text("size_type"),
 
     isActive: boolean("is_active").default(true).notNull(),
 

@@ -1,9 +1,23 @@
 
-import { and, eq, ilike, sql } from "drizzle-orm";
-import { brands, carousel, categories, products } from "../../db/schema";
+import { and, eq, ilike, sql, inArray, asc, desc } from "drizzle-orm";
+import {
+  brands, carousel, categories, products, productVariants,
+  variantOptionValues,
+  optionValues,
+  options,
+  productRates
+} from "../../db/schema";
 import { db } from "../../config/db";
 import { transformProduct } from "../../utils/transformProducts";
-
+type QueryParams = {
+  page?: number
+  limit?: number
+  category?: string
+  brand?: string
+  size?: string[]
+  finish?: string[]
+  sort?: string
+}
 export const publicService = {
 
 
@@ -108,6 +122,7 @@ export const publicService = {
         id: true,
         sizeType: true,
       },
+
       with: {
         unit: {
           columns: {
@@ -127,7 +142,9 @@ export const publicService = {
           }
         },
 
+
         variants: {
+
           columns: {
             id: true,
             packing: true,
@@ -137,19 +154,23 @@ export const publicService = {
           with: {
             optionValues: {
               columns: {},
+
               with: {
                 optionValue: {
+
                   columns: {
-                    value: true
+                    value: true,
+                    position: true
                   },
                   with: {
                     option: {
                       columns: {
                         name: true
+
                       }
                     }
-                  }
-                }
+                  },
+                },
               }
             },
             rates: {
@@ -171,6 +192,122 @@ export const publicService = {
       where: eq(carousel.isActive, true),
 
     })
-  }
+  },
 
+  async getProductDetailNew(id: string) {
+    const result = await db.execute(sql`
+    
+    WITH variant_options AS (
+  SELECT
+    pv.id AS variant_id,
+    pv.product_id,
+    pv.sku,
+    jsonb_object_agg(opt.name, ov.value ORDER BY ov.position) AS options
+  FROM bizion.public.product_variants pv
+  left JOIN bizion.public.variant_option_values vov 
+    ON pv.id = vov.variant_id
+ left JOIN bizion.public.option_values ov 
+    ON vov.option_value_id = ov.id
+ left JOIN bizion.public.options opt 
+    ON ov.option_id = opt.id
+  GROUP BY pv.id, pv.product_id, pv.sku
+),
+
+-- ✅ deduplicate once
+dedup_option_values AS (
+  SELECT
+    pv.product_id,
+    opt.name AS option_name,
+    ov.value,
+    ov.position
+  FROM bizion.public.product_variants pv
+ left JOIN bizion.public.variant_option_values vov 
+    ON pv.id = vov.variant_id
+ left JOIN bizion.public.option_values ov 
+    ON vov.option_value_id = ov.id
+ left JOIN bizion.public.options opt 
+    ON ov.option_id = opt.id
+  GROUP BY
+    pv.product_id,
+    opt.name,
+    ov.value,
+    ov.position
+)
+
+SELECT
+  p.id,
+  p.model,
+  p.image_id,
+  c.name AS category,
+  b.name AS brand,
+  p.size_type,
+  u.symbol AS unit,
+
+  -- 🔥 variants
+  jsonb_agg(
+    jsonb_build_object(
+      'variant_id', vo.variant_id,
+      'sku', vo.sku,
+      'options', vo.options
+    )
+    ORDER BY vo.sku
+  ) AS variants,
+
+  -- 🔥 sizes (distinct + ordered)
+  COALESCE(
+    (
+      SELECT jsonb_agg(value ORDER BY position)
+      FROM dedup_option_values d
+      WHERE d.product_id = p.id
+        AND d.option_name = 'size'
+    ),
+    '[]'::jsonb
+  ) AS sizes,
+
+  -- 🔥 finishes (distinct + ordered)
+  COALESCE(
+    (
+      SELECT jsonb_agg(value ORDER BY position)
+      FROM dedup_option_values d
+      WHERE d.product_id = p.id
+        AND d.option_name = 'finish'
+    ),
+    '[]'::jsonb
+  ) AS finishes
+
+FROM bizion.public.products p
+
+left JOIN bizion.public.product_variants pv 
+  ON pv.product_id = p.id
+
+left JOIN variant_options vo 
+  ON vo.variant_id = pv.id
+
+left JOIN bizion.public.categories c 
+  ON p.category_id = c.id
+
+left JOIN bizion.public.brands b 
+  ON p.brand_id = b.id
+
+left JOIN bizion.public.units u 
+  ON p.unit_id = u.id
+
+LEFT JOIN bizion.public.product_images i 
+  ON p.image_id = i.id
+
+-- ⚡ IMPORTANT: filter early
+WHERE p.id = ${id}
+
+GROUP BY
+  p.id,
+  p.model,
+  p.image_id,
+  c.name,
+  b.name,
+  p.size_type,
+  u.symbol;
+  `)
+
+    return result[0]
+  }
 };

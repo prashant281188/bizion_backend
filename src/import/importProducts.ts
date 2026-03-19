@@ -12,32 +12,21 @@ import {
   createSku,
   findOrCreateBrand,
   findOrCreateCategory,
+  findOrCreateHsn,
   findOrCreateOption,
   findOrCreateOptionValue,
+  findOrCreateUnit,
+  getSizePosition,
   trimAndLower
 } from "./helpers"
 
 import { db } from "../config/db"
 
-type productData = {
-  model: string
-  brand: string
-  category: string
-  size?: string
-  size_type?: string
-  finish?: string
-  packing: number
-  unit: string
-  metal?: string
-  manufacure?: string
-  mrp?: string
-  purchase?: string
-  sale?: string
-}
+
 
 export async function importProducts() {
 
-  const rows: productData[] = parseExcel("src/data/products.xlsx")
+  const rows = parseExcel("src/data/products.xlsx")
 
   const results = {
     success: 0,
@@ -48,6 +37,7 @@ export async function importProducts() {
   // 🔥 Cache (performance boost)
   const optionCache = new Map<string, any>()
   const optionValueCache = new Map<string, any>()
+
 
   for (let i = 0; i < rows.length; i++) {
 
@@ -60,10 +50,27 @@ export async function importProducts() {
         const normalizedModel = trimAndLower(row.model)
         const normalizedBrand = trimAndLower(row.brand)
         const normalizedCategory = trimAndLower(row.category)
+        const normalizedUnit = trimAndLower(row.unit)
+        const normalizedUnitSymbol = trimAndLower(row.unit_symbol)
 
         // ✅ Brand & Category
         const brand = await findOrCreateBrand(normalizedBrand)
         const category = await findOrCreateCategory(normalizedCategory)
+
+        let hsn  
+        let unit
+        if (row.hsn) {
+
+          hsn = await findOrCreateHsn(row.hsn!)
+        }
+
+        if (row.unit && row.unit_symbol) {
+
+          unit = await findOrCreateUnit(normalizedUnit, normalizedUnitSymbol)
+        }
+
+
+
 
         // ✅ Find or Create Product
         let product = await tx.query.products.findFirst({
@@ -84,6 +91,8 @@ export async function importProducts() {
               imageId: image[0].id,
               brandId: brand.id,
               categoryId: category.id,
+              unitId: unit?.id || null, 
+              hsnId: hsn?.id || null,
               metal: row.metal?.toLowerCase()
             })
             .returning()
@@ -97,13 +106,13 @@ export async function importProducts() {
 
         let sizeOption = optionCache.get("size")
         if (!sizeOption) {
-          sizeOption = await findOrCreateOption("Size")
+          sizeOption = await findOrCreateOption("size")
           optionCache.set("size", sizeOption)
         }
 
         let finishOption = optionCache.get("finish")
         if (!finishOption) {
-          finishOption = await findOrCreateOption("Finish")
+          finishOption = await findOrCreateOption("finish")
           optionCache.set("finish", finishOption)
         }
 
@@ -115,7 +124,7 @@ export async function importProducts() {
           sizeValue = optionValueCache.get(key)
 
           if (!sizeValue) {
-            sizeValue = await findOrCreateOptionValue(sizeOption.id, row.size)
+            sizeValue = await findOrCreateOptionValue(sizeOption.id, row.size, getSizePosition(row.size))
             optionValueCache.set(key, sizeValue)
           }
         }
