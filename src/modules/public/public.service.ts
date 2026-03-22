@@ -309,5 +309,11 @@ GROUP BY
   `)
 
     return result[0]
+  },
+
+  async getCatalogProducts() {
+    return "all"
   }
+
+
 };

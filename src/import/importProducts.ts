@@ -9,6 +9,7 @@ import {
 } from "../db/schema"
 
 import {
+  createProductSlug,
   createSku,
   findOrCreateBrand,
   findOrCreateCategory,
@@ -39,7 +40,7 @@ export async function importProducts() {
   const optionValueCache = new Map<string, any>()
 
 
-  for (let i = 0; i < rows.length; i++) {
+  for (let i = 3872; i < rows.length; i++) {
 
     const row = rows[i]
 
@@ -57,7 +58,7 @@ export async function importProducts() {
         const brand = await findOrCreateBrand(normalizedBrand)
         const category = await findOrCreateCategory(normalizedCategory)
 
-        let hsn  
+        let hsn
         let unit
         if (row.hsn) {
 
@@ -91,9 +92,11 @@ export async function importProducts() {
               imageId: image[0].id,
               brandId: brand.id,
               categoryId: category.id,
-              unitId: unit?.id || null, 
+              unitId: unit?.id || null,
               hsnId: hsn?.id || null,
-              metal: row.metal?.toLowerCase()
+              metal: row.metal?.toLowerCase(),
+              slug: createProductSlug(normalizedModel, normalizedBrand),
+              sizeType: row.size_type
             })
             .returning()
 

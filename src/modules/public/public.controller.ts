@@ -4,6 +4,16 @@ import { publicService } from "./public.service";
 
 export const publicController = {
 
+    async getCatalog(req:Request, res:Response){
+
+        const data = await publicService.getCatalogProducts();
+        res.json({
+            success: true,
+            message: "Catalog Created",
+            data
+        })
+    },
+
     async getCategories(req: Request, res: Response) {
 
         const data = await publicService.getActiveCategories();

@@ -61,6 +61,9 @@ export async function findOrCreateBrand(name: string) {
 
 }
 
+export  function createProductSlug(model:string, brand:string){
+  return trimAndLower(brand.replace(" ", "-"))+"-"+trimAndLower(model.replace(" ", "-"))
+}
 
 export async function findOrCreateUnit(name: string, symbol: string) {
   const existing = await db.query.units.findFirst({

@@ -22,8 +22,9 @@ export const products = pgTable(
 
     model: text("model").notNull(),
     metal: text("metal"),
+    shortDescription: text("short_description"),
     description: text("description"),
-    slug: text("slug"),
+    slug: text("slug").unique(),
 
     brandId: uuid("brand_id")
       .references(() => brands.id, { onDelete: "no action" }),
@@ -44,6 +45,14 @@ export const products = pgTable(
     sizeType: text("size_type"),
 
     isActive: boolean("is_active").default(true).notNull(),
+
+    isFeatured: boolean("is_featured").default(false),
+    isNew: boolean("is_new").default(false),
+
+    status: text("status").default('draft'), // draft, active, archived
+
+    isDeleted: boolean("is_deleted").default(false),
+    deletedAt: timestamp("deleted_at"),
 
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at").defaultNow().notNull(),

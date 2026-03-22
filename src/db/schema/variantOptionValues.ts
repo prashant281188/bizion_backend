@@ -6,8 +6,9 @@ import { optionValues } from "./optionValues";
 export const variantOptionValues = pgTable(
     "variant_option_values",
     {
-        variantId: uuid("variant_id").notNull(),
-        optionValueId: uuid("option_value_id"),
+        id: uuid("id").defaultRandom().primaryKey(),
+        variantId: uuid("variant_id").notNull().references(() => productVariants.id),
+        optionValueId: uuid("option_value_id").references(() => optionValues.id),
     },
     (table) => [
         uniqueIndex("variant_option_values_pk")
