@@ -8,8 +8,8 @@ import {
 import { productVariants } from "./productVariant";
 import { relations } from "drizzle-orm";
 
-export const productRates = pgTable(
-  "product_rates",
+export const variantRates = pgTable(
+  "variant_rates",
   {
     id: uuid("id").defaultRandom().primaryKey(),
 
@@ -28,9 +28,9 @@ export const productRates = pgTable(
   ]
 );
 
-export const productRatesRelations = relations(productRates, ({ one }) => ({
+export const variantRatesRelations = relations(variantRates, ({ one }) => ({
   productVariant: one(productVariants, {
-    fields: [productRates.variantId],
+    fields: [variantRates.variantId],
     references: [productVariants.id]
   })
 }))

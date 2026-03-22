@@ -10,7 +10,7 @@ export * from "./passwordResetToken";
 export * from "./permission";
 export * from "./product";
 export * from "./productImage";
-export * from "./productRate";
+export * from "./variantRates";
 export * from "./productVariant";
 export * from "./role";
 export * from "./rolePermission";

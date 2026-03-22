@@ -9,7 +9,7 @@ import {
 } from "drizzle-orm/pg-core";
 import { products } from "./product";
 import { relations } from "drizzle-orm";
-import { productRates } from "./productRate";
+import { productRates } from "./variantRates";
 import { variantOptionValues } from "./variantOptionValues";
 import { variantImages } from "./variantImage";
 

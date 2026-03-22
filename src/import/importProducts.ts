@@ -40,7 +40,7 @@ export async function importProducts() {
   const optionValueCache = new Map<string, any>()
 
 
-  for (let i = 3872; i < rows.length; i++) {
+  for (let i = 0; i < rows.length; i++) {
 
     const row = rows[i]
 
