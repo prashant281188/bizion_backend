@@ -8,7 +8,7 @@ export const categoryService = {
     const offset = (page - 1) * limit;
 
     const where = search
-      ? ilike(categories.cateogryName, `%${search}%`)
+      ? ilike(categories.categoryName, `%${search}%`)
       : undefined;
 
     const items = await db
@@ -44,7 +44,7 @@ export const categoryService = {
     const [row] = await db
       .insert(categories)
       .values({
-        cateogryName: data.categoryName,
+        categoryName: data.categoryName,
         parentId: data.parentId
       })
       .returning();

@@ -82,14 +82,14 @@ export async function findOrCreateUnit(name: string, symbol: string) {
 export async function findOrCreateCategory(name: string) {
 
   const existing = await db.query.categories.findFirst({
-    where: eq(categories.cateogryName, name)
+    where: eq(categories.categoryName, name)
   })
 
 
   if (existing) return existing
 
   const inserted = await db.insert(categories)
-    .values({ cateogryName: name })
+    .values({ categoryName: name })
     .returning()
 
   return inserted[0]

@@ -24,10 +24,10 @@ export const publicService = {
   async getActiveCategories() {
     return db.query.categories.findMany({
       where: eq(categories.isActive, true),
-      orderBy: categories.cateogryName,
+      orderBy: categories.categoryName,
       columns: {
         id: true,
-        cateogryName: true
+        categoryName: true
       }
     })
   },
@@ -84,7 +84,7 @@ export const publicService = {
         },
         category: {
           columns: {
-            cateogryName: true
+            categoryName: true
           }
         },
         image: {
@@ -132,7 +132,7 @@ export const publicService = {
         },
         category: {
           columns: {
-            cateogryName: true
+            categoryName: true
           }
         },
         brand: {
