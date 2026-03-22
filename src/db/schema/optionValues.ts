@@ -8,7 +8,7 @@ export const optionValues = pgTable("option_values", {
     optionId: uuid("option_id")
         .references(() => options.id)
         .notNull(),
-    value: text("value").notNull(),
+    optionValue: text("option_value").notNull(),
     position: integer("position").default(0)
 })
 

@@ -24,7 +24,7 @@ export const products = pgTable(
     metal: text("metal"),
     shortDescription: text("short_description"),
     description: text("description"),
-    slug: text("slug").unique(),
+    slug: text("slug"),
 
     brandId: uuid("brand_id")
       .references(() => brands.id, { onDelete: "no action" }),
@@ -58,7 +58,7 @@ export const products = pgTable(
     updatedAt: timestamp("updated_at").defaultNow().notNull(),
   },
   (table) => [
-    uniqueIndex("products_slug_unique").on(table.slug, table.model, table.brandId),
+    uniqueIndex("products_brand_model_unique").on( table.brandId, table.model),
     index("products_model_idx").on(table.model),
     index("products_category_idx").on(table.categoryId),
   ])

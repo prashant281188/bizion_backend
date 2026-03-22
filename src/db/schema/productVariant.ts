@@ -9,7 +9,7 @@ import {
 } from "drizzle-orm/pg-core";
 import { products } from "./product";
 import { relations } from "drizzle-orm";
-import { productRates } from "./variantRates";
+import { variantRates } from "./variantRates";
 import { variantOptionValues } from "./variantOptionValues";
 import { variantImages } from "./variantImage";
 
@@ -22,7 +22,7 @@ export const productVariants = pgTable(
       .notNull()
       .references(() => products.id, { onDelete: "cascade" }),
 
-    sku: text("sku").unique(),
+    sku: text("sku"),
     barcode: text("barcode"),
 
     packing: integer("packing"),
@@ -30,7 +30,7 @@ export const productVariants = pgTable(
     createdAt: timestamp("created_at").defaultNow().notNull(),
   },
   (table) => [
-    uniqueIndex("variants_sku_unique").on(table.sku),
+    uniqueIndex("variants_sku_unique").on(table.sku, table.productId),
     index("variants_product_idx").on(table.productId),
   ])
 
@@ -40,6 +40,6 @@ export const productVariantRelations = relations(productVariants, ({ one, many }
     references: [products.id]
   })),
   optionValues: many(variantOptionValues),
-  rates: many(productRates),
+  rates: many(variantRates),
   images: many(variantImages)
 }))

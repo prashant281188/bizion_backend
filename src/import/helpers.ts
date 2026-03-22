@@ -11,9 +11,9 @@ export function getSizePosition(size: string) {
 }
 
 
-export function createSku(model: string, size?: string, size_type?: string, finish?: string) {
+export function createSku(brand: string, model: string, size?: string, size_type?: string, finish?: string) {
 
-  let sku = model
+  let sku = brand + " " + model
   if (size) {
     sku = sku + " " + size
   }
@@ -33,12 +33,12 @@ export function trimAndLower(value: string) {
 
 export async function findOrCreateHsn(hsn: string) {
   const existing = await db.query.hsnCodes.findFirst({
-    where: eq(hsnCodes.code, hsn)
+    where: eq(hsnCodes.hsnCode, hsn)
   })
 
   if (existing) return existing
   const inserted = await db.insert(hsnCodes).values({
-    code: hsn,
+    hsnCode: hsn,
 
   }).returning()
 
@@ -48,32 +48,32 @@ export async function findOrCreateHsn(hsn: string) {
 export async function findOrCreateBrand(name: string) {
 
   const existing = await db.query.brands.findFirst({
-    where: eq(brands.name, name)
+    where: eq(brands.brandName, name)
   })
 
   if (existing) return existing
 
   const inserted = await db.insert(brands)
-    .values({ name })
+    .values({ brandName: name })
     .returning()
 
   return inserted[0]
 
 }
 
-export  function createProductSlug(model:string, brand:string){
-  return trimAndLower(brand.replace(" ", "-"))+"-"+trimAndLower(model.replace(" ", "-"))
+export function createProductSlug(model: string, brand: string) {
+  return trimAndLower(brand.replace(" ", "-")) + "-" + trimAndLower(model.replace(" ", "-"))
 }
 
 export async function findOrCreateUnit(name: string, symbol: string) {
   const existing = await db.query.units.findFirst({
-    where: eq(units.name, name)
+    where: eq(units.unitName, name)
   })
 
   if (existing) return existing
 
   const inserted = await db.insert(units).values({
-    name, symbol
+    unitName: name, unitSymbol: symbol
   }).returning()
 
   return inserted[0]
@@ -82,14 +82,14 @@ export async function findOrCreateUnit(name: string, symbol: string) {
 export async function findOrCreateCategory(name: string) {
 
   const existing = await db.query.categories.findFirst({
-    where: eq(categories.name, name)
+    where: eq(categories.cateogryName, name)
   })
 
 
   if (existing) return existing
 
   const inserted = await db.insert(categories)
-    .values({ name })
+    .values({ cateogryName: name })
     .returning()
 
   return inserted[0]
@@ -99,13 +99,13 @@ export async function findOrCreateCategory(name: string) {
 export async function findOrCreateOption(name: string) {
 
   const existing = await db.query.options.findFirst({
-    where: eq(options.name, name)
+    where: eq(options.optionName, name)
   })
 
   if (existing) return existing
 
   const inserted = await db.insert(options)
-    .values({ name })
+    .values({ optionName: name })
     .returning()
 
   return inserted[0]
@@ -117,7 +117,7 @@ export async function findOrCreateOptionValue(optionId: string, value: string, p
   const existing = await db.query.optionValues.findFirst({
     where: and(
       eq(optionValues.optionId, optionId),
-      eq(optionValues.value, value)
+      eq(optionValues.optionValue, value)
     )
   })
 
@@ -126,7 +126,7 @@ export async function findOrCreateOptionValue(optionId: string, value: string, p
   const inserted = await db.insert(optionValues)
     .values({
       optionId,
-      value,
+      optionValue: value,
       position
     })
     .returning()

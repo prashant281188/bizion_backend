@@ -5,8 +5,8 @@ import { products } from "./product";
 
 export const units = pgTable("units", {
     id: uuid("id").defaultRandom().primaryKey(),
-    name: text("name").notNull().unique(),
-    symbol: text("symbol").unique()
+    unitName: text("unit_name").notNull().unique(),
+    unitSymbol: text("unit_symbol").unique()
 })
 
 export const unitRelations = relations(units,({many})=>({

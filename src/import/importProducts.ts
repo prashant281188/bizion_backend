@@ -4,7 +4,7 @@ import {
   products,
   productVariants,
   variantOptionValues,
-  productRates,
+  variantRates,
   productImages
 } from "../db/schema"
 
@@ -40,7 +40,7 @@ export async function importProducts() {
   const optionValueCache = new Map<string, any>()
 
 
-  for (let i = 0; i < rows.length; i++) {
+  for (let i = 4125; i < 4652; i++) {
 
     const row = rows[i]
 
@@ -183,7 +183,7 @@ export async function importProducts() {
             .values({
               productId: product.id,
               packing: row.packing,
-              sku: createSku(row.model, row.size, row.size_type, row.finish)
+              sku: createSku(row.brand, row.model, row.size, row.size_type, row.finish)
             })
             .returning()
 
@@ -205,12 +205,12 @@ export async function importProducts() {
         // 🔥 INSERT RATE (IF NOT EXISTS)
         // =========================
 
-        const existingRate = await tx.query.productRates.findFirst({
+        const existingRate = await tx.query.variantRates.findFirst({
           where: (r, { eq }) => eq(r.variantId, variantId)
         })
 
         if (!existingRate) {
-          await tx.insert(productRates).values({
+          await tx.insert(variantRates).values({
             variantId,
             mrp: row.mrp,
             saleRate: row.sale,

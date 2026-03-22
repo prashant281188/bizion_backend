@@ -4,11 +4,11 @@ import { categories } from "../../db/schema";
 import { db } from "../../config/db";
 
 export const categoryService = {
-  async list({ page = 1, limit = 10, search =""}) {
+  async list({ page = 1, limit = 10, search = "" }) {
     const offset = (page - 1) * limit;
 
     const where = search
-      ? ilike(categories.name, `%${search}%`)
+      ? ilike(categories.cateogryName, `%${search}%`)
       : undefined;
 
     const items = await db
@@ -40,10 +40,13 @@ export const categoryService = {
     });
   },
 
-  async create(data: { name: string; parentId?: string }) {
+  async create(data: { categoryName: string; parentId?: string }) {
     const [row] = await db
       .insert(categories)
-      .values(data)
+      .values({
+        cateogryName: data.categoryName,
+        parentId: data.parentId
+      })
       .returning();
 
     return row;

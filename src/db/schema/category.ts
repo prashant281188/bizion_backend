@@ -13,7 +13,7 @@ export const categories = pgTable(
   {
     id: uuid("id").defaultRandom().primaryKey(),
 
-    name: text("name").notNull().unique(),
+    cateogryName: text("category_name").notNull().unique(),
     parentId: uuid("parent_id").references(():any => categories.id),
     description: text("description"),
 

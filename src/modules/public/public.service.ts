@@ -5,7 +5,7 @@ import {
   variantOptionValues,
   optionValues,
   options,
-  productRates
+  variantRates
 } from "../../db/schema";
 import { db } from "../../config/db";
 import { transformProduct } from "../../utils/transformProducts";
@@ -24,16 +24,16 @@ export const publicService = {
   async getActiveCategories() {
     return db.query.categories.findMany({
       where: eq(categories.isActive, true),
-      orderBy: categories.name,
+      orderBy: categories.cateogryName,
       columns: {
         id: true,
-        name: true
+        cateogryName: true
       }
     })
   },
 
   async getBrands() {
-    return db.select().from(brands).orderBy(brands.name)
+    return db.select().from(brands).orderBy(brands.brandName)
   },
 
   async getProducts({ page = 1, limit = 10, search = "", category = "", brand = "" }) {
@@ -73,18 +73,18 @@ export const publicService = {
       with: {
         unit: {
           columns: {
-            symbol: true
+            unitSymbol: true
           }
         },
         brand: {
           columns: {
-            name: true,
-            logo: true
+            brandName: true,
+            brandLogo: true
           }
         },
         category: {
           columns: {
-            name: true
+            cateogryName: true
           }
         },
         image: {
@@ -126,19 +126,19 @@ export const publicService = {
       with: {
         unit: {
           columns: {
-            name: true,
-            symbol: true
+            unitName: true,
+            unitSymbol: true
           }
         },
         category: {
           columns: {
-            name: true
+            cateogryName: true
           }
         },
         brand: {
           columns: {
-            name: true,
-            logo: true
+            brandName: true,
+            brandLogo: true
           }
         },
 
@@ -159,13 +159,13 @@ export const publicService = {
                 optionValue: {
 
                   columns: {
-                    value: true,
+                    optionValue: true,
                     position: true
                   },
                   with: {
                     option: {
                       columns: {
-                        name: true
+                        optionName: true
 
                       }
                     }
@@ -202,7 +202,7 @@ export const publicService = {
     pv.id AS variant_id,
     pv.product_id,
     pv.sku,
-    jsonb_object_agg(opt.name, ov.value ORDER BY ov.position) AS options
+    jsonb_object_agg(opt.option_name, ov.option_value ORDER BY ov.position) AS options
   FROM bizion.public.product_variants pv
   left JOIN bizion.public.variant_option_values vov 
     ON pv.id = vov.variant_id
@@ -217,8 +217,8 @@ export const publicService = {
 dedup_option_values AS (
   SELECT
     pv.product_id,
-    opt.name AS option_name,
-    ov.value,
+    opt.option_name AS option_name,
+    ov.option_value,
     ov.position
   FROM bizion.public.product_variants pv
  left JOIN bizion.public.variant_option_values vov 
@@ -229,8 +229,8 @@ dedup_option_values AS (
     ON ov.option_id = opt.id
   GROUP BY
     pv.product_id,
-    opt.name,
-    ov.value,
+    opt.option_name,
+    ov.option_value,
     ov.position
 )
 
@@ -238,10 +238,10 @@ SELECT
   p.id,
   p.model,
   p.image_id,
-  c.name AS category,
-  b.name AS brand,
+  c.category_name AS category,
+  b.brand_name AS brand,
   p.size_type,
-  u.symbol AS unit,
+  u.unit_symbol AS unit,
 
   -- 🔥 variants
   jsonb_agg(
@@ -302,10 +302,10 @@ GROUP BY
   p.id,
   p.model,
   p.image_id,
-  c.name,
-  b.name,
+  c.category_name,
+  b.brand_name,
   p.size_type,
-  u.symbol;
+  u.unit_symbol;
   `)
 
     return result[0]

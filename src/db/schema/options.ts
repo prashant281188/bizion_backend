@@ -4,7 +4,7 @@ import { optionValues } from "./optionValues";
 
 export const options = pgTable("options", {
     id: uuid("id").defaultRandom().primaryKey(),
-    name: text("name").notNull().unique()
+    optionName: text("option_name").notNull().unique()
 },
 )
 

@@ -4,8 +4,8 @@ import { products } from "./product";
 
 export const brands = pgTable("brands", {
     id: uuid("id").defaultRandom().primaryKey(),
-    name: text("name").notNull().unique(),
-    logo: text("logo")
+    brandName: text("brand_name").notNull().unique(),
+    brandLogo: text("brand_logo")
 });
 
 

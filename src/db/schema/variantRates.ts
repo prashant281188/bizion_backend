@@ -22,6 +22,8 @@ export const variantRates = pgTable(
     saleRate: numeric("sale_rate", { precision: 12, scale: 2 }),
 
     createdAt: timestamp("created_at").defaultNow().notNull(),
+    from: timestamp("from"),
+    to: timestamp("to")
   },
   (table) => [
     index("rates_variant_idx").on(table.variantId),
