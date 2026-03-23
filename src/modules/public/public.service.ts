@@ -194,48 +194,115 @@ export const publicService = {
     };
   },
 
-  /* ===== CATALOG (lightweight full listing for catalog pages) ===== */
+  /* ===== CATALOG: brand → category → product → variants ===== */
 
-  async getCatalog() {
+  async getCatalog({ brandId, categoryId }: { brandId?: string; categoryId?: string } = {}) {
+    const conditions = [eq(products.isDeleted, false), eq(products.isActive, true)];
+    if (brandId) conditions.push(eq(products.brandId, brandId));
+    if (categoryId) conditions.push(eq(products.categoryId, categoryId));
+
     const rows = await db.query.products.findMany({
-      where: and(eq(products.isDeleted, false), eq(products.isActive, true)),
-      orderBy: [asc(products.categoryId), asc(products.model)],
-      columns: { id: true, model: true, metal: true, sizeType: true, slug: true },
+      where: and(...conditions),
+      orderBy: [asc(products.brandId), asc(products.categoryId), asc(products.model)],
+      columns: {
+        id: true,
+        model: true,
+        metal: true,
+        shortDescription: true,
+        description: true,
+        sizeType: true,
+        slug: true,
+        isFeatured: true,
+        isNew: true,
+        status: true,
+      },
       with: {
-        brand: { columns: { brandName: true } },
-        category: { columns: { categoryName: true } },
+        brand: { columns: { id: true, brandName: true, brandLogo: true } },
+        category: { columns: { id: true, categoryName: true } },
+        hsn: { columns: { hsnCode: true, description: true } },
+        unit: { columns: { unitName: true, unitSymbol: true } },
         image: { columns: { path: true } },
         variants: {
-          columns: { sku: true, packing: true },
+          columns: { id: true, sku: true, packing: true },
           with: {
             rates: {
-              columns: { mrp: true, saleRate: true },
+              columns: { mrp: true, saleRate: true, purchaseRate: true, createdAt: true },
               orderBy: (r, { desc }) => [desc(r.createdAt)],
+            },
+            optionValues: {
+              columns: {},
+              with: {
+                optionValue: {
+                  columns: { optionValue: true, position: true },
+                  with: { option: { columns: { optionName: true } } },
+                },
+              },
             },
           },
         },
       },
     });
 
-    // Group by category
-    const grouped: Record<string, { categoryName: string; products: any[] }> = {};
-    for (const p of rows) {
-      const key = p.category?.categoryName ?? "Uncategorised";
-      if (!grouped[key]) grouped[key] = { categoryName: key, products: [] };
+    // Group: brand → category → product
+    const brandMap = new Map<string, {
+      id: string; brandName: string; brandLogo: string | null;
+      categories: Map<string, { id: string; categoryName: string; products: any[] }>;
+    }>();
 
-      const { category: _, variants, ...rest } = p;
-      grouped[key].products.push({
-        ...rest,
-        variants: variants.map((v) => ({
+    for (const p of rows) {
+      const brandId   = p.brand?.id   ?? "__no_brand__";
+      const brandName = p.brand?.brandName ?? "Unbranded";
+      const catId     = p.category?.id   ?? "__no_cat__";
+      const catName   = p.category?.categoryName ?? "Uncategorised";
+
+      if (!brandMap.has(brandId)) {
+        brandMap.set(brandId, {
+          id: brandId,
+          brandName,
+          brandLogo: p.brand?.brandLogo ?? null,
+          categories: new Map(),
+        });
+      }
+
+      const brand = brandMap.get(brandId)!;
+      if (!brand.categories.has(catId)) {
+        brand.categories.set(catId, { id: catId, categoryName: catName, products: [] });
+      }
+
+      const { brand: _b, category: _c, variants, ...productData } = p;
+
+      const transformedVariants = variants.map((v) => {
+        const rate = latestRate(v.rates);
+        const options: Record<string, string> = {};
+        for (const ov of v.optionValues) {
+          if (ov.optionValue?.option?.optionName && ov.optionValue?.optionValue) {
+            options[ov.optionValue.option.optionName] = ov.optionValue.optionValue;
+          }
+        }
+        return {
+          id: v.id,
           sku: v.sku,
           packing: v.packing,
-          mrp: v.rates[0]?.mrp ?? null,
-          saleRate: v.rates[0]?.saleRate ?? null,
-        })),
+          mrp: rate?.mrp ?? null,
+          saleRate: rate?.saleRate ?? null,
+          purchaseRate: rate?.purchaseRate ?? null,
+          options,
+        };
+      });
+
+      brand.categories.get(catId)!.products.push({
+        ...productData,
+        variants: transformedVariants,
       });
     }
 
-    return Object.values(grouped);
+    // Serialize Maps to arrays
+    return Array.from(brandMap.values()).map((b) => ({
+      id: b.id,
+      brandName: b.brandName,
+      brandLogo: b.brandLogo,
+      categories: Array.from(b.categories.values()),
+    }));
   },
 
   /* ===== CAROUSEL ===== */
