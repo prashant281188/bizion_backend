@@ -3,10 +3,12 @@ import helmet from "helmet";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import morgan from "morgan";
+import swaggerUi from "swagger-ui-express";
 
 import routes from "./routes";
 import { errorHandler } from "./middlewares/errorHandler";
 import { globalLimiter } from "./middlewares/rateLimit";
+import { swaggerSpec } from "./config/swagger";
 
 export const app = express();
 
@@ -37,5 +39,20 @@ app.use(cookieParser());
 app.use(morgan("dev"));
 
 app.use("/api", routes);
+
+// API docs — available at /api/docs
+app.use(
+  "/api/docs",
+  swaggerUi.serve,
+  swaggerUi.setup(swaggerSpec, {
+    customSiteTitle: "Bizion API Docs",
+    swaggerOptions: {
+      persistAuthorization: true,
+      displayRequestDuration: true,
+      filter: true,
+      tryItOutEnabled: true,
+    },
+  })
+);
 
 app.use(errorHandler);
