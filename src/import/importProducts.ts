@@ -27,7 +27,7 @@ import { db } from "../config/db"
 
 export async function importProducts() {
 
-  const rows = parseExcel("src/data/products.xlsx")
+  const rows = await parseExcel("src/data/products.xlsx")
 
   const results = {
     success: 0,
