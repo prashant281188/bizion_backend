@@ -5,7 +5,7 @@ import { AppError } from "../../middlewares/errorHandler";
 import { db } from "../../config/db";
 import { products, productImages, variantImages, productVariants } from "../../db/schema";
 import { logAudit } from "../../services/audit.service";
-import { uploadToS3, deleteFromS3 } from "../../services/s3.service";
+import { uploadToS3, deleteFromS3, getS3Url } from "../../services/s3.service";
 
 export const imageController = {
   /* ===== PRODUCT IMAGE ===== */
@@ -20,7 +20,7 @@ export const imageController = {
       });
       if (!product) throw new AppError("Product not found", 404);
 
-      const { url } = await uploadToS3(req.file.buffer, req.file.originalname, req.file.mimetype);
+      const { key } = await uploadToS3(req.file.buffer, req.file.originalname, req.file.mimetype);
 
       await db.transaction(async (tx) => {
         // Delete old image from S3 and DB if present
@@ -32,7 +32,7 @@ export const imageController = {
           if (old) await deleteFromS3(old.path);
         }
 
-        const [image] = await tx.insert(productImages).values({ path: url }).returning();
+        const [image] = await tx.insert(productImages).values({ path: key }).returning();
 
         await tx
           .update(products)
@@ -42,7 +42,7 @@ export const imageController = {
 
       await logAudit({ userId: req.user!.userId, action: "product:image:upload", entity: "product", entityId: product.id });
 
-      res.status(201).json({ success: true, message: "Image uploaded", data: { url } });
+      res.status(201).json({ success: true, message: "Image uploaded", data: { url: getS3Url(key) } });
     } catch (err) { next(err); }
   },
 
@@ -87,16 +87,16 @@ export const imageController = {
       });
       if (!variant) throw new AppError("Variant not found", 404);
 
-      const { url } = await uploadToS3(req.file.buffer, req.file.originalname, req.file.mimetype);
+      const { key } = await uploadToS3(req.file.buffer, req.file.originalname, req.file.mimetype);
 
       const [image] = await db
         .insert(variantImages)
-        .values({ productVariantId: variant.id, path: url })
+        .values({ productVariantId: variant.id, path: key })
         .returning();
 
       await logAudit({ userId: req.user!.userId, action: "variant:image:upload", entity: "variant", entityId: variant.id });
 
-      res.status(201).json({ success: true, message: "Image uploaded", data: image });
+      res.status(201).json({ success: true, message: "Image uploaded", data: { ...image, url: getS3Url(key) } });
     } catch (err) { next(err); }
   },
 

@@ -2,6 +2,7 @@ import { and, asc, desc, eq, ilike, sql } from "drizzle-orm";
 import { db } from "../../config/db";
 import { brands, carousel, categories, products, variantRates } from "../../db/schema";
 import { AppError } from "../../middlewares/errorHandler";
+import { getS3Url } from "../../services/s3.service";
 import { ListProductsInput } from "./public.schema";
 
 /* =====================================================
@@ -26,6 +27,12 @@ function buildOptions(variants: any[]): { name: string; values: string[] }[] {
     name,
     values: Array.from(values).sort(),
   }));
+}
+
+/** Convert a stored S3 key to a full public URL (null-safe) */
+function resolveImageUrl(image: { path: string } | null | undefined) {
+  if (!image?.path) return null;
+  return { url: getS3Url(image.path) };
 }
 
 /** Pick the latest rate entry for a variant */
@@ -115,7 +122,7 @@ export const publicService = {
     ]);
 
     return {
-      items,
+      items: items.map((p) => ({ ...p, image: resolveImageUrl(p.image) })),
       meta: { page, limit, total: Number(count), totalPages: Math.ceil(Number(count) / limit) },
     };
   },
@@ -185,10 +192,11 @@ export const publicService = {
       };
     });
 
-    const { variants: _, ...productData } = product;
+    const { variants: _, image, ...productData } = product;
 
     return {
       ...productData,
+      image: resolveImageUrl(image),
       options: buildOptions(product.variants),
       variants,
     };
@@ -269,7 +277,7 @@ export const publicService = {
         brand.categories.set(catId, { id: catId, categoryName: catName, products: [] });
       }
 
-      const { brand: _b, category: _c, variants, ...productData } = p;
+      const { brand: _b, category: _c, variants, image, ...productData } = p;
 
       const transformedVariants = variants.map((v) => {
         const rate = latestRate(v.rates);
@@ -292,6 +300,7 @@ export const publicService = {
 
       brand.categories.get(catId)!.products.push({
         ...productData,
+        image: resolveImageUrl(image),
         variants: transformedVariants,
       });
     }
