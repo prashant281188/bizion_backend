@@ -1,98 +1,97 @@
-import { Response } from "express";
+import { NextFunction, Response } from "express";
 import { AuthRequest } from "../../middlewares/authMiddelware";
 import { categoryService } from "./category.service";
 import { AppError } from "../../middlewares/errorHandler";
 import { logAudit } from "../../services/audit.service";
 
-
 export const categoryController = {
   /* ================= LIST ================= */
 
-  async list(req: AuthRequest, res: Response) {
-    const { page, limit, search = "" } = req.query;
-    const data = await categoryService.list({
-      page: page ? Number(page) : 1,
-      limit: limit ? Number(limit) : 10,
-      search:String(search),
-    });
-    res.json({ success: true, data });
+  async list(req: AuthRequest, res: Response, next: NextFunction) {
+    try {
+      const data = await categoryService.list(req.query as any);
+      res.json({ success: true, data });
+    } catch (err) {
+      next(err);
+    }
   },
 
   /* ================= GET ================= */
 
-  async getById(req: AuthRequest, res: Response) {
-    const category = await categoryService.getById(req.params.id);
+  async getById(req: AuthRequest, res: Response, next: NextFunction) {
+    try {
+      const category = await categoryService.getById(req.params.id);
 
-    if (!category)
-      throw new AppError("Category not found", 404);
+      if (!category) throw new AppError("Category not found", 404);
 
-    res.json({ success: true, data: category });
+      res.json({ success: true, data: category });
+    } catch (err) {
+      next(err);
+    }
   },
 
   /* ================= CREATE ================= */
 
-  async create(req: AuthRequest, res: Response) {
-    const category = await categoryService.create(req.body);
+  async create(req: AuthRequest, res: Response, next: NextFunction) {
+    try {
+      const category = await categoryService.create(req.body);
 
-    await logAudit({
-      userId: req.user!.userId,
-      action: "category:create",
-      entity: "category",
-      entityId: category.id,
-    });
+      await logAudit({
+        userId: req.user!.userId,
+        action: "category:create",
+        entity: "category",
+        entityId: category.id,
+      });
 
-    res.status(201).json({
-      success: true,
-      message: "Category created",
-      data: category,
-    });
+      res.status(201).json({
+        success: true,
+        message: "Category created",
+        data: category,
+      });
+    } catch (err) {
+      next(err);
+    }
   },
 
   /* ================= UPDATE ================= */
 
-  async update(req: AuthRequest, res: Response) {
-    const updated = await categoryService.update(
-      req.params.id,
-      req.body
-    );
+  async update(req: AuthRequest, res: Response, next: NextFunction) {
+    try {
+      const updated = await categoryService.update(req.params.id, req.body);
 
-    if (!updated)
-      throw new AppError("Category not found", 404);
+      if (!updated) throw new AppError("Category not found", 404);
 
-    await logAudit({
-      userId: req.user!.userId,
-      action: "category:update",
-      entity: "category",
-      entityId: updated.id,
-    });
+      await logAudit({
+        userId: req.user!.userId,
+        action: "category:update",
+        entity: "category",
+        entityId: updated.id,
+      });
 
-    res.json({
-      success: true,
-      message: "Category updated",
-      data: updated,
-    });
+      res.json({ success: true, message: "Category updated", data: updated });
+    } catch (err) {
+      next(err);
+    }
   },
 
   /* ================= DELETE ================= */
 
-  async remove(req: AuthRequest, res: Response) {
-    const deleted = await categoryService.remove(
-      req.params.id
-    );
+  async remove(req: AuthRequest, res: Response, next: NextFunction) {
+    try {
+      const deleted = await categoryService.remove(req.params.id);
 
-    if (!deleted)
-      throw new AppError("Category not found", 404);
+      if (!deleted) throw new AppError("Category not found", 404);
 
-    await logAudit({
-      userId: req.user!.userId,
-      action: "category:delete",
-      entity: "category",
-      entityId: req.params.id,
-    });
+      await logAudit({
+        userId: req.user!.userId,
+        action: "category:delete",
+        entity: "category",
+        entityId: req.params.id,
+      });
 
-    res.json({
-      success: true,
-      message: "Category deleted",
-    });
+      res.json({ success: true, message: "Category deleted" });
+    } catch (err) {
+      next(err);
+    }
   },
 };

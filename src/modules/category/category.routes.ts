@@ -3,9 +3,9 @@ import { categoryController } from "./category.controller";
 import { requirePermission } from "../../middlewares/requirePermission";
 import { validateSchema } from "../../middlewares/validateSchema";
 import {
-  listSchema,
-  createSchema,
-  updateSchema,
+  listCategorySchema,
+  createCategorySchema,
+  updateCategorySchema,
 } from "./category.schema";
 import { authMiddleware } from "../../middlewares/authMiddelware";
 
@@ -15,6 +15,9 @@ const router = Router();
 
 router.get(
   "/",
+  authMiddleware,
+  requirePermission("category:read"),
+  validateSchema(listCategorySchema, "query"),
   categoryController.list
 );
 
@@ -32,8 +35,8 @@ router.get(
 router.post(
   "/",
   authMiddleware,
-  validateSchema(createSchema),
   requirePermission("category:create"),
+  validateSchema(createCategorySchema),
   categoryController.create
 );
 
@@ -42,8 +45,8 @@ router.post(
 router.put(
   "/:id",
   authMiddleware,
-  validateSchema(updateSchema),
   requirePermission("category:update"),
+  validateSchema(updateCategorySchema),
   categoryController.update
 );
 
