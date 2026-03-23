@@ -38,9 +38,7 @@ app.use(express.urlencoded({ extended: true, limit: "1mb" }));
 app.use(cookieParser());
 app.use(morgan("dev"));
 
-app.use("/api", routes);
-
-// API docs — available at /api/docs
+// API docs — must be registered before the main router (which has a catch-all 404)
 app.use(
   "/api/docs",
   swaggerUi.serve,
@@ -54,5 +52,7 @@ app.use(
     },
   })
 );
+
+app.use("/api", routes);
 
 app.use(errorHandler);
