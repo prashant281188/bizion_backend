@@ -9,6 +9,7 @@ export const userController = {
 
   async list(req: AuthRequest, res: Response, next: NextFunction) {
     try {
+      
       const data = await userService.list(req.query);
       res.json({ success: true, data });
     } catch (err) {

@@ -9,83 +9,82 @@ import bcrypt from "bcrypt";
 import { v4 as uuid } from "uuid";
 
 async function seed() {
-  // const adminRoleId = uuid();
+  const adminRoleId = uuid();
 
-  // await db.insert(roles).values([
-  //   { id: adminRoleId, name: "admin" },
-  // ]);
+  await db.insert(roles).values([
+    { id: adminRoleId, name: "admin" },
+  ]);
 
-  // const perms = [
-  //   "category:read",
-  //   "category:create",
-  //   "category:update",
-  //   "category:delete",
-  //   "product:read",
-  //   "product:create",
-  //   "product:update",
-  //   "product:delete",
-  //   "user:read",
-  //   "user:create",
-  //   "user:update",
-  //   "user:delete",
-  // ];
+  const perms = [
+    "category:read",
+    "category:create",
+    "category:update",
+    "category:delete",
+    "product:read",
+    "product:create",
+    "product:update",
+    "product:delete",
+    "user:read",
+    "user:create",
+    "user:update",
+    "user:delete",
+  ];
 
-  // const permIds = perms.map((code) => ({
-  //   id: uuid(),
-  //   code,
-  // }));
+  const permIds = perms.map((code) => ({
+    id: uuid(),
+    code,
+  }));
 
-  // await db.insert(permissions).values(permIds);
+  await db.insert(permissions).values(permIds);
 
-  // await db.insert(rolePermissions).values(
-  //   permIds.map((p) => ({
-  //     roleId: adminRoleId,
-  //     permissionId: p.id,
-  //   }))
-  // );
+  await db.insert(rolePermissions).values(
+    permIds.map((p) => ({
+      roleId: adminRoleId,
+      permissionId: p.id,
+    }))
+  );
 
-  // const hashed = await bcrypt.hash("Admin@123", 10);
+  const hashed = await bcrypt.hash("Admin@123", 10);
 
-  // await db.insert(users).values({
-  //   id: uuid(),
-  //   email: "admin@example.com",
-  //   password: hashed,
-  //   roleId: adminRoleId,
-  // });
-
-
-  // const categoriesList = [
-  //   "cabinet handle",
-  //   "door handle",
-  //   "profile handle",
-  //   "bathroom accessories",
-  //   "aluminum profile",
-  //   "door closer",
-  //   "sofa leg",
-  //   "tower bolt",
-  // ]
-
-  // const categoriesIds = categoriesList.map((name) => ({
-  //   id: uuid(),
-  //   name
-  // }))
-
-  // await db.insert(categories).values(categoriesIds)
+  await db.insert(users).values({
+    id: uuid(),
+    email: "admin@example.com",
+    password: hashed,
+    roleId: adminRoleId,
+  });
 
 
-  // const brandsList = [
-  //   "flybird",
-  //   "hini",
-  //   "poins",
-  //   "nexito",
-  //   "dytor"
-  // ]
+  const categoriesList = [
+    "door handle",
+    "profile handle",
+    "bathroom accessories",
+    "aluminum profile",
+    "door closer",
+    "sofa leg",
+    "tower bolt",
+  ]
 
-  // const brandIds = brandsList.map((brand) => ({
-  //   id: uuid(),
-  //   name: brand
-  // }))
-  // await db.insert(brands).values(brandIds)
+  const categoriesIds = categoriesList.map((categoryName) => ({
+    id: uuid(),
+    categoryName
+  }))
+
+  await db.insert(categories).values(categoriesIds)
+
+
+  const brandsList = [
+    "flybird",
+    "hini",
+    "poins",
+    "nexito",
+    "dytor"
+  ]
+
+  const brandIds = brandsList.map((brand) => ({
+    id: uuid(),
+    brandName: brand
+  }))
+  await db.insert(brands).values(brandIds)
 
   await db.insert(products).values(productList)
 
