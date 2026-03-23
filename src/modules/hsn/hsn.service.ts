@@ -1,114 +1,82 @@
-import { eq } from "drizzle-orm";
+import { eq, ilike, sql } from "drizzle-orm";
 import { db } from "../../config/db";
-import { gstGroups, hsnCodes } from "../../db/schema";
+import { hsnCodes } from "../../db/schema";
 import { AppError } from "../../middlewares/errorHandler";
+import { CreateHsnInput, ListHsnInput, UpdateHsnInput } from "./hsn.schema";
 
+export const hsnService = {
+  async list({ page = 1, limit = 10, search }: ListHsnInput) {
+    const offset = (page - 1) * limit;
 
-export class HsnService {
-    async create(data: {
-        code: string;
-        description?: string;
-        gstGroupId: string;
-    }) {
-        // Check GST group exists
-        const gstGroup = await db.query.gstGroups.findFirst({
-            where: eq(gstGroups.id, data.gstGroupId),
-        });
+    const where = search
+      ? ilike(hsnCodes.hsnCode, `%${search}%`)
+      : undefined;
 
-        if (!gstGroup) {
-            throw new AppError("Invalid GST Group", 400);
-        }
+    const [items, [{ count }]] = await Promise.all([
+      db.query.hsnCodes.findMany({
+        where,
+        limit,
+        offset,
+        with: { gstHistory: true },
+      }),
+      db.select({ count: sql<number>`count(*)` }).from(hsnCodes).where(where),
+    ]);
 
-        // Check duplicate HSN
-        const existing = await db.query.hsnCodes.findFirst({
-            where: eq(hsnCodes.code, data.code),
-        });
+    return {
+      items,
+      meta: {
+        page,
+        limit,
+        total: Number(count),
+        totalPages: Math.ceil(Number(count) / limit),
+      },
+    };
+  },
 
-        if (existing) {
-            throw new AppError("HSN already exists", 400);
-        }
+  async getById(id: string) {
+    const hsn = await db.query.hsnCodes.findFirst({
+      where: eq(hsnCodes.id, id),
+      with: { gstHistory: true },
+    });
 
-        const [hsn] = await db
-            .insert(hsnCodes)
-            .values(data)
-            .returning();
+    if (!hsn) throw new AppError("HSN not found", 404);
 
-        return hsn;
-    }
+    return hsn;
+  },
 
-    async findAll() {
-        return db.query.hsnCodes.findMany({
-            with: {
-                gstHistory: true
-            },
-        });
-    }
+  async create(data: CreateHsnInput) {
+    const existing = await db.query.hsnCodes.findFirst({
+      where: eq(hsnCodes.hsnCode, data.hsnCode),
+    });
 
-    async findById(id: string) {
-        const hsn = await db.query.hsnCodes.findFirst({
-            where: eq(hsnCodes.id, id),
-            with: {
-                gstHistory: true
-            },
-        });
+    if (existing) throw new AppError("HSN code already exists", 409);
 
-        if (!hsn) {
-            throw new AppError("HSN not found", 404);
-        }
+    const [hsn] = await db.insert(hsnCodes).values(data).returning();
 
-        return hsn;
-    }
+    return hsn;
+  },
 
-    async update(
-        id: string,
-        data: {
-            description?: string;
-            gstGroupId?: string;
-            isActive?: boolean;
-        }
-    ) {
-        const existing = await db.query.hsnCodes.findFirst({
-            where: eq(hsnCodes.id, id),
-        });
+  async update(id: string, data: UpdateHsnInput) {
+    const [updated] = await db
+      .update(hsnCodes)
+      .set(data)
+      .where(eq(hsnCodes.id, id))
+      .returning();
 
-        if (!existing) {
-            throw new AppError("HSN not found", 404);
-        }
+    if (!updated) throw new AppError("HSN not found", 404);
 
-        if (data.gstGroupId) {
-            const gstGroup = await db.query.gstGroups.findFirst({
-                where: eq(gstGroups.id, data.gstGroupId),
-            });
+    return updated;
+  },
 
-            if (!gstGroup) {
-                throw new AppError("Invalid GST Group", 400);
-            }
-        }
+  async remove(id: string) {
+    const [updated] = await db
+      .update(hsnCodes)
+      .set({ isActive: false })
+      .where(eq(hsnCodes.id, id))
+      .returning({ id: hsnCodes.id });
 
-        const [updated] = await db
-            .update(hsnCodes)
-            .set(data)
-            .where(eq(hsnCodes.id, id))
-            .returning();
+    if (!updated) throw new AppError("HSN not found", 404);
 
-        return updated;
-    }
-
-    async remove(id: string) {
-        const existing = await db.query.hsnCodes.findFirst({
-            where: eq(hsnCodes.id, id),
-        });
-
-        if (!existing) {
-            throw new AppError("HSN not found", 404);
-        }
-
-        // Soft delete recommended
-        await db
-            .update(hsnCodes)
-            .set({ isActive: false })
-            .where(eq(hsnCodes.id, id));
-
-        return { message: "HSN deactivated successfully" };
-    }
-}
+    return { message: "HSN deactivated successfully" };
+  },
+};

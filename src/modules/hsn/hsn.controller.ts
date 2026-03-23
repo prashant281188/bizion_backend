@@ -1,56 +1,59 @@
-import { Request, Response } from "express";
-import { HsnService } from "./hsn.service";
-import { createHsnSchema, updateHsnSchema } from "./hsn.schema";
+import { NextFunction, Request, Response } from "express";
+import { hsnService } from "./hsn.service";
 
-const service = new HsnService();
+export const hsnController = {
+  /* ================= LIST ================= */
 
-export class HsnController {
-  async create(req: Request, res: Response) {
-    const data = createHsnSchema.parse(req.body);
+  async list(req: Request, res: Response, next: NextFunction) {
+    try {
+      const data = await hsnService.list(req.query as any);
+      res.json({ success: true, data });
+    } catch (err) {
+      next(err);
+    }
+  },
 
-    const result = await service.create(data);
+  /* ================= GET BY ID ================= */
 
-    res.status(201).json({
-      success: true,
-      data: result,
-    });
-  }
+  async getById(req: Request, res: Response, next: NextFunction) {
+    try {
+      const data = await hsnService.getById(req.params.id);
+      res.json({ success: true, data });
+    } catch (err) {
+      next(err);
+    }
+  },
 
-  async getAll(req: Request, res: Response) {
-    const result = await service.findAll();
+  /* ================= CREATE ================= */
 
-    res.json({
-      success: true,
-      data: result,
-    });
-  }
+  async create(req: Request, res: Response, next: NextFunction) {
+    try {
+      const data = await hsnService.create(req.body);
+      res.status(201).json({ success: true, data });
+    } catch (err) {
+      next(err);
+    }
+  },
 
-  async getById(req: Request, res: Response) {
-    const result = await service.findById(req.params.id);
+  /* ================= UPDATE ================= */
 
-    res.json({
-      success: true,
-      data: result,
-    });
-  }
+  async update(req: Request, res: Response, next: NextFunction) {
+    try {
+      const data = await hsnService.update(req.params.id, req.body);
+      res.json({ success: true, data });
+    } catch (err) {
+      next(err);
+    }
+  },
 
-  async update(req: Request, res: Response) {
-    const data = updateHsnSchema.parse(req.body);
+  /* ================= DELETE ================= */
 
-    const result = await service.update(req.params.id, data);
-
-    res.json({
-      success: true,
-      data: result,
-    });
-  }
-
-  async delete(req: Request, res: Response) {
-    const result = await service.remove(req.params.id);
-
-    res.json({
-      success: true,
-      message: result.message,
-    });
-  }
-}
+  async remove(req: Request, res: Response, next: NextFunction) {
+    try {
+      const result = await hsnService.remove(req.params.id);
+      res.json({ success: true, message: result.message });
+    } catch (err) {
+      next(err);
+    }
+  },
+};
