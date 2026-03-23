@@ -1,95 +1,31 @@
-import { Response } from "express";
+import { NextFunction, Response } from "express";
 import { AppError } from "../../middlewares/errorHandler";
 import { AuthRequest } from "../../middlewares/authMiddelware";
 import { productService } from "./product.service";
 
-
 export const productController = {
   /* ================= LIST ================= */
 
-  async list(req: AuthRequest, res: Response) {
-    const data = await productService.list();
-
-    res.json({ success: true, data });
+  async list(req: AuthRequest, res: Response, next: NextFunction) {
+    try {
+      const data = await productService.list(req.query as any);
+      res.json({ success: true, data });
+    } catch (err) {
+      next(err);
+    }
   },
 
   /* ================= GET ================= */
 
-  async getById(req: AuthRequest, res: Response) {
+  async getById(req: AuthRequest, res: Response, next: NextFunction) {
+    try {
+      const product = await productService.getById(req.params.id);
 
-    const id = req.params.id
-    const product = await productService.getById(id);
+      if (!product) throw new AppError("Product not found", 404);
 
-    if (!product)
-      throw new AppError("Product not found", 404);
-
-    res.json({ success: true, data: product });
+      res.json({ success: true, data: product });
+    } catch (err) {
+      next(err);
+    }
   },
-
-  // /* ================= CREATE ================= */
-
-  // async create(req: AuthRequest, res: Response) {
-  //   const product = await productService.create(req.body);
-
-  //   await logAudit({
-  //     userId: req.user!.userId,
-  //     action: "product:create",
-  //     entity: "product",
-  //     entityId: product.id,
-  //   });
-
-  //   res.status(201).json({
-  //     success: true,
-  //     message: "Product created",
-  //     data: product,
-  //   });
-  // },
-
-  // /* ================= UPDATE ================= */
-
-  // async update(req: AuthRequest, res: Response) {
-  //   const updated = await productService.update(
-  //     req.params.id,
-  //     req.body
-  //   );
-
-  //   if (!updated)
-  //     throw new AppError("Product not found", 404);
-
-  //   await logAudit({
-  //     userId: req.user!.userId,
-  //     action: "product:update",
-  //     entity: "product",
-  //     entityId: updated.id,
-  //   });
-
-  //   res.json({
-  //     success: true,
-  //     message: "Product updated",
-  //     data: updated,
-  //   });
-  // },
-
-  // /* ================= DELETE ================= */
-
-  // async remove(req: AuthRequest, res: Response) {
-  //   const deleted = await productService.remove(
-  //     req.params.id
-  //   );
-
-  //   if (!deleted)
-  //     throw new AppError("Product not found", 404);
-
-  //   await logAudit({
-  //     userId: req.user!.userId,
-  //     action: "product:delete",
-  //     entity: "product",
-  //     entityId: req.params.id,
-  //   });
-
-  //   res.json({
-  //     success: true,
-  //     message: "Product deleted",
-  //   });
-  // },
 };

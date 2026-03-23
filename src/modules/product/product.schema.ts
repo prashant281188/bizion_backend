@@ -42,12 +42,10 @@ export const productVariantSchema = z.object({
 
 export const createProductSchema = z.object({
   model: z.string().trim().min(1, "Model is required"),
-  brand: z.string().trim().optional(),
+  brandId: uuid.optional(),
   metal: z.string().trim().optional(),
   description: z.string().trim().optional(),
-
   categoryId: uuid,
-
   variants: z
     .array(productVariantSchema)
     .min(1, "At least one variant is required"),
