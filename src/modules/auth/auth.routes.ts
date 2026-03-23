@@ -4,6 +4,7 @@ import { validateSchema } from "../../middlewares/validateSchema";
 import { authLimiter } from "../../middlewares/authRateLimit";
 import {
   changePasswordSchema,
+  forgotPasswordSchema,
   loginSchema,
   registerSchema,
   resetPasswordSchema,
@@ -49,6 +50,8 @@ router.get(
 
 router.post(
   "/forgot-password",
+  authLimiter,
+  validateSchema(forgotPasswordSchema),
   authController.forgotPassword
 );
 
