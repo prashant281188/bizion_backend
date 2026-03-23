@@ -256,7 +256,7 @@ SELECT
   -- 🔥 sizes (distinct + ordered)
   COALESCE(
     (
-      SELECT jsonb_agg(value ORDER BY position)
+      SELECT jsonb_agg(option_value ORDER BY position)
       FROM dedup_option_values d
       WHERE d.product_id = p.id
         AND d.option_name = 'size'
@@ -267,7 +267,7 @@ SELECT
   -- 🔥 finishes (distinct + ordered)
   COALESCE(
     (
-      SELECT jsonb_agg(value ORDER BY position)
+      SELECT jsonb_agg(option_value ORDER BY position)
       FROM dedup_option_values d
       WHERE d.product_id = p.id
         AND d.option_name = 'finish'
