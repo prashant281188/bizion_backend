@@ -3,7 +3,7 @@ import { publicController } from "./public.controller";
 
 const router = Router();
 
-router.get("/carousel", publicController.gerCarouselData)
+router.get("/carousel", publicController.getCarouselData)
 router.get("/categories", publicController.getCategories);
 router.get("/brands", publicController.getBrands);
 router.get("/products/catalog", publicController.getCatalog)
