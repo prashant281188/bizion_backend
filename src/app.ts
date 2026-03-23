@@ -3,7 +3,6 @@ import helmet from "helmet";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import morgan from "morgan";
-import path from "path";
 
 import routes from "./routes";
 import { errorHandler } from "./middlewares/errorHandler";
@@ -37,7 +36,6 @@ app.use(express.urlencoded({ extended: true, limit: "1mb" }));
 app.use(cookieParser());
 app.use(morgan("dev"));
 
-app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 app.use("/api", routes);
 
 app.use(errorHandler);

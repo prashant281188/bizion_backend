@@ -1,30 +1,18 @@
 import { NextFunction, Response } from "express";
-import path from "path";
-import fs from "fs";
 import { and, eq } from "drizzle-orm";
 import { AuthRequest } from "../../middlewares/authMiddelware";
 import { AppError } from "../../middlewares/errorHandler";
 import { db } from "../../config/db";
 import { products, productImages, variantImages, productVariants } from "../../db/schema";
 import { logAudit } from "../../services/audit.service";
-
-function deleteFileFromDisk(filePath: string) {
-  try {
-    const fullPath = path.join(process.cwd(), "uploads", filePath);
-    if (fs.existsSync(fullPath)) fs.unlinkSync(fullPath);
-  } catch {
-    // Non-fatal — log but don't throw
-    console.error("Failed to delete file from disk:", filePath);
-  }
-}
+import { uploadToS3, deleteFromS3 } from "../../services/s3.service";
 
 export const imageController = {
   /* ===== PRODUCT IMAGE ===== */
 
   async uploadProductImage(req: AuthRequest, res: Response, next: NextFunction) {
     try {
-      const file = req.file;
-      if (!file) throw new AppError("No image file provided", 400);
+      if (!req.file) throw new AppError("No image file provided", 400);
 
       const product = await db.query.products.findFirst({
         where: and(eq(products.id, req.params.id), eq(products.isDeleted, false)),
@@ -32,22 +20,19 @@ export const imageController = {
       });
       if (!product) throw new AppError("Product not found", 404);
 
-      const relativePath = `products/${file.filename}`;
+      const { url } = await uploadToS3(req.file.buffer, req.file.originalname, req.file.mimetype);
 
       await db.transaction(async (tx) => {
-        // Delete old image if present
+        // Delete old image from S3 and DB if present
         if (product.imageId) {
           const [old] = await tx
             .delete(productImages)
             .where(eq(productImages.id, product.imageId))
             .returning({ path: productImages.path });
-          if (old) deleteFileFromDisk(old.path);
+          if (old) await deleteFromS3(old.path);
         }
 
-        const [image] = await tx
-          .insert(productImages)
-          .values({ path: relativePath })
-          .returning();
+        const [image] = await tx.insert(productImages).values({ path: url }).returning();
 
         await tx
           .update(products)
@@ -57,7 +42,7 @@ export const imageController = {
 
       await logAudit({ userId: req.user!.userId, action: "product:image:upload", entity: "product", entityId: product.id });
 
-      res.status(201).json({ success: true, message: "Image uploaded", data: { path: relativePath } });
+      res.status(201).json({ success: true, message: "Image uploaded", data: { url } });
     } catch (err) { next(err); }
   },
 
@@ -81,7 +66,7 @@ export const imageController = {
           .set({ imageId: null, updatedAt: new Date() })
           .where(eq(products.id, product.id));
 
-        if (old) deleteFileFromDisk(old.path);
+        if (old) await deleteFromS3(old.path);
       });
 
       await logAudit({ userId: req.user!.userId, action: "product:image:delete", entity: "product", entityId: product.id });
@@ -94,8 +79,7 @@ export const imageController = {
 
   async uploadVariantImage(req: AuthRequest, res: Response, next: NextFunction) {
     try {
-      const file = req.file;
-      if (!file) throw new AppError("No image file provided", 400);
+      if (!req.file) throw new AppError("No image file provided", 400);
 
       const variant = await db.query.productVariants.findFirst({
         where: eq(productVariants.id, req.params.id),
@@ -103,11 +87,11 @@ export const imageController = {
       });
       if (!variant) throw new AppError("Variant not found", 404);
 
-      const relativePath = `products/${file.filename}`;
+      const { url } = await uploadToS3(req.file.buffer, req.file.originalname, req.file.mimetype);
 
       const [image] = await db
         .insert(variantImages)
-        .values({ productVariantId: variant.id, path: relativePath })
+        .values({ productVariantId: variant.id, path: url })
         .returning();
 
       await logAudit({ userId: req.user!.userId, action: "variant:image:upload", entity: "variant", entityId: variant.id });
@@ -130,7 +114,7 @@ export const imageController = {
 
       if (!deleted) throw new AppError("Image not found", 404);
 
-      deleteFileFromDisk(deleted.path);
+      await deleteFromS3(deleted.path);
 
       await logAudit({ userId: req.user!.userId, action: "variant:image:delete", entity: "variant", entityId: req.params.id });
 
