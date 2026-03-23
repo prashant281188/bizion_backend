@@ -3,6 +3,7 @@ import jwt from "jsonwebtoken";
 import { AppError } from "../../middlewares/errorHandler";
 import { authService } from "./auth.service";
 import { AuthRequest } from "../../middlewares/authMiddelware";
+import { ENV } from "../../config/env";
 
 export const authController = {
   /* ================= REGISTER ================= */
@@ -28,13 +29,13 @@ export const authController = {
 
       const token = jwt.sign(
         { userId: user.id, roleId: user.roleId },
-        process.env.JWT_SECRET!,
+        ENV.JWT_SECRET,
         { expiresIn: "1h" }
       );
 
       res.cookie("token", token, {
         httpOnly: true,
-        secure: false,
+        secure: ENV.NODE_ENV === "production",
         sameSite: "lax",
         maxAge: 60 * 60 * 1000,
       });

@@ -7,7 +7,11 @@ export const listHsnSchema = z.object({
 });
 
 export const createHsnSchema = z.object({
-  hsnCode: z.string().min(4, "HSN code must be at least 4 characters").max(10),
+  hsnCode: z
+    .string()
+    .min(4, "HSN code must be at least 4 characters")
+    .max(10, "HSN code must be at most 10 characters")
+    .regex(/^\d+$/, "HSN code must contain digits only"),
   description: z.string().max(255).optional(),
 });
 

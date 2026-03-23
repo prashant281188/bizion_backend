@@ -17,5 +17,6 @@ export * from "./rolePermission";
 export * from "./unit";
 export * from "./user";
 export * from "./variantOptionValues";
+export * from "./variantImage";
 export * from "./options";
 export * from "./optionValues";

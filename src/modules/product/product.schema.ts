@@ -10,30 +10,27 @@ const priceSchema = z
   .number({ invalid_type_error: "Must be a number" })
   .nonnegative("Price cannot be negative");
 
+const statusEnum = z.enum(["draft", "active", "archived"]);
+
 /* =====================================================
-   PRODUCT RATE
+   VARIANT RATE
 ===================================================== */
 
-export const productRateSchema = z.object({
+export const variantRateSchema = z.object({
   mrp: priceSchema.optional(),
   purchaseRate: priceSchema.optional(),
   saleRate: priceSchema.optional(),
 });
 
 /* =====================================================
-   PRODUCT VARIANT
+   VARIANT (for create)
 ===================================================== */
 
-export const productVariantSchema = z.object({
-  size: z.string().trim().min(1).optional(),
-  finish: z.string().trim().min(1).optional(),
-  packing: z
-    .number()
-    .int("Packing must be an integer")
-    .positive("Packing must be positive")
-    .optional(),
-
-  rates: productRateSchema.optional(),
+export const createVariantSchema = z.object({
+  sku: z.string().trim().min(1).optional(),
+  packing: z.number().int("Packing must be an integer").positive("Packing must be positive").optional(),
+  optionValueIds: z.array(uuid).optional(),
+  rates: variantRateSchema.optional(),
 });
 
 /* =====================================================
@@ -42,21 +39,48 @@ export const productVariantSchema = z.object({
 
 export const createProductSchema = z.object({
   model: z.string().trim().min(1, "Model is required"),
-  brandId: uuid.optional(),
   metal: z.string().trim().optional(),
+  shortDescription: z.string().trim().optional(),
   description: z.string().trim().optional(),
+  slug: z.string().trim().optional(),
+  brandId: uuid.optional(),
   categoryId: uuid,
-  variants: z
-    .array(productVariantSchema)
-    .min(1, "At least one variant is required"),
+  hsnId: uuid.optional(),
+  unitId: uuid.optional(),
+  imageId: uuid.optional(),
+  sizeType: z.string().trim().optional(),
+  isActive: z.boolean().default(true),
+  isFeatured: z.boolean().default(false),
+  isNew: z.boolean().default(false),
+  status: statusEnum.default("draft"),
+  variants: z.array(createVariantSchema).optional().default([]),
 });
 
 /* =====================================================
    UPDATE PRODUCT
 ===================================================== */
 
-export const updateProductSchema =
-  createProductSchema.partial();
+export const updateProductSchema = z
+  .object({
+    model: z.string().trim().min(1).optional(),
+    metal: z.string().trim().optional(),
+    shortDescription: z.string().trim().optional(),
+    description: z.string().trim().optional(),
+    slug: z.string().trim().optional(),
+    brandId: uuid.optional(),
+    categoryId: uuid.optional(),
+    hsnId: uuid.optional(),
+    unitId: uuid.optional(),
+    imageId: uuid.optional(),
+    sizeType: z.string().trim().optional(),
+    isActive: z.boolean().optional(),
+    isFeatured: z.boolean().optional(),
+    isNew: z.boolean().optional(),
+    status: statusEnum.optional(),
+  })
+  .refine((d) => Object.values(d).some((v) => v !== undefined), {
+    message: "At least one field must be provided",
+  });
 
 /* =====================================================
    LIST / FILTER
@@ -67,28 +91,17 @@ export const listProductSchema = z.object({
   limit: z.coerce.number().min(1).max(100).default(10),
   search: z.string().optional(),
   categoryId: uuid.optional(),
-});
-
-/* =====================================================
-   PARAMS
-===================================================== */
-
-export const productIdSchema = z.object({
-  id: uuid,
+  brandId: uuid.optional(),
+  status: statusEnum.optional(),
+  isActive: z.coerce.boolean().optional(),
+  isFeatured: z.coerce.boolean().optional(),
+  isNew: z.coerce.boolean().optional(),
 });
 
 /* =====================================================
    TYPES
 ===================================================== */
 
-export type CreateProductInput = z.infer<
-  typeof createProductSchema
->;
-
-export type UpdateProductInput = z.infer<
-  typeof updateProductSchema
->;
-
-export type ListProductInput = z.infer<
-  typeof listProductSchema
->;
+export type CreateProductInput = z.infer<typeof createProductSchema>;
+export type UpdateProductInput = z.infer<typeof updateProductSchema>;
+export type ListProductInput = z.infer<typeof listProductSchema>;

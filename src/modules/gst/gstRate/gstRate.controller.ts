@@ -1,29 +1,45 @@
-import { Request, Response } from "express";
+import { NextFunction, Response } from "express";
+import { AuthRequest } from "../../../middlewares/authMiddelware";
 import { gstRateService } from "./gstRate.service";
+import { logAudit } from "../../../services/audit.service";
+import { ListGstRateInput } from "./gstRate.schema";
 
 export const gstRateController = {
+  async list(req: AuthRequest, res: Response, next: NextFunction) {
+    try {
+      const data = await gstRateService.list(req.query as unknown as ListGstRateInput);
+      res.json({ success: true, data });
+    } catch (err) { next(err); }
+  },
 
-    async getGstRate(req: Request, res: Response) {
+  async getById(req: AuthRequest, res: Response, next: NextFunction) {
+    try {
+      const data = await gstRateService.getById(req.params.id);
+      res.json({ success: true, data });
+    } catch (err) { next(err); }
+  },
 
-        const data = await gstRateService.getGstRate()
+  async create(req: AuthRequest, res: Response, next: NextFunction) {
+    try {
+      const data = await gstRateService.create(req.body);
+      await logAudit({ userId: req.user!.userId, action: "gst:rate:create", entity: "gstRate", entityId: data.id });
+      res.status(201).json({ success: true, message: "GST rate created", data });
+    } catch (err) { next(err); }
+  },
 
-        res.json({
-            data,
-            success: true,
-            message: "Gst Rate fetched successfully"
-        })
-    },
+  async update(req: AuthRequest, res: Response, next: NextFunction) {
+    try {
+      const data = await gstRateService.update(req.params.id, req.body);
+      await logAudit({ userId: req.user!.userId, action: "gst:rate:update", entity: "gstRate", entityId: data.id });
+      res.json({ success: true, message: "GST rate updated", data });
+    } catch (err) { next(err); }
+  },
 
-    async getGstRateById(req: Request, res: Response) {
-
-        const id = req.params.id
-
-        const data = await gstRateService.getGstRateById(id)
-
-        res.json({
-            data,
-            success: true,
-            message: "Gst Rate fetched successfully"
-        })
-    }
-}
+  async remove(req: AuthRequest, res: Response, next: NextFunction) {
+    try {
+      await gstRateService.remove(req.params.id);
+      await logAudit({ userId: req.user!.userId, action: "gst:rate:delete", entity: "gstRate", entityId: req.params.id });
+      res.json({ success: true, message: "GST rate deleted" });
+    } catch (err) { next(err); }
+  },
+};

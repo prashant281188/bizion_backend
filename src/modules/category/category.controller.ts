@@ -3,13 +3,14 @@ import { AuthRequest } from "../../middlewares/authMiddelware";
 import { categoryService } from "./category.service";
 import { AppError } from "../../middlewares/errorHandler";
 import { logAudit } from "../../services/audit.service";
+import { ListCategoryInput } from "./category.schema";
 
 export const categoryController = {
   /* ================= LIST ================= */
 
   async list(req: AuthRequest, res: Response, next: NextFunction) {
     try {
-      const data = await categoryService.list(req.query as any);
+      const data = await categoryService.list(req.query as unknown as ListCategoryInput);
       res.json({ success: true, data });
     } catch (err) {
       next(err);

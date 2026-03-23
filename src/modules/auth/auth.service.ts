@@ -53,7 +53,8 @@ export const authService = {
 
     if (!valid) throw new AppError("Invalid credentials", 401);
 
-    return user;
+    const { password: _, ...safeUser } = user;
+    return safeUser;
   },
 
   /* =====================================================
@@ -109,9 +110,10 @@ export const authService = {
 
     const hashed = await bcrypt.hash(newPassword, SALT_ROUNDS);
 
-    await db.update(users).set({ password: hashed }).where(eq(users.id, record.userId));
-
-    await db.delete(passwordResetTokens).where(eq(passwordResetTokens.id, record.id));
+    await db.transaction(async (tx) => {
+      await tx.update(users).set({ password: hashed }).where(eq(users.id, record.userId));
+      await tx.delete(passwordResetTokens).where(eq(passwordResetTokens.id, record.id));
+    });
   },
 
   /* =====================================================

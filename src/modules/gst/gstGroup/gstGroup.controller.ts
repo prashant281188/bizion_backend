@@ -1,35 +1,45 @@
-import { Request, Response } from "express";
+import { NextFunction, Response } from "express";
+import { AuthRequest } from "../../../middlewares/authMiddelware";
 import { gstGroupService } from "./gstGroup.service";
+import { logAudit } from "../../../services/audit.service";
+import { ListGstGroupInput } from "./gstGroup.schema";
 
 export const gstGroupController = {
+  async list(req: AuthRequest, res: Response, next: NextFunction) {
+    try {
+      const data = await gstGroupService.list(req.query as unknown as ListGstGroupInput);
+      res.json({ success: true, data });
+    } catch (err) { next(err); }
+  },
 
-    async getGstGroups(req: Request, res: Response) {
+  async getById(req: AuthRequest, res: Response, next: NextFunction) {
+    try {
+      const data = await gstGroupService.getById(req.params.id);
+      res.json({ success: true, data });
+    } catch (err) { next(err); }
+  },
 
-        const data = await gstGroupService.getGstGroups();
-        res.json({
-            success: true,
-            message: "Gst Group Fetched",
-            data
-        })
-    },
+  async create(req: AuthRequest, res: Response, next: NextFunction) {
+    try {
+      const data = await gstGroupService.create(req.body);
+      await logAudit({ userId: req.user!.userId, action: "gst:group:create", entity: "gstGroup", entityId: data.id });
+      res.status(201).json({ success: true, message: "GST group created", data });
+    } catch (err) { next(err); }
+  },
 
-    async getGstGroupById(req: Request, res: Response) {
-        const id = req.params.id;
+  async update(req: AuthRequest, res: Response, next: NextFunction) {
+    try {
+      const data = await gstGroupService.update(req.params.id, req.body);
+      await logAudit({ userId: req.user!.userId, action: "gst:group:update", entity: "gstGroup", entityId: data.id });
+      res.json({ success: true, message: "GST group updated", data });
+    } catch (err) { next(err); }
+  },
 
-        const data = await gstGroupService.getGstGroupById(id);
-
-        res.json({
-            success: true,
-            message: "Gst Group Fetched",
-            data
-        })
-    },
-
-    async createGstGroup(req: Request, res:Response){
-        const name = req.body
-
-        const group = await gstGroupService.createGstGroup(name)
-
-        res.json()
-    }
-}
+  async remove(req: AuthRequest, res: Response, next: NextFunction) {
+    try {
+      await gstGroupService.remove(req.params.id);
+      await logAudit({ userId: req.user!.userId, action: "gst:group:delete", entity: "gstGroup", entityId: req.params.id });
+      res.json({ success: true, message: "GST group deleted" });
+    } catch (err) { next(err); }
+  },
+};

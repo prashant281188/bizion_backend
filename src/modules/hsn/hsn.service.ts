@@ -1,4 +1,4 @@
-import { eq, ilike, sql } from "drizzle-orm";
+import { and, eq, ilike, sql } from "drizzle-orm";
 import { db } from "../../config/db";
 import { hsnCodes } from "../../db/schema";
 import { AppError } from "../../middlewares/errorHandler";
@@ -8,9 +8,10 @@ export const hsnService = {
   async list({ page = 1, limit = 10, search }: ListHsnInput) {
     const offset = (page - 1) * limit;
 
+    const activeFilter = eq(hsnCodes.isActive, true);
     const where = search
-      ? ilike(hsnCodes.hsnCode, `%${search}%`)
-      : undefined;
+      ? and(activeFilter, ilike(hsnCodes.hsnCode, `%${search}%`))
+      : activeFilter;
 
     const [items, [{ count }]] = await Promise.all([
       db.query.hsnCodes.findMany({

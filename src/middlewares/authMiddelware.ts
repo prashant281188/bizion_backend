@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import { AppError } from "./errorHandler";
+import { ENV } from "../config/env";
 
 export interface AuthRequest extends Request {
   user?: { userId: string; roleId: string };
@@ -11,24 +12,20 @@ export const authMiddleware = (
   _res: Response,
   next: NextFunction
 ) => {
-  const token = req.cookies?.token;
-
-  if (!token) throw new AppError("Unauthorized", 401);
   try {
+    const token = req.cookies?.token;
 
-    const decoded = jwt.verify(
-      token,
-      process.env.JWT_SECRET!
-    ) as any;
+    if (!token) return next(new AppError("Unauthorized", 401));
 
-    req.user = {
-      userId: decoded.userId,
-      roleId: decoded.roleId,
+    const decoded = jwt.verify(token, ENV.JWT_SECRET) as {
+      userId: string;
+      roleId: string;
     };
 
+    req.user = { userId: decoded.userId, roleId: decoded.roleId };
+
     next();
-  }
-  catch {
-    return next(new AppError("Unauthorized", 401))
+  } catch {
+    next(new AppError("Unauthorized", 401));
   }
 };

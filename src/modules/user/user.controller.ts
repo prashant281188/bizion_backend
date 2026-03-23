@@ -3,6 +3,7 @@ import { logAudit } from "../../services/audit.service";
 import { AppError } from "../../middlewares/errorHandler";
 import { userService } from "./user.service";
 import { AuthRequest } from "../../middlewares/authMiddelware";
+import { ListUserInput } from "./user.schema";
 
 export const userController = {
   /* ================= LIST ================= */
@@ -10,7 +11,7 @@ export const userController = {
   async list(req: AuthRequest, res: Response, next: NextFunction) {
     try {
       
-      const data = await userService.list(req.query);
+      const data = await userService.list(req.query as unknown as ListUserInput);
       res.json({ success: true, data });
     } catch (err) {
       next(err);
