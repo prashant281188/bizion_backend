@@ -38,11 +38,11 @@ export async function uploadToS3(
 }
 
 /* =====================================================
-   URL HELPER — construct full public URL from a stored key
+   URL HELPER — construct full public URL via CloudFront
 ===================================================== */
 
 export function getS3Url(key: string): string {
-  return `https://${ENV.AWS_S3_BUCKET}.s3.${ENV.AWS_REGION}.amazonaws.com/${key}`;
+  return `${ENV.CLOUDFRONT_URL}/${key}`;
 }
 
 /* =====================================================
