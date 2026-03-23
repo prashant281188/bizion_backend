@@ -1,12 +1,12 @@
 import { Router } from "express";
 import { userController } from "./user.controller";
-import { authMiddleware } from "../../middlewares/authMiddleware";
+import { authMiddleware } from "../../middlewares/authMiddelware";
 import { requirePermission } from "../../middlewares/requirePermission";
 import { validateSchema } from "../../middlewares/validateSchema";
 import {
-  listSchema,
-  createSchema,
-  updateSchema,
+  listUserSchema,
+  createUserSchema,
+  updateUserSchema,
 } from "./user.schema";
 
 const router = Router();
@@ -16,8 +16,8 @@ const router = Router();
 router.get(
   "/",
   authMiddleware,
-  validateSchema(listSchema, "query"),
   requirePermission("user:read"),
+  validateSchema(listUserSchema, "query"),
   userController.list
 );
 
@@ -35,8 +35,8 @@ router.get(
 router.post(
   "/",
   authMiddleware,
-  validateSchema(createSchema),
   requirePermission("user:create"),
+  validateSchema(createUserSchema),
   userController.create
 );
 
@@ -45,8 +45,8 @@ router.post(
 router.put(
   "/:id",
   authMiddleware,
-  validateSchema(updateSchema),
   requirePermission("user:update"),
+  validateSchema(updateUserSchema),
   userController.update
 );
 
