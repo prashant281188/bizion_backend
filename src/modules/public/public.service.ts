@@ -35,6 +35,24 @@ function resolveImageUrl(image: { path: string } | null | undefined) {
   return { url: getS3Url(image.path) };
 }
 
+/** Sort variants: Size position first, then Finish position */
+function sortVariants(variants: any[]): any[] {
+  const pos = (variant: any, optionName: string): number => {
+    for (const ov of variant.optionValues) {
+      if (ov.optionValue?.option?.optionName === optionName) {
+        return ov.optionValue.position ?? 9999;
+      }
+    }
+    return 9999;
+  };
+
+  return [...variants].sort((a, b) => {
+    const sizeDiff = pos(a, "Size") - pos(b, "Size");
+    if (sizeDiff !== 0) return sizeDiff;
+    return pos(a, "Finish") - pos(b, "Finish");
+  });
+}
+
 /** Pick the latest rate entry for a variant */
 function latestRate(rates: any[]) {
   if (!rates.length) return null;
@@ -172,8 +190,8 @@ export const publicService = {
 
     if (!product) throw new AppError("Product not found", 404);
 
-    // Transform variants into a clean shape
-    const variants = product.variants.map((v) => {
+    // Transform variants into a clean shape, sorted by Size then Finish
+    const variants = sortVariants(product.variants).map((v) => {
       const rate = latestRate(v.rates);
       const optionObj: Record<string, string> = {};
       for (const ov of v.optionValues) {
@@ -279,7 +297,7 @@ export const publicService = {
 
       const { brand: _b, category: _c, variants, image, ...productData } = p;
 
-      const transformedVariants = variants.map((v) => {
+      const transformedVariants = sortVariants(variants).map((v) => {
         const rate = latestRate(v.rates);
         const options: Record<string, string> = {};
         for (const ov of v.optionValues) {
