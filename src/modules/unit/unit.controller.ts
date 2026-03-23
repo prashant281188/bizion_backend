@@ -7,8 +7,8 @@ import { ListUnitInput } from "./unit.schema";
 export const unitController = {
   async list(req: AuthRequest, res: Response, next: NextFunction) {
     try {
-      const data = await unitService.list(req.query as unknown as ListUnitInput);
-      res.json({ success: true, data });
+      const result = await unitService.list(req.query as unknown as ListUnitInput);
+      res.json({ success: true, data: result.items, meta: result.meta });
     } catch (err) { next(err); }
   },
 

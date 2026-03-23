@@ -9,8 +9,8 @@ export const optionController = {
 
   async list(req: AuthRequest, res: Response, next: NextFunction) {
     try {
-      const data = await optionService.list(req.query as unknown as ListOptionInput);
-      res.json({ success: true, data });
+      const result = await optionService.list(req.query as unknown as ListOptionInput);
+      res.json({ success: true, data: result.items, meta: result.meta });
     } catch (err) { next(err); }
   },
 

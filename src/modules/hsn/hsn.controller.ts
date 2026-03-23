@@ -9,8 +9,8 @@ export const hsnController = {
 
   async list(req: AuthRequest, res: Response, next: NextFunction) {
     try {
-      const data = await hsnService.list(req.query as unknown as ListHsnInput);
-      res.json({ success: true, data });
+      const result = await hsnService.list(req.query as unknown as ListHsnInput);
+      res.json({ success: true, data: result.items, meta: result.meta });
     } catch (err) {
       next(err);
     }

@@ -7,8 +7,8 @@ import { ListGstGroupInput } from "./gstGroup.schema";
 export const gstGroupController = {
   async list(req: AuthRequest, res: Response, next: NextFunction) {
     try {
-      const data = await gstGroupService.list(req.query as unknown as ListGstGroupInput);
-      res.json({ success: true, data });
+      const result = await gstGroupService.list(req.query as unknown as ListGstGroupInput);
+      res.json({ success: true, data: result.items, meta: result.meta });
     } catch (err) { next(err); }
   },
 

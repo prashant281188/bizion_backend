@@ -11,8 +11,8 @@ export const userController = {
   async list(req: AuthRequest, res: Response, next: NextFunction) {
     try {
       
-      const data = await userService.list(req.query as unknown as ListUserInput);
-      res.json({ success: true, data });
+      const result = await userService.list(req.query as unknown as ListUserInput);
+      res.json({ success: true, data: result.items, meta: result.meta });
     } catch (err) {
       next(err);
     }

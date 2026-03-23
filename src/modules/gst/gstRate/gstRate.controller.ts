@@ -7,8 +7,8 @@ import { ListGstRateInput } from "./gstRate.schema";
 export const gstRateController = {
   async list(req: AuthRequest, res: Response, next: NextFunction) {
     try {
-      const data = await gstRateService.list(req.query as unknown as ListGstRateInput);
-      res.json({ success: true, data });
+      const result = await gstRateService.list(req.query as unknown as ListGstRateInput);
+      res.json({ success: true, data: result.items, meta: result.meta });
     } catch (err) { next(err); }
   },
 

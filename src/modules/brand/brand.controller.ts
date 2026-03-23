@@ -7,8 +7,8 @@ import { ListBrandInput } from "./brand.schema";
 export const brandController = {
   async list(req: AuthRequest, res: Response, next: NextFunction) {
     try {
-      const data = await brandService.list(req.query as unknown as ListBrandInput);
-      res.json({ success: true, data });
+      const result = await brandService.list(req.query as unknown as ListBrandInput);
+      res.json({ success: true, data: result.items, meta: result.meta });
     } catch (err) { next(err); }
   },
 

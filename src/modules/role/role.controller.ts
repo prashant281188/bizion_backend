@@ -9,8 +9,8 @@ export const roleController = {
 
   async listRoles(req: AuthRequest, res: Response, next: NextFunction) {
     try {
-      const data = await roleService.listRoles(req.query as unknown as ListRoleInput);
-      res.json({ success: true, data });
+      const result = await roleService.listRoles(req.query as unknown as ListRoleInput);
+      res.json({ success: true, data: result.items, meta: result.meta });
     } catch (err) { next(err); }
   },
 
@@ -65,8 +65,8 @@ export const roleController = {
 
   async listPermissions(req: AuthRequest, res: Response, next: NextFunction) {
     try {
-      const data = await roleService.listPermissions(req.query as unknown as ListPermissionInput);
-      res.json({ success: true, data });
+      const result = await roleService.listPermissions(req.query as unknown as ListPermissionInput);
+      res.json({ success: true, data: result.items, meta: result.meta });
     } catch (err) { next(err); }
   },
 
