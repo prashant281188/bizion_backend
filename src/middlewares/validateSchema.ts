@@ -16,8 +16,17 @@ export const validateSchema =
       });
     }
 
-    // ✅ Instead of reassigning, mutate existing object
-    Object.assign(req[location], parsed.data);
+    // Shadow the prototype getter (e.g. req.query) with an own property
+    // so the coerced/defaulted values are visible to downstream handlers.
+    // Object.assign(req[location], ...) doesn't work for req.query because
+    // Express defines it as a getter on the prototype — each access returns
+    // a fresh object, so mutations are silently discarded.
+    Object.defineProperty(req, location, {
+      value: parsed.data,
+      writable: true,
+      enumerable: true,
+      configurable: true,
+    });
 
     next();
   };
