@@ -1,319 +1,248 @@
-
-import { and, eq, ilike, sql, inArray, asc, desc } from "drizzle-orm";
-import {
-  brands, carousel, categories, products, productVariants,
-  variantOptionValues,
-  optionValues,
-  options,
-  variantRates
-} from "../../db/schema";
+import { and, asc, desc, eq, ilike, sql } from "drizzle-orm";
 import { db } from "../../config/db";
-import { transformProduct } from "../../utils/transformProducts";
-type QueryParams = {
-  page?: number
-  limit?: number
-  category?: string
-  brand?: string
-  size?: string[]
-  finish?: string[]
-  sort?: string
-}
-export const publicService = {
+import { brands, carousel, categories, products, variantRates } from "../../db/schema";
+import { AppError } from "../../middlewares/errorHandler";
+import { ListProductsInput } from "./public.schema";
 
+/* =====================================================
+   HELPERS
+===================================================== */
+
+/** Aggregate distinct option values per option name across all variants */
+function buildOptions(variants: any[]): { name: string; values: string[] }[] {
+  const map: Record<string, Set<string>> = {};
+
+  for (const variant of variants) {
+    for (const ov of variant.optionValues) {
+      const name: string = ov.optionValue?.option?.optionName;
+      const value: string = ov.optionValue?.optionValue;
+      if (!name || !value) continue;
+      if (!map[name]) map[name] = new Set();
+      map[name].add(value);
+    }
+  }
+
+  return Object.entries(map).map(([name, values]) => ({
+    name,
+    values: Array.from(values).sort(),
+  }));
+}
+
+/** Pick the latest rate entry for a variant */
+function latestRate(rates: any[]) {
+  if (!rates.length) return null;
+  return rates.reduce((a, b) =>
+    new Date(a.createdAt) > new Date(b.createdAt) ? a : b
+  );
+}
+
+/* =====================================================
+   SERVICE
+===================================================== */
+
+export const publicService = {
+  /* ===== CATEGORIES ===== */
 
   async getActiveCategories() {
-    return db.query.categories.findMany({
+    const rows = await db.query.categories.findMany({
       where: eq(categories.isActive, true),
-      orderBy: categories.categoryName,
-      columns: {
-        id: true,
-        categoryName: true
+      orderBy: asc(categories.categoryName),
+      columns: { id: true, categoryName: true, parentId: true, description: true },
+    });
+
+    // Build hierarchy: parent → children
+    const map: Record<string, any> = {};
+    for (const row of rows) map[row.id] = { ...row, children: [] };
+
+    const roots: any[] = [];
+    for (const row of rows) {
+      if (row.parentId && map[row.parentId]) {
+        map[row.parentId].children.push(map[row.id]);
+      } else {
+        roots.push(map[row.id]);
       }
-    })
+    }
+
+    return roots;
   },
+
+  /* ===== BRANDS ===== */
 
   async getBrands() {
-    return db.select().from(brands).orderBy(brands.brandName)
+    return db.select().from(brands).orderBy(asc(brands.brandName));
   },
 
-  async getProducts({ page = 1, limit = 10, search = "", category = "", brand = "" }) {
+  /* ===== PRODUCT LISTING ===== */
 
+  async getProducts({ page = 1, limit = 20, search, categoryId, brandId, sort = "model_asc" }: ListProductsInput) {
     const offset = (page - 1) * limit;
 
-    const conditions = []
+    const conditions = [eq(products.isDeleted, false), eq(products.isActive, true)];
+    if (search) conditions.push(ilike(products.model, `%${search}%`));
+    if (categoryId) conditions.push(eq(products.categoryId, categoryId));
+    if (brandId) conditions.push(eq(products.brandId, brandId));
 
-    if (category) {
-      conditions.push(eq(products.categoryId, category))
-    }
+    const where = and(...conditions);
 
-    if (brand) {
-      conditions.push(eq(products.brandId, brand))
+    const orderBy =
+      sort === "model_desc" ? [desc(products.model)]
+      : sort === "newest"   ? [desc(products.createdAt)]
+      :                       [asc(products.model)];
 
-    }
-    if (search) {
-      conditions.push(ilike(products.model, `%${search}%`))
-    }
-
-    const whereClause =
-      conditions.length > 0 ? and(...conditions) : undefined
-
-
-
-    const data = await db.query.products.findMany({
-      where: whereClause,
-      limit,
-      offset,
-      orderBy: [products.categoryId, products.model],
-      columns: {
-        id: true,
-        model: true,
-        metal: true,
-        isActive: true,
-      },
-      with: {
-        unit: {
-          columns: {
-            unitSymbol: true
-          }
+    const [items, [{ count }]] = await Promise.all([
+      db.query.products.findMany({
+        where,
+        limit,
+        offset,
+        orderBy,
+        columns: {
+          id: true,
+          model: true,
+          metal: true,
+          shortDescription: true,
+          sizeType: true,
+          isFeatured: true,
+          isNew: true,
+          createdAt: true,
         },
-        brand: {
-          columns: {
-            brandName: true,
-            brandLogo: true
-          }
+        with: {
+          brand: { columns: { id: true, brandName: true, brandLogo: true } },
+          category: { columns: { id: true, categoryName: true } },
+          image: { columns: { path: true } },
         },
-        category: {
-          columns: {
-            categoryName: true
-          }
-        },
-        image: {
-          columns: {
-            path: true
-          }
-        }
-
-      }
-    })
-
-    const [{ count }] = await db
-      .select({ count: sql<number>`count(*)` })
-      .from(products)
-      .where(whereClause);
+      }),
+      db.select({ count: sql<number>`count(*)` }).from(products).where(where),
+    ]);
 
     return {
-      data,
-      meta: {
-        page,
-        limit,
-        total: Number(count),
-        totalPages: Math.ceil(Number(count) / limit)
-      }
-    }
+      items,
+      meta: { page, limit, total: Number(count), totalPages: Math.ceil(Number(count) / limit) },
+    };
   },
+
+  /* ===== PRODUCT DETAIL ===== */
 
   async getProductDetail(id: string) {
-    const data = await (db.query.products.findFirst({
-      where: eq(products.id, id),
+    const product = await db.query.products.findFirst({
+      where: and(eq(products.id, id), eq(products.isDeleted, false), eq(products.isActive, true)),
       columns: {
-        isActive: true,
-        metal: true,
-        model: true,
         id: true,
+        model: true,
+        metal: true,
+        shortDescription: true,
+        description: true,
         sizeType: true,
+        status: true,
+        isFeatured: true,
+        isNew: true,
       },
-
       with: {
-        unit: {
-          columns: {
-            unitName: true,
-            unitSymbol: true
-          }
-        },
-        category: {
-          columns: {
-            categoryName: true
-          }
-        },
-        brand: {
-          columns: {
-            brandName: true,
-            brandLogo: true
-          }
-        },
-
-
+        brand: { columns: { id: true, brandName: true, brandLogo: true } },
+        category: { columns: { id: true, categoryName: true } },
+        hsn: { columns: { hsnCode: true } },
+        unit: { columns: { unitName: true, unitSymbol: true } },
+        image: { columns: { path: true } },
         variants: {
-
-          columns: {
-            id: true,
-            packing: true,
-            sku: true
-          },
-
+          columns: { id: true, sku: true, packing: true },
           with: {
+            rates: {
+              columns: { mrp: true, saleRate: true, purchaseRate: true, createdAt: true },
+              orderBy: (r, { desc }) => [desc(r.createdAt)],
+            },
             optionValues: {
               columns: {},
-
               with: {
                 optionValue: {
-
-                  columns: {
-                    optionValue: true,
-                    position: true
-                  },
-                  with: {
-                    option: {
-                      columns: {
-                        optionName: true
-
-                      }
-                    }
-                  },
+                  columns: { id: true, optionValue: true, position: true },
+                  with: { option: { columns: { optionName: true } } },
                 },
-              }
-            },
-            rates: {
-              columns: {
-                mrp: true
-              }
+              },
             },
           },
-        }
+        },
       },
+    });
 
-    },))
+    if (!product) throw new AppError("Product not found", 404);
 
-    return transformProduct(data)
+    // Transform variants into a clean shape
+    const variants = product.variants.map((v) => {
+      const rate = latestRate(v.rates);
+      const optionObj: Record<string, string> = {};
+      for (const ov of v.optionValues) {
+        if (ov.optionValue?.option?.optionName && ov.optionValue?.optionValue) {
+          optionObj[ov.optionValue.option.optionName] = ov.optionValue.optionValue;
+        }
+      }
+      return {
+        id: v.id,
+        sku: v.sku,
+        packing: v.packing,
+        mrp: rate?.mrp ?? null,
+        saleRate: rate?.saleRate ?? null,
+        purchaseRate: rate?.purchaseRate ?? null,
+        options: optionObj,
+      };
+    });
+
+    const { variants: _, ...productData } = product;
+
+    return {
+      ...productData,
+      options: buildOptions(product.variants),
+      variants,
+    };
   },
+
+  /* ===== CATALOG (lightweight full listing for catalog pages) ===== */
+
+  async getCatalog() {
+    const rows = await db.query.products.findMany({
+      where: and(eq(products.isDeleted, false), eq(products.isActive, true)),
+      orderBy: [asc(products.categoryId), asc(products.model)],
+      columns: { id: true, model: true, metal: true, sizeType: true, slug: true },
+      with: {
+        brand: { columns: { brandName: true } },
+        category: { columns: { categoryName: true } },
+        image: { columns: { path: true } },
+        variants: {
+          columns: { sku: true, packing: true },
+          with: {
+            rates: {
+              columns: { mrp: true, saleRate: true },
+              orderBy: (r, { desc }) => [desc(r.createdAt)],
+            },
+          },
+        },
+      },
+    });
+
+    // Group by category
+    const grouped: Record<string, { categoryName: string; products: any[] }> = {};
+    for (const p of rows) {
+      const key = p.category?.categoryName ?? "Uncategorised";
+      if (!grouped[key]) grouped[key] = { categoryName: key, products: [] };
+
+      const { category: _, variants, ...rest } = p;
+      grouped[key].products.push({
+        ...rest,
+        variants: variants.map((v) => ({
+          sku: v.sku,
+          packing: v.packing,
+          mrp: v.rates[0]?.mrp ?? null,
+          saleRate: v.rates[0]?.saleRate ?? null,
+        })),
+      });
+    }
+
+    return Object.values(grouped);
+  },
+
+  /* ===== CAROUSEL ===== */
 
   async getCarouselData() {
     return db.query.carousel.findMany({
       where: eq(carousel.isActive, true),
-
-    })
+    });
   },
-
-  async getProductDetailNew(id: string) {
-    const result = await db.execute(sql`
-    
-    WITH variant_options AS (
-  SELECT
-    pv.id AS variant_id,
-    pv.product_id,
-    pv.sku,
-    jsonb_object_agg(opt.option_name, ov.option_value ORDER BY ov.position) AS options
-  FROM bizion.public.product_variants pv
-  left JOIN bizion.public.variant_option_values vov 
-    ON pv.id = vov.variant_id
- left JOIN bizion.public.option_values ov 
-    ON vov.option_value_id = ov.id
- left JOIN bizion.public.options opt 
-    ON ov.option_id = opt.id
-  GROUP BY pv.id, pv.product_id, pv.sku
-),
-
--- ✅ deduplicate once
-dedup_option_values AS (
-  SELECT
-    pv.product_id,
-    opt.option_name AS option_name,
-    ov.option_value,
-    ov.position
-  FROM bizion.public.product_variants pv
- left JOIN bizion.public.variant_option_values vov 
-    ON pv.id = vov.variant_id
- left JOIN bizion.public.option_values ov 
-    ON vov.option_value_id = ov.id
- left JOIN bizion.public.options opt 
-    ON ov.option_id = opt.id
-  GROUP BY
-    pv.product_id,
-    opt.option_name,
-    ov.option_value,
-    ov.position
-)
-
-SELECT
-  p.id,
-  p.model,
-  p.image_id,
-  c.category_name AS category,
-  b.brand_name AS brand,
-  p.size_type,
-  u.unit_symbol AS unit,
-
-  -- 🔥 variants
-  jsonb_agg(
-    jsonb_build_object(
-      'variant_id', vo.variant_id,
-      'sku', vo.sku,
-      'options', vo.options
-    )
-    ORDER BY vo.sku
-  ) AS variants,
-
-  -- 🔥 sizes (distinct + ordered)
-  COALESCE(
-    (
-      SELECT jsonb_agg(option_value ORDER BY position)
-      FROM dedup_option_values d
-      WHERE d.product_id = p.id
-        AND d.option_name = 'size'
-    ),
-    '[]'::jsonb
-  ) AS sizes,
-
-  -- 🔥 finishes (distinct + ordered)
-  COALESCE(
-    (
-      SELECT jsonb_agg(option_value ORDER BY position)
-      FROM dedup_option_values d
-      WHERE d.product_id = p.id
-        AND d.option_name = 'finish'
-    ),
-    '[]'::jsonb
-  ) AS finishes
-
-FROM bizion.public.products p
-
-left JOIN bizion.public.product_variants pv 
-  ON pv.product_id = p.id
-
-left JOIN variant_options vo 
-  ON vo.variant_id = pv.id
-
-left JOIN bizion.public.categories c 
-  ON p.category_id = c.id
-
-left JOIN bizion.public.brands b 
-  ON p.brand_id = b.id
-
-left JOIN bizion.public.units u 
-  ON p.unit_id = u.id
-
-LEFT JOIN bizion.public.product_images i 
-  ON p.image_id = i.id
-
--- ⚡ IMPORTANT: filter early
-WHERE p.id = ${id}
-
-GROUP BY
-  p.id,
-  p.model,
-  p.image_id,
-  c.category_name,
-  b.brand_name,
-  p.size_type,
-  u.unit_symbol;
-  `)
-
-    return result[0]
-  },
-
-  async getCatalogProducts() {
-    return "all"
-  }
-
-
 };
