@@ -28,6 +28,10 @@ async function seed() {
     "user:create",
     "user:update",
     "user:delete",
+    "brand:read",
+    "brand:create",
+    "brand:update",
+    "brand:delete",
   ];
 
   const permIds = perms.map((code) => ({

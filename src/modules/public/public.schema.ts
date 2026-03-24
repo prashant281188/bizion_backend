@@ -4,7 +4,7 @@ const uuid = z.string().uuid();
 
 export const listProductsSchema = z.object({
   page: z.coerce.number().min(1).default(1),
-  limit: z.coerce.number().min(1).max(100).default(20),
+  limit: z.coerce.number().min(1).max(999).default(20),
   search: z.string().optional(),
   categoryId: uuid.optional(),
   brandId: uuid.optional(),
