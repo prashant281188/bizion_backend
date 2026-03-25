@@ -16,22 +16,24 @@ app.disable("x-powered-by");
 
 app.use(helmet({ contentSecurityPolicy: false }));
 app.use(globalLimiter);
-const allowedOrigins = [
-  "http://localhost:3000",
-  "http://192.168.29.120:3000",
-  "http://192.168.31.216:3000",
-];
+const allowedOrigins = process.env.CORS_ORIGIN?.split(",") || [];
 
-app.use(cors({
-  origin: function (origin, callback) {
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error("Not allowed by CORS"));
-    }
-  },
-  credentials: true,
-}));
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      if (!origin) return callback(null, true);
+
+      const isAllowed = allowedOrigins.some(o =>
+        origin === o || origin.endsWith(".hinihardware.in")
+      );
+
+      if (isAllowed) return callback(null, true);
+
+      return callback(new Error(`CORS blocked: ${origin}`));
+    },
+    credentials: true,
+  })
+);
 
 app.use(express.json({ limit: "1mb" }));
 app.use(express.urlencoded({ extended: true, limit: "1mb" }));

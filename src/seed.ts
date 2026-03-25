@@ -1,3 +1,4 @@
+import { randomUUID as uuid } from "crypto";
 import { db } from "./config/db";
 import { productList } from "./data";
 import { categories, permissions, products } from "./db/schema";
@@ -6,14 +7,13 @@ import { roles } from "./db/schema/role";
 import { rolePermissions } from "./db/schema/rolePermission";
 import { users } from "./db/schema/user";
 import bcrypt from "bcrypt";
-import { v4 as uuid } from "uuid";
 
 async function seed() {
   const adminRoleId = uuid();
 
   await db.insert(roles).values([
     { id: adminRoleId, name: "admin" },
-  ]);
+  ]).onConflictDoNothing();
 
   const perms = [
     "category:read",
@@ -39,14 +39,14 @@ async function seed() {
     code,
   }));
 
-  await db.insert(permissions).values(permIds);
+  await db.insert(permissions).values(permIds).onConflictDoNothing();
 
   await db.insert(rolePermissions).values(
     permIds.map((p) => ({
       roleId: adminRoleId,
       permissionId: p.id,
     }))
-  );
+  ).onConflictDoNothing();
 
   const hashed = await bcrypt.hash("Admin@123", 10);
 
@@ -55,7 +55,7 @@ async function seed() {
     email: "admin@example.com",
     password: hashed,
     roleId: adminRoleId,
-  });
+  }).onConflictDoNothing();
 
 
   const categoriesList = [
@@ -73,7 +73,7 @@ async function seed() {
     categoryName
   }))
 
-  await db.insert(categories).values(categoriesIds)
+  await db.insert(categories).values(categoriesIds).onConflictDoNothing()
 
 
   const brandsList = [
@@ -88,9 +88,9 @@ async function seed() {
     id: uuid(),
     brandName: brand
   }))
-  await db.insert(brands).values(brandIds)
+  await db.insert(brands).values(brandIds).onConflictDoNothing()
 
-  await db.insert(products).values(productList)
+  await db.insert(products).values(productList).onConflictDoNothing()
 
   console.log("✅ Seed completed");
   process.exit(0);
