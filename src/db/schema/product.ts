@@ -15,6 +15,7 @@ import { hsnCodes } from "./hsnCodes";
 import { units } from "./unit";
 import { productImages } from "./productImage";
 
+
 export const products = pgTable(
   "products",
   {
@@ -45,6 +46,8 @@ export const products = pgTable(
     sizeType: text("size_type"),
 
     isActive: boolean("is_active").default(true).notNull(),
+    inStock :boolean("in_stock").default(false),
+
 
     isFeatured: boolean("is_featured").default(false),
     isNew: boolean("is_new").default(false),
@@ -58,7 +61,7 @@ export const products = pgTable(
     updatedAt: timestamp("updated_at").defaultNow().notNull(),
   },
   (table) => [
-    uniqueIndex("products_brand_model_unique").on( table.brandId, table.model),
+    uniqueIndex("products_brand_model_unique").on(table.brandId, table.model),
     index("products_model_idx").on(table.model),
     index("products_category_idx").on(table.categoryId),
   ])

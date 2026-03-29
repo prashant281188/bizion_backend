@@ -25,7 +25,8 @@ export const authController = {
 
   async login(req: Request, res: Response, next: NextFunction) {
     try {
-      const user = await authService.login(req.body);
+      const ip = (req.headers["x-forwarded-for"] as string)?.split(",")[0]?.trim() ?? req.socket.remoteAddress;
+      const user = await authService.login({ ...req.body, ip });
 
       const token = jwt.sign(
         { userId: user.id, roleId: user.roleId },
@@ -36,7 +37,7 @@ export const authController = {
       res.cookie("token", token, {
         httpOnly: true,
         secure: ENV.NODE_ENV === "production",
-        sameSite: "lax",
+        sameSite: ENV.NODE_ENV === "production" ? "none" : "lax",
         maxAge: 60 * 60 * 1000,
       });
 
@@ -50,7 +51,11 @@ export const authController = {
 
   async logout(_req: Request, res: Response, next: NextFunction) {
     try {
-      res.clearCookie("token");
+      res.clearCookie("token", {
+        httpOnly: true,
+        secure: ENV.NODE_ENV === "production",
+        sameSite: ENV.NODE_ENV === "production" ? "none" : "lax",
+      });
       res.json({ success: true, message: "Logged out" });
     } catch (err) {
       next(err);
@@ -73,10 +78,18 @@ export const authController = {
   async forgotPassword(req: Request, res: Response, next: NextFunction) {
     try {
       await authService.forgotPassword(req.body.email);
-      res.json({
-        success: true,
-        message: "If email exists, reset link sent",
-      });
+      res.json({ success: true, message: "If the email exists, an OTP has been sent" });
+    } catch (err) {
+      next(err);
+    }
+  },
+
+  /* ================= VERIFY OTP ================= */
+
+  async verifyOtp(req: Request, res: Response, next: NextFunction) {
+    try {
+      const token = await authService.verifyOtp(req.body.email, req.body.otp);
+      res.json({ success: true, message: "OTP verified", data: { token } });
     } catch (err) {
       next(err);
     }
@@ -88,6 +101,17 @@ export const authController = {
     try {
       await authService.resetPassword(req.body.token, req.body.newPassword);
       res.json({ success: true, message: "Password reset successful" });
+    } catch (err) {
+      next(err);
+    }
+  },
+
+  /* ================= UPDATE PROFILE ================= */
+
+  async updateProfile(req: AuthRequest, res: Response, next: NextFunction) {
+    try {
+      const user = await authService.updateProfile(req.user!.userId, req.body);
+      res.json({ success: true, message: "Profile updated", data: user });
     } catch (err) {
       next(err);
     }

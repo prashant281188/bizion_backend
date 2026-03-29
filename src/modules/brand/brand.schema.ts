@@ -2,17 +2,12 @@ import { z } from "zod";
 
 export const createBrandSchema = z.object({
   brandName: z.string().trim().min(1, "Brand name is required"),
-  brandLogo: z.string().trim().optional(),
 });
 
-export const updateBrandSchema = z
-  .object({
-    brandName: z.string().trim().min(1).optional(),
-    brandLogo: z.string().trim().optional(),
-  })
-  .refine((d) => d.brandName !== undefined || d.brandLogo !== undefined, {
-    message: "At least one field must be provided",
-  });
+export const updateBrandSchema = z.object({
+  brandName: z.string().trim().min(1).optional(),
+  brandLogo: z.string().trim().optional(),
+});
 
 export const listBrandSchema = z.object({
   page: z.coerce.number().min(1).default(1),

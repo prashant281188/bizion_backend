@@ -27,6 +27,7 @@ export function createSku(brand: string, model: string, size?: string, size_type
 }
 
 export function trimAndLower(value: string) {
+  if(!value) return ""
   return String(value).trim().toLocaleLowerCase()
 }
 
@@ -74,7 +75,7 @@ export async function findOrCreateUnit(name: string, symbol: string) {
 
   const inserted = await db.insert(units).values({
     unitName: name, unitSymbol: symbol
-  }).returning()
+  }).returning().onConflictDoNothing()
 
   return inserted[0]
 }

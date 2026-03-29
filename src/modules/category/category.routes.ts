@@ -42,7 +42,7 @@ router.post(
 
 /* ================= UPDATE ================= */
 
-router.put(
+router.patch(
   "/:id",
   authMiddleware,
   requirePermission("category:update"),

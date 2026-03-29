@@ -2,8 +2,9 @@ import { Router } from "express";
 import { authMiddleware } from "../../middlewares/authMiddelware";
 import { requirePermission } from "../../middlewares/requirePermission";
 import { validateSchema } from "../../middlewares/validateSchema";
+import { uploadImages } from "../../middlewares/upload";
 import { productController } from "./product.controller";
-import { createProductSchema, listProductSchema, updateProductSchema } from "./product.schema";
+import { listProductSchema } from "./product.schema";
 
 const router = Router();
 
@@ -27,22 +28,29 @@ router.get(
 );
 
 /* ================= CREATE ================= */
+// Accepts multipart/form-data. Product fields as form fields (variants as JSON string),
+// plus optional files: productImage (single), variantImages (multiple, matched by index to variants array).
 
 router.post(
   "/",
   authMiddleware,
   requirePermission("product:create"),
-  validateSchema(createProductSchema),
+  uploadImages.fields([
+    { name: "productImage", maxCount: 1 },
+    { name: "variantImages", maxCount: 20 },
+  ]),
   productController.create
 );
 
 /* ================= UPDATE ================= */
+// Accepts multipart/form-data. Product fields as form fields,
+// plus optional file: productImage (replaces existing image).
 
 router.patch(
   "/:id",
   authMiddleware,
   requirePermission("product:update"),
-  validateSchema(updateProductSchema),
+  uploadImages.fields([{ name: "productImage", maxCount: 1 }]),
   productController.update
 );
 

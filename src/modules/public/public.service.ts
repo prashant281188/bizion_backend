@@ -72,12 +72,12 @@ export const publicService = {
     const rows = await db.query.categories.findMany({
       where: eq(categories.isActive, true),
       orderBy: asc(categories.categoryName),
-      columns: { id: true, categoryName: true, parentId: true, description: true },
+      columns: { id: true, categoryName: true, parentId: true, categoryImage: true, description: true },
     });
 
     // Build hierarchy: parent → children
     const map: Record<string, any> = {};
-    for (const row of rows) map[row.id] = { ...row, children: [] };
+    for (const row of rows) map[row.id] = { ...row, children: [], categoryImage: row.categoryImage ?? "" };
 
     const roots: any[] = [];
     for (const row of rows) {
@@ -88,7 +88,7 @@ export const publicService = {
       }
     }
 
-    return roots;
+    return rows;
   },
 
   /* ===== BRANDS ===== */
@@ -111,8 +111,8 @@ export const publicService = {
 
     const orderBy =
       sort === "model_desc" ? [desc(products.model)]
-      : sort === "newest"   ? [desc(products.createdAt)]
-      :                       [asc(products.model)];
+        : sort === "newest" ? [desc(products.createdAt)]
+          : [asc(products.model)];
 
     const [items, [{ count }]] = await Promise.all([
       db.query.products.findMany({
@@ -276,10 +276,10 @@ export const publicService = {
     }>();
 
     for (const p of rows) {
-      const brandId   = p.brand?.id   ?? "__no_brand__";
+      const brandId = p.brand?.id ?? "__no_brand__";
       const brandName = p.brand?.brandName ?? "Unbranded";
-      const catId     = p.category?.id   ?? "__no_cat__";
-      const catName   = p.category?.categoryName ?? "Uncategorised";
+      const catId = p.category?.id ?? "__no_cat__";
+      const catName = p.category?.categoryName ?? "Uncategorised";
 
       if (!brandMap.has(brandId)) {
         brandMap.set(brandId, {

@@ -11,6 +11,7 @@
     "db:studio": "npx drizzle-kit studio",
     "db:gen": "npx drizzle-kit generate",
     "seed": "ts-node src/seed.ts",
+    "seed:admin": "ts-node src/seedAdmin.ts",
     "import:products": "tsx src/import/runImport.ts"
   },
   "keywords": [],

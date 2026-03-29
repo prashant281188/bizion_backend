@@ -14,4 +14,5 @@ router.delete("/products/:id/image", authMiddleware, requirePermission("product:
 router.post("/variants/:id/images", authMiddleware, requirePermission("product:update"), uploadImages.single("image"), imageController.uploadVariantImage);
 router.delete("/variants/:id/images/:imageId", authMiddleware, requirePermission("product:update"), imageController.deleteVariantImage);
 
+
 export default router;

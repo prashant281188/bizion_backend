@@ -16,6 +16,7 @@ export const categories = pgTable(
     categoryName: text("category_name").notNull().unique(),
     parentId: uuid("parent_id").references(():any => categories.id),
     description: text("description"),
+    categoryImage: text("category_image"),
 
     isActive: boolean("is_active").default(true).notNull(),
 

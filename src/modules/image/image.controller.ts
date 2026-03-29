@@ -8,6 +8,11 @@ import { logAudit } from "../../services/audit.service";
 import { uploadToS3, deleteFromS3, getS3Url } from "../../services/s3.service";
 
 export const imageController = {
+
+
+
+
+
   /* ===== PRODUCT IMAGE ===== */
 
   async uploadProductImage(req: AuthRequest, res: Response, next: NextFunction) {

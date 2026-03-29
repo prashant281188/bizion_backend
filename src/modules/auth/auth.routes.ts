@@ -8,6 +8,8 @@ import {
   loginSchema,
   registerSchema,
   resetPasswordSchema,
+  updateProfileSchema,
+  verifyOtpSchema,
 } from "./auth.schema";
 import { authMiddleware } from "../../middlewares/authMiddelware";
 
@@ -35,7 +37,6 @@ router.post(
 
 router.post(
   "/logout",
-  authMiddleware,
   authController.logout
 );
 
@@ -47,12 +48,28 @@ router.get(
   authController.me
 );
 
+/* ================= UPDATE PROFILE ================= */
+
+router.patch(
+  "/me",
+  authMiddleware,
+  validateSchema(updateProfileSchema),
+  authController.updateProfile
+);
+
 
 router.post(
   "/forgot-password",
   authLimiter,
   validateSchema(forgotPasswordSchema),
   authController.forgotPassword
+);
+
+router.post(
+  "/verify-otp",
+  authLimiter,
+  validateSchema(verifyOtpSchema),
+  authController.verifyOtp
 );
 
 router.post(

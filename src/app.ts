@@ -16,11 +16,15 @@ app.disable("x-powered-by");
 
 app.use(helmet({ contentSecurityPolicy: false }));
 app.use(globalLimiter);
-const allowedOrigins = process.env.CORS_ORIGIN?.split(",") || [];
+const allowedOrigins = process.env.CORS_ORIGIN
+  ? process.env.CORS_ORIGIN.split(",")
+  : ["http://127.0.0.1:3000", "http://localhost:3000", "http://192.168.29.120:3000"];
 
 app.use(
   cors({
     origin: (origin, callback) => {
+      console.log(origin);
+      
       if (!origin) return callback(null, true);
 
       const isAllowed = allowedOrigins.some(o =>

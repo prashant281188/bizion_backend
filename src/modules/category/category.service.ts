@@ -1,4 +1,4 @@
-import { and, eq, ilike, sql } from "drizzle-orm";
+import { and, asc, eq, ilike, sql } from "drizzle-orm";
 import { categories } from "../../db/schema";
 import { db } from "../../config/db";
 import { AppError } from "../../middlewares/errorHandler";
@@ -17,7 +17,7 @@ export const categoryService = {
       : undefined;
 
     const [items, [{ count }]] = await Promise.all([
-      db.select().from(categories).where(where).limit(limit).offset(offset),
+      db.select().from(categories).where(where).limit(limit).orderBy(asc(categories.categoryName)).offset(offset),
       db.select({ count: sql<number>`count(*)` }).from(categories).where(where),
     ]);
 

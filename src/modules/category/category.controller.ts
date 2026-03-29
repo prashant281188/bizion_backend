@@ -4,6 +4,7 @@ import { categoryService } from "./category.service";
 import { AppError } from "../../middlewares/errorHandler";
 import { logAudit } from "../../services/audit.service";
 import { ListCategoryInput } from "./category.schema";
+import { uploadToS3 } from "../../services/s3.service";
 
 export const categoryController = {
   /* ================= LIST ================= */
@@ -35,7 +36,12 @@ export const categoryController = {
 
   async create(req: AuthRequest, res: Response, next: NextFunction) {
     try {
-      const category = await categoryService.create(req.body);
+
+      if (!req.file) throw new AppError("No image file provided", 400);
+
+      const { key } = await uploadToS3(req.file.buffer, req.file.originalname, req.file.mimetype);
+      const category = await categoryService.create(req.body,);
+
 
       await logAudit({
         userId: req.user!.userId,
