@@ -1,4 +1,4 @@
-import { publicService } from "./public.service";
+import { storeService } from "./store.service";
 
 /* ─────────────────────────────────────────────
    TYPES (mirror getCatalog output)
@@ -59,7 +59,7 @@ function fmtMrp(mrp: string | null): string {
 function variantTable(variants: Variant[]): string {
   if (!variants.length) return `<p class="no-variants">No variants</p>`;
 
-  const sizes    = [...new Set(variants.map(v => v.options["Size"]).filter(Boolean))];
+  const sizes = [...new Set(variants.map(v => v.options["Size"]).filter(Boolean))];
   const finishes = [...new Set(variants.map(v => v.options["Finish"]).filter(Boolean))];
 
   /* ── Full Size × Finish matrix ── */
@@ -116,8 +116,8 @@ function variantTable(variants: Variant[]): string {
 function buildHtml(catalog: Brand[]): string {
   const date = new Date().toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" });
   const totalBrands = catalog.length;
-  const totalCats   = catalog.reduce((a, b) => a + b.categories.length, 0);
-  const totalProds  = catalog.reduce((a, b) => a + b.categories.reduce((x, y) => x + y.products.length, 0), 0);
+  const totalCats = catalog.reduce((a, b) => a + b.categories.length, 0);
+  const totalProds = catalog.reduce((a, b) => a + b.categories.reduce((x, y) => x + y.products.length, 0), 0);
 
   const brandSections = catalog.map(brand => {
     const catSections = brand.categories.map(cat => {
@@ -546,6 +546,6 @@ ${brandSections}
 export async function generateCatalogHtml(
   options: { brandId?: string; categoryId?: string } = {}
 ): Promise<string> {
-  const catalog = await publicService.getCatalog(options) as Brand[];
+  const catalog = await storeService.getCatalog(options) as Brand[];
   return buildHtml(catalog);
 }

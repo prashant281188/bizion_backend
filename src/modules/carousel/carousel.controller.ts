@@ -1,6 +1,6 @@
 import { NextFunction, Response } from "express";
 import { eq } from "drizzle-orm";
-import { AuthRequest } from "../../middlewares/authMiddelware";
+import { AuthRequest } from "../../middlewares/authMiddleware";
 import { carouselService } from "./carousel.service";
 import { logAudit } from "../../services/audit.service";
 import { AppError } from "../../middlewares/errorHandler";

@@ -1,5 +1,5 @@
 import { NextFunction, Response } from "express";
-import { AuthRequest } from "../../middlewares/authMiddelware";
+import { AuthRequest } from "../../middlewares/authMiddleware";
 import { roleService } from "./role.service";
 import { logAudit } from "../../services/audit.service";
 import { ListPermissionInput, ListRoleInput } from "./role.schema";

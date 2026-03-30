@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { authMiddleware } from "../../middlewares/authMiddelware";
+import { authMiddleware } from "../../middlewares/authMiddleware";
 import { requirePermission } from "../../middlewares/requirePermission";
 import { uploadImages } from "../../middlewares/upload";
 import { imageController } from "./image.controller";

@@ -6,7 +6,7 @@ import {
   variantOptionValues,
   variantRates,
   productImages
-} from "../db/schema"
+} from "../../db/schema"
 
 import {
   createProductSlug,
@@ -21,7 +21,7 @@ import {
   trimAndLower
 } from "./helpers"
 
-import { db } from "../config/db"
+import { db } from "../../config/db"
 
 
 

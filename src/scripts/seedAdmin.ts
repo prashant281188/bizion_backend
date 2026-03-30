@@ -1,10 +1,10 @@
 import { randomUUID as uuid } from "crypto";
 import bcrypt from "bcrypt";
-import { db } from "./config/db";
-import { permissions } from "./db/schema/permission";
-import { roles } from "./db/schema/role";
-import { rolePermissions } from "./db/schema/rolePermission";
-import { users } from "./db/schema/user";
+import { db } from "../config/db";
+import { permissions } from "../db/schema/permission";
+import { roles } from "../db/schema/role";
+import { rolePermissions } from "../db/schema/rolePermission";
+import { users } from "../db/schema/user";
 
 /* =====================================================
    ALL PERMISSIONS
@@ -24,6 +24,9 @@ const RESOURCES = [
   "variant",
   "gst",
   "hsn",
+  "party",
+  "field_order",
+  "inventory"
 ] as const;
 
 const ACTIONS = ["create", "read", "update", "delete"] as const;

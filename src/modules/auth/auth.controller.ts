@@ -1,8 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import jwt from "jsonwebtoken";
-import { AppError } from "../../middlewares/errorHandler";
 import { authService } from "./auth.service";
-import { AuthRequest } from "../../middlewares/authMiddelware";
+import { AuthRequest } from "../../middlewares/authMiddleware";
 import { ENV } from "../../config/env";
 
 export const authController = {

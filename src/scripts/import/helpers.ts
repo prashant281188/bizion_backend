@@ -1,5 +1,5 @@
-import { db } from "../config/db"
-import { brands, categories, hsnCodes, options, optionValues, units, } from "../db/schema"
+import { db } from "../../config/db"
+import { brands, categories, hsnCodes, options, optionValues, units, } from "../../db/schema"
 
 
 

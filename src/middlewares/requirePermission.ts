@@ -1,7 +1,7 @@
 import { NextFunction, Response } from "express";
 import { getPermissionsByRole } from "../services/permission.service";
 import { AppError } from "./errorHandler";
-import { AuthRequest } from "./authMiddelware";
+import { AuthRequest } from "./authMiddleware";
 
 export const requirePermission =
   (permission: string) =>

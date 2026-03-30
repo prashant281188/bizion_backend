@@ -1,6 +1,6 @@
 import { NextFunction, Response } from "express";
 import { and, asc, eq } from "drizzle-orm";
-import { AuthRequest } from "../../middlewares/authMiddelware";
+import { AuthRequest } from "../../middlewares/authMiddleware";
 import { AppError } from "../../middlewares/errorHandler";
 import { productService } from "./product.service";
 import { logAudit } from "../../services/audit.service";

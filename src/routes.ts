@@ -1,19 +1,22 @@
 import { Router, Request, Response } from "express";
 
-import authRoutes from "./modules/auth/auth.routes";
-import userRoutes from "./modules/user/user.routes";
-import categoryRoutes from "./modules/category/category.routes";
-import productRoutes from "./modules/product/product.routes";
-import variantRoutes from "./modules/variant/variant.routes";
-import hsnRoutes from "./modules/hsn/hsn.routes";
-import gstRoutes from "./modules/gst/index";
-import brandRoutes from "./modules/brand/brand.routes";
-import unitRoutes from "./modules/unit/unit.routes";
-import optionRoutes from "./modules/option/option.routes";
-import carouselRoutes from "./modules/carousel/carousel.routes";
-import roleRoutes from "./modules/role/role.routes";
-import imageRoutes from "./modules/image/image.routes";
-import publicRoutes from "./modules/public/public.routes";
+import authRoutes from "./modules/auth";
+import userRoutes from "./modules/user";
+import categoryRoutes from "./modules/category";
+import productRoutes from "./modules/product";
+import variantRoutes from "./modules/variant";
+import hsnRoutes from "./modules/hsn";
+import gstRoutes from "./modules/gst";
+import brandRoutes from "./modules/brand";
+import unitRoutes from "./modules/unit";
+import optionRoutes from "./modules/option";
+import carouselRoutes from "./modules/carousel";
+import roleRoutes from "./modules/role";
+import imageRoutes from "./modules/image";
+import storeRoutes from "./modules/store";
+import partyRoutes from "./modules/party";
+import fieldOrderRoutes from "./modules/fieldOrder";
+import inventoryRoutes from "./modules/inventory";
 
 const router = Router();
 
@@ -33,7 +36,7 @@ const v1 = Router();
 router.use("/v1", v1);
 
 /* -------- PUBLIC (no auth) -------- */
-v1.use("/public", publicRoutes);
+v1.use("/store", storeRoutes);
 
 /* -------- AUTH -------- */
 v1.use("/auth", authRoutes);
@@ -73,6 +76,15 @@ v1.use("/carousel", carouselRoutes);
 
 /* -------- IMAGES -------- */
 v1.use("/images", imageRoutes);
+
+/* -------- PARTIES -------- */
+v1.use("/parties", partyRoutes);
+
+/* -------- FIELD ORDERS -------- */
+v1.use("/field-orders", fieldOrderRoutes);
+
+/* -------- INVENTORY -------- */
+v1.use("/inventory", inventoryRoutes);
 
 /* ================= 404 HANDLER ================= */
 

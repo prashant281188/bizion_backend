@@ -1,5 +1,5 @@
 import { NextFunction, Response } from "express";
-import { AuthRequest } from "../../middlewares/authMiddelware";
+import { AuthRequest } from "../../middlewares/authMiddleware";
 import { brandService } from "./brand.service";
 import { logAudit } from "../../services/audit.service";
 import { ListBrandInput } from "./brand.schema";

@@ -7,7 +7,7 @@ import {
   createCategorySchema,
   updateCategorySchema,
 } from "./category.schema";
-import { authMiddleware } from "../../middlewares/authMiddelware";
+import { authMiddleware } from "../../middlewares/authMiddleware";
 
 const router = Router();
 

@@ -1,5 +1,5 @@
 import { NextFunction, Response } from "express";
-import { AuthRequest } from "../../middlewares/authMiddelware";
+import { AuthRequest } from "../../middlewares/authMiddleware";
 import { hsnService } from "./hsn.service";
 import { logAudit } from "../../services/audit.service";
 import { ListHsnInput } from "./hsn.schema";

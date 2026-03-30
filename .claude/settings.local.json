@@ -11,7 +11,13 @@
       "Bash(xargs grep:*)",
       "Bash(wmic logicaldisk:*)",
       "Bash(powershell \"Get-PSDrive C | Select-Object Used,Free\")",
-      "Bash(npm run:*)"
+      "Bash(npm run:*)",
+      "Bash(ls:*)",
+      "Bash(for f:*)",
+      "Bash(do)",
+      "Bash(sed -i 's|authMiddelware|authMiddleware|g' \"$f\")",
+      "Bash(done)",
+      "Bash(xargs basename:*)"
     ]
   }
 }

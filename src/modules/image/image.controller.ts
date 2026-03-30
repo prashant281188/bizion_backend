@@ -1,6 +1,6 @@
 import { NextFunction, Response } from "express";
 import { and, eq } from "drizzle-orm";
-import { AuthRequest } from "../../middlewares/authMiddelware";
+import { AuthRequest } from "../../middlewares/authMiddleware";
 import { AppError } from "../../middlewares/errorHandler";
 import { db } from "../../config/db";
 import { products, productImages, variantImages, productVariants } from "../../db/schema";

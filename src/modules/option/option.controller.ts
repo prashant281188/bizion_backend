@@ -1,5 +1,5 @@
 import { NextFunction, Response } from "express";
-import { AuthRequest } from "../../middlewares/authMiddelware";
+import { AuthRequest } from "../../middlewares/authMiddleware";
 import { optionService } from "./option.service";
 import { logAudit } from "../../services/audit.service";
 import { ListOptionInput } from "./option.schema";

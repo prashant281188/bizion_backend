@@ -1,9 +1,9 @@
 import { and, asc, desc, eq, ilike, sql } from "drizzle-orm";
 import { db } from "../../config/db";
-import { brands, carousel, categories, products, variantRates } from "../../db/schema";
+import { carousel, categories, products } from "../../db/schema";
 import { AppError } from "../../middlewares/errorHandler";
 import { getS3Url } from "../../services/s3.service";
-import { ListProductsInput } from "./public.schema";
+import { ListProductsInput, Params } from "./store.schema";
 
 /* =====================================================
    HELPERS
@@ -65,7 +65,7 @@ function latestRate(rates: any[]) {
    SERVICE
 ===================================================== */
 
-export const publicService = {
+export const storeService = {
   /* ===== CATEGORIES ===== */
 
   async getActiveCategories() {
@@ -88,13 +88,16 @@ export const publicService = {
       }
     }
 
-    return rows;
+    return roots;
   },
 
   /* ===== BRANDS ===== */
 
   async getBrands() {
-    return db.select().from(brands).orderBy(asc(brands.brandName));
+
+    return await db.query.brands.findMany({
+
+    })
   },
 
   /* ===== PRODUCT LISTING ===== */

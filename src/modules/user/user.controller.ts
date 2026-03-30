@@ -2,7 +2,7 @@ import { NextFunction, Response } from "express";
 import { logAudit } from "../../services/audit.service";
 import { AppError } from "../../middlewares/errorHandler";
 import { userService } from "./user.service";
-import { AuthRequest } from "../../middlewares/authMiddelware";
+import { AuthRequest } from "../../middlewares/authMiddleware";
 import { ListUserInput } from "./user.schema";
 
 export const userController = {
