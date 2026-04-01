@@ -1,10 +1,28 @@
-import { NextFunction, Response } from "express";
+import { NextFunction, Request, Response } from "express";
 import { AuthRequest } from "../../middlewares/authMiddleware";
 import { variantService } from "./variant.service";
 import { logAudit } from "../../services/audit.service";
 import { AssignOptionValuesInput, CreateRateInput, CreateVariantInput, UpdateVariantInput } from "./variant.schema";
+type Search = { search: string }
 
 export const variantController = {
+
+  async getSkus(req: Request, res: Response, next: NextFunction) {
+    try {
+      
+      const data = await variantService.getSkus(req.query as Search)
+    
+      res.status(201).json({ success: true, message: "skus retrieved", data })
+    }
+    catch (err) { next(err) }
+  },
+  async getVariantRateAndPacking(req: Request, res: Response, next: NextFunction) {
+    try {
+      const data = await variantService.getVariantRateAndPacking(req.params.id)
+      res.status(201).json({ success: true, message: "skus retrieved", data })
+    }
+    catch (err) { next(err) }
+  },
   async getById(req: AuthRequest, res: Response, next: NextFunction) {
     try {
       const data = await variantService.getById(req.params.id);

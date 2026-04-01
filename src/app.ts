@@ -18,7 +18,7 @@ app.use(helmet({ contentSecurityPolicy: false }));
 app.use(globalLimiter);
 const allowedOrigins = process.env.CORS_ORIGIN
   ? process.env.CORS_ORIGIN.split(",")
-  : ["http://127.0.0.1:3000", "http://localhost:6767", "http://localhost:3000", "http://192.168.29.120:3000"];
+  : ["http://127.0.0.1:3000", "http://localhost:6767", "http://localhost:3000", "http://192.168.29.120:3000", "http://192.168.31.216:3000"];
 
 app.use(
   cors({

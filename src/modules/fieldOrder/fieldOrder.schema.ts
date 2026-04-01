@@ -12,6 +12,7 @@ const orderItemSchema = z.object({
 });
 
 export const createFieldOrderSchema = z.object({
+  orderType: z.enum(['purchase', 'sale']),
   partyId: z.string().uuid("Valid party ID is required"),
   notes: z.string().trim().optional(),
   items: z.array(orderItemSchema).min(1, "At least one item is required"),

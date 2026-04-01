@@ -11,15 +11,23 @@ export const fieldOrderItems = pgTable(
     orderId: uuid("order_id")
       .notNull()
       .references(() => fieldOrders.id, { onDelete: "cascade" }),
+
     productId: uuid("product_id").references(() => products.id, { onDelete: "set null" }),
+
     variantId: uuid("variant_id").references(() => productVariants.id, { onDelete: "set null" }),
+
     // Stored at order time in case product data changes later
-    productName: text("product_name").notNull(),
-    finish: text("finish"),
-    size: text("size"),
+    sku: text("sku").notNull(),
     boxQty: integer("box_qty").notNull(),
-    ratePerBox: numeric("rate_per_box", { precision: 10, scale: 2 }).notNull(),
+    packing: numeric("packing", { precision: 10, scale: 2 }).notNull(),
+
+    orderQty: numeric("order_qty", { precision: 12, scale: 2 }),
+    fulfilledQty: numeric("fulfilled_qty", { mode: "number", precision: 12, scale: 2 }).default(0),
+    cancelledQty: numeric("cancelled_qty", { mode: "number", precision: 12, scale: 2 }).default(0),
+
+    rate: numeric("rate", { precision: 12, scale: 2 }),
     amount: numeric("amount", { precision: 12, scale: 2 }).notNull(),
+
     notes: text("notes"),
     createdAt: timestamp("created_at").defaultNow().notNull(),
   },

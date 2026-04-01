@@ -13,6 +13,8 @@ import {
 const router = Router();
 
 /* ===== GET / UPDATE / DELETE VARIANT ===== */
+router.get("/skus",  variantController.getSkus)
+router.get("/:id/rate_qty",  variantController.getVariantRateAndPacking)
 router.get("/:id", authMiddleware, requirePermission("product:read"), variantController.getById);
 router.patch("/:id", authMiddleware, requirePermission("product:update"), validateSchema(updateVariantSchema), variantController.update);
 router.delete("/:id", authMiddleware, requirePermission("product:update"), variantController.remove);

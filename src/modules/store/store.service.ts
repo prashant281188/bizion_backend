@@ -3,7 +3,7 @@ import { db } from "../../config/db";
 import { carousel, categories, products } from "../../db/schema";
 import { AppError } from "../../middlewares/errorHandler";
 import { getS3Url } from "../../services/s3.service";
-import { ListProductsInput, Params } from "./store.schema";
+import { ListProductsInput } from "./store.schema";
 
 /* =====================================================
    HELPERS

@@ -1,10 +1,49 @@
-import { and, eq } from "drizzle-orm";
+import { and, eq, ilike } from "drizzle-orm";
 import { db } from "../../config/db";
-import { products, productVariants, variantRates, variantOptionValues } from "../../db/schema";
+import { products, productVariants, variantRates, variantOptionValues, optionValues } from "../../db/schema";
 import { AppError } from "../../middlewares/errorHandler";
 import { AssignOptionValuesInput, CreateRateInput, CreateVariantInput, UpdateVariantInput } from "./variant.schema";
-
+type Search = {
+  search: string
+}
 export const variantService = {
+
+  async getSkus({ search }: Search) {
+    const skus = await db.query.productVariants.findMany({
+      where: ilike(productVariants.sku, `%${search.split(' ').join('%')}%`),
+      columns: {
+        id: true,
+        sku: true
+      },
+      orderBy: [productVariants.sku]
+    })
+    if (!skus) throw new AppError("Product Not found", 404)
+    return skus
+  },
+
+  async getVariantRateAndPacking(id: string) {
+    const variantData = await db.query.productVariants.findFirst({
+      where: eq(productVariants.id, id),
+      columns: {
+        sku: true,
+        packing: true
+      },
+      with: {
+        rates: {
+          columns: {
+            mrp: true,
+            saleRate: true,
+            purchaseRate: true,
+            createdAt: true
+
+          },
+          orderBy: (rates, { desc }) => [desc(rates.createdAt)],
+        }
+      }
+    })
+    if (!variantData) throw new AppError("Variant not found", 404)
+    return variantData
+  },
   /* ===== GET VARIANT ===== */
 
   async getById(id: string) {

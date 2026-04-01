@@ -4,13 +4,15 @@ import { parties } from "./party";
 import { users } from "./user";
 import { fieldOrderItems } from "./fieldOrderItem";
 
-export const orderStatusEnum = pgEnum('order_status', ['draft', 'confirmed', 'cancelled'])
+export const orderTypeEnum = pgEnum('order_type', ['purchase', 'sale'])
+export const orderStatusEnum = pgEnum('order_status', ['draft', 'confirmed', 'partial', 'completed','cancelled'])
 
 
 export const fieldOrders = pgTable(
   "field_orders",
   {
     id: uuid("id").defaultRandom().primaryKey(),
+    orderType: orderTypeEnum('order_type').notNull(),
     orderNumber: text("order_number").notNull().unique(),
     partyId: uuid("party_id")
       .notNull()

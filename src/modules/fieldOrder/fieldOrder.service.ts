@@ -11,6 +11,7 @@ import {
 } from "./fieldOrder.schema";
 
 type DbOrTx = Parameters<Parameters<typeof db.transaction>[0]>[0] | typeof db;
+type orderType = 'purchase' | 'sale'
 
 /* ── helpers ──────────────────────────────────────────── */
 
@@ -18,14 +19,14 @@ function calcAmount(boxQty: number, ratePerBox: number): string {
   return (boxQty * ratePerBox).toFixed(2);
 }
 
-async function generateOrderNumber(): Promise<string> {
+async function generateOrderNumber(orderType: orderType): Promise<string> {
   const today = new Date();
   const datePart = today.toISOString().slice(0, 10).replace(/-/g, "");
   const [{ count }] = await db
     .select({ count: sql<number>`count(*)` })
-    .from(fieldOrders);
+    .from(fieldOrders).where(eq(fieldOrders.orderType, orderType));
   const seq = String(Number(count) + 1).padStart(4, "0");
-  return `ORD-${datePart}-${seq}`;
+  return `${orderType}-ORD-${datePart}-${seq}`;
 }
 
 async function recalcOrderTotal(tx: DbOrTx, orderId: string) {
@@ -87,12 +88,12 @@ export const fieldOrderService = {
   },
 
   async create(data: CreateFieldOrderInput, salesmanId: string) {
-    const orderNumber = await generateOrderNumber();
+    const orderNumber = await generateOrderNumber(data.orderType);
 
     return db.transaction(async (tx) => {
       const [order] = await tx
         .insert(fieldOrders)
-        .values({ partyId: data.partyId, salesmanId, notes: data.notes, orderNumber })
+        .values({ partyId: data.partyId, salesmanId, notes: data.notes, orderNumber, orderType: data.orderType })
         .returning();
 
       const itemValues = data.items.map((item) => ({
@@ -218,10 +219,10 @@ export const fieldOrderService = {
 
     const itemSummary = order.items.map((item, i) => ({
       sNo: i + 1,
-      productName: item.productName,
-      finish: item.finish ?? "-",
-      size: item.size ?? "-",
-      boxQty: item.boxQty,
+      sku: item.sku,
+     
+      packing: item.packing,
+      
       ratePerBox: Number(item.ratePerBox),
       amount: Number(item.amount),
       notes: item.notes,
