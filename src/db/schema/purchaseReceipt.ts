@@ -2,7 +2,7 @@ import { numeric, pgTable, timestamp, uuid } from "drizzle-orm/pg-core";
 import { orders } from "./order";
 import { users } from "./user";
 import { productVariants } from "./productVariant";
-import { orderItems } from "./fieldOrderItem";
+import { orderItems } from "./orderItem";
 
 export const purchaseReceipts = pgTable("puchase_receipts", {
     id: uuid("id").defaultRandom().primaryKey(),

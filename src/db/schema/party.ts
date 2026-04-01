@@ -1,6 +1,5 @@
 import { pgTable, uuid, text, boolean, timestamp, index, pgEnum } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
-import { fieldOrders } from "./order";
 
 export const partyTypeEnum = pgEnum('party_type', ['retailer', 'supplier', 'customer', 'distributor'])
 
@@ -12,7 +11,7 @@ export const parties = pgTable(
     phone: text("phone"),
     address: text("address"),
     city: text("city"),
-    type: partyTypeEnum('party_type').notNull().default("retailer"), 
+    type: partyTypeEnum('party_type').notNull().default("retailer"),
     gstNo: text("gst_no"),
     isActive: boolean("is_active").default(true).notNull(),
     createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -21,6 +20,3 @@ export const parties = pgTable(
   (table) => [index("parties_name_idx").on(table.name)]
 );
 
-export const partyRelations = relations(parties, ({ many }) => ({
-  orders: many(fieldOrders),
-}));

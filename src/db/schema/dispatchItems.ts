@@ -1,6 +1,6 @@
 import { numeric, pgTable, uuid } from "drizzle-orm/pg-core";
 import { dispatches } from "./dispatch";
-import { orderItems } from "./fieldOrderItem";
+import { orderItems } from "./orderItem";
 import { productVariants } from "./productVariant";
 
 export const dispatchItems = pgTable("dispatch_items", {

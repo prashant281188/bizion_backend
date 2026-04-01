@@ -2,7 +2,7 @@ import { pgTable, uuid, text, numeric, timestamp, index, pgEnum } from "drizzle-
 import { relations } from "drizzle-orm";
 import { parties } from "./party";
 import { users } from "./user";
-import { orderItems } from "./fieldOrderItem";
+import { orderItems } from "./orderItem";
 
 export const orderTypeEnum = pgEnum('order_type', ['purchase', 'sale'])
 export const orderStatusEnum = pgEnum('order_status', ['draft', 'confirmed', 'partial', 'completed','cancelled'])
@@ -32,6 +32,10 @@ export const orders = pgTable(
     index("field_orders_status_idx").on(table.status),
   ]
 );
+
+export const partyRelations = relations(parties, ({ many }) => ({
+  orders: many(orders),
+}));
 
 export const orderRelations = relations(orders, ({ one, many }) => ({
   party: one(parties, {

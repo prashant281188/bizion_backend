@@ -1,6 +1,6 @@
 import { numeric, pgTable, uuid } from "drizzle-orm/pg-core";
 import { dispatchItems } from "./dispatchItems";
-import { orderItems } from "./fieldOrderItem";
+import { orderItems } from "./orderItem";
 
 export const dispatchAllocations = pgTable("dispact_allocations", {
     id: uuid("id").defaultRandom().primaryKey(),

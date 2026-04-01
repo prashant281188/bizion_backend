@@ -22,5 +22,5 @@ export * from "./options";
 export * from "./optionValues";
 export * from "./party";
 export * from "./order";
-export * from "./fieldOrderItem";
+export * from "./orderItem";
 export * from "./inventory";
