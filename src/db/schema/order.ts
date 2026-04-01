@@ -2,14 +2,14 @@ import { pgTable, uuid, text, numeric, timestamp, index, pgEnum } from "drizzle-
 import { relations } from "drizzle-orm";
 import { parties } from "./party";
 import { users } from "./user";
-import { fieldOrderItems } from "./fieldOrderItem";
+import { orderItems } from "./fieldOrderItem";
 
 export const orderTypeEnum = pgEnum('order_type', ['purchase', 'sale'])
 export const orderStatusEnum = pgEnum('order_status', ['draft', 'confirmed', 'partial', 'completed','cancelled'])
 
 
-export const fieldOrders = pgTable(
-  "field_orders",
+export const orders = pgTable(
+  "orders",
   {
     id: uuid("id").defaultRandom().primaryKey(),
     orderType: orderTypeEnum('order_type').notNull(),
@@ -33,14 +33,14 @@ export const fieldOrders = pgTable(
   ]
 );
 
-export const fieldOrderRelations = relations(fieldOrders, ({ one, many }) => ({
+export const orderRelations = relations(orders, ({ one, many }) => ({
   party: one(parties, {
-    fields: [fieldOrders.partyId],
+    fields: [orders.partyId],
     references: [parties.id],
   }),
   salesman: one(users, {
-    fields: [fieldOrders.salesmanId],
+    fields: [orders.salesmanId],
     references: [users.id],
   }),
-  items: many(fieldOrderItems),
+  items: many(orderItems),
 }));

@@ -1,5 +1,5 @@
 import { index, numeric, pgTable, text, uuid } from "drizzle-orm/pg-core";
-import { orderTypeEnum } from "./fieldOrder";
+import { orderTypeEnum } from "./order";
 
 type DbOrTx = Parameters<Parameters<typeof db.transaction>[0]>[0] | typeof db;
 export const orderSequences = pgTable("order_sequences", {

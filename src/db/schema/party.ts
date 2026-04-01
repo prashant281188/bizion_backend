@@ -1,6 +1,6 @@
 import { pgTable, uuid, text, boolean, timestamp, index, pgEnum } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
-import { fieldOrders } from "./fieldOrder";
+import { fieldOrders } from "./order";
 
 export const partyTypeEnum = pgEnum('party_type', ['retailer', 'supplier', 'customer', 'distributor'])
 

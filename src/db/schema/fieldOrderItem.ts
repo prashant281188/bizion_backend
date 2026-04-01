@@ -1,16 +1,16 @@
 import { pgTable, uuid, text, integer, numeric, timestamp, index } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
-import { fieldOrders } from "./fieldOrder";
+import { orders } from "./order";
 import { products } from "./product";
 import { productVariants } from "./productVariant";
 
-export const fieldOrderItems = pgTable(
-  "field_order_items",
+export const orderItems = pgTable(
+  "order_items",
   {
     id: uuid("id").defaultRandom().primaryKey(),
     orderId: uuid("order_id")
       .notNull()
-      .references(() => fieldOrders.id, { onDelete: "cascade" }),
+      .references(() => orders.id, { onDelete: "cascade" }),
 
     productId: uuid("product_id").references(() => products.id, { onDelete: "set null" }),
 
@@ -34,17 +34,17 @@ export const fieldOrderItems = pgTable(
   (table) => [index("field_order_items_order_idx").on(table.orderId)]
 );
 
-export const fieldOrderItemRelations = relations(fieldOrderItems, ({ one }) => ({
-  order: one(fieldOrders, {
-    fields: [fieldOrderItems.orderId],
-    references: [fieldOrders.id],
+export const fieldOrderItemRelations = relations(orderItems, ({ one }) => ({
+  order: one(orders, {
+    fields: [orderItems.orderId],
+    references: [orders.id],
   }),
   product: one(products, {
-    fields: [fieldOrderItems.productId],
+    fields: [orderItems.productId],
     references: [products.id],
   }),
   variant: one(productVariants, {
-    fields: [fieldOrderItems.variantId],
+    fields: [orderItems.variantId],
     references: [productVariants.id],
   }),
 }));

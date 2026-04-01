@@ -21,6 +21,6 @@ export * from "./variantImage";
 export * from "./options";
 export * from "./optionValues";
 export * from "./party";
-export * from "./fieldOrder";
+export * from "./order";
 export * from "./fieldOrderItem";
 export * from "./inventory";
