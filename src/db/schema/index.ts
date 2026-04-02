@@ -24,3 +24,7 @@ export * from "./party";
 export * from "./order";
 export * from "./orderItem";
 export * from "./inventory";
+export * from "./dispatch";
+export * from "./dispatchItems";
+export * from "./dispatchAllocation";
+export * from "./purchaseReceipt";

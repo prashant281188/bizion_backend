@@ -25,8 +25,10 @@ const RESOURCES = [
   "gst",
   "hsn",
   "party",
-  "field_order",
-  "inventory"
+  "order",
+  "inventory",
+  "dispatch",
+  "purchase_receipt",
 ] as const;
 
 const ACTIONS = ["create", "read", "update", "delete"] as const;

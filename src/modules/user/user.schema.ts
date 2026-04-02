@@ -31,7 +31,7 @@ export const createUserSchema = z.object({
   email: emailSchema,
   password: passwordSchema,
   roleId: uuid,
-  isActive: z.boolean().optional(),
+  isActive: z.boolean().default(false),
 });
 
 /* =====================================================
@@ -40,6 +40,9 @@ export const createUserSchema = z.object({
 
 export const updateUserSchema = z
   .object({
+    firstName: z.string().optional(),
+    lastName: z.string().optional(),
+    phone: z.string().optional(),
     email: emailSchema.optional(),
     password: passwordSchema.optional(),
     roleId: uuid.optional(),

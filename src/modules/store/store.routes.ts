@@ -8,9 +8,9 @@ const router = Router();
 router.get("/carousel", storeController.getCarouselData);
 router.get("/categories", storeController.getCategories);
 router.get("/brands", storeController.getBrands);
-router.get("/products/catalog", storeController.getCatalog);
 router.get("/catalog/pdf", storeController.getCatalogPdf);
 router.get("/products/:id", storeController.getProductDetail);
 router.get("/products", validateSchema(listProductsSchema, "query"), storeController.getProducts);
+router.get("/products/catalog", storeController.getCatalog);
 
 export default router;

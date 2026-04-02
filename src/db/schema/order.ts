@@ -1,8 +1,9 @@
-import { pgTable, uuid, text, numeric, timestamp, index, pgEnum } from "drizzle-orm/pg-core";
+import { pgTable, uuid, text, numeric, timestamp, index, pgEnum, date } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 import { parties } from "./party";
 import { users } from "./user";
 import { orderItems } from "./orderItem";
+import { purchaseReceipts } from "./purchaseReceipt";
 
 export const orderTypeEnum = pgEnum('order_type', ['purchase', 'sale'])
 export const orderStatusEnum = pgEnum('order_status', ['draft', 'confirmed', 'partial', 'completed','cancelled'])
@@ -14,6 +15,7 @@ export const orders = pgTable(
     id: uuid("id").defaultRandom().primaryKey(),
     orderType: orderTypeEnum('order_type').notNull(),
     orderNumber: text("order_number").notNull().unique(),
+    orderDate: date("order_date"),
     partyId: uuid("party_id")
       .notNull()
       .references(() => parties.id),
@@ -47,4 +49,5 @@ export const orderRelations = relations(orders, ({ one, many }) => ({
     references: [users.id],
   }),
   items: many(orderItems),
+  purchaseReceipts: many(purchaseReceipts),
 }));

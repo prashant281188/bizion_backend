@@ -57,6 +57,18 @@ export const createProductSchema = z.object({
 });
 
 /* =====================================================
+   UPDATE VARIANT (for update product)
+===================================================== */
+
+export const updateVariantSchema = z.object({
+  id: uuid.optional(), // present = update existing; absent = create new
+  sku: z.string().trim().min(1).optional(),
+  packing: z.number().int("Packing must be an integer").positive("Packing must be positive").optional(),
+  optionValueIds: z.array(uuid).optional(),
+  rates: variantRateSchema.optional(),
+});
+
+/* =====================================================
    UPDATE PRODUCT
 ===================================================== */
 
@@ -77,10 +89,25 @@ export const updateProductSchema = z
     isFeatured: z.boolean().optional(),
     isNew: z.boolean().optional(),
     status: statusEnum.optional(),
+    // Variant upsert: existing variants by id + new variants without id
+    variants: z.array(updateVariantSchema).optional(),
+    // IDs of variants to delete
+    deleteVariantIds: z.array(uuid).optional(),
+    // IDs of variant images to delete
+    deleteVariantImageIds: z.array(uuid).optional(),
   })
-  .refine((d) => Object.values(d).some((v) => v !== undefined), {
-    message: "At least one field must be provided",
-  });
+  .refine(
+    (d) => {
+      const { variants, deleteVariantIds, deleteVariantImageIds, ...rest } = d;
+      return (
+        Object.values(rest).some((v) => v !== undefined) ||
+        (variants && variants.length > 0) ||
+        (deleteVariantIds && deleteVariantIds.length > 0) ||
+        (deleteVariantImageIds && deleteVariantImageIds.length > 0)
+      );
+    },
+    { message: "At least one field must be provided" }
+  );
 
 /* =====================================================
    LIST / FILTER
@@ -104,4 +131,5 @@ export const listProductSchema = z.object({
 
 export type CreateProductInput = z.infer<typeof createProductSchema>;
 export type UpdateProductInput = z.infer<typeof updateProductSchema>;
+export type UpdateVariantInput = z.infer<typeof updateVariantSchema>;
 export type ListProductInput = z.infer<typeof listProductSchema>;

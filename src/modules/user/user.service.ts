@@ -9,7 +9,10 @@ const SALT_ROUNDS = 10;
 
 const safeUserColumns = {
   id: users.id,
+  phone: users.phone,
   email: users.email,
+  firstName: users.firstName,
+  lastName: users.lastName,
   roleId: users.roleId,
   isActive: users.isActive,
   createdAt: users.createdAt,

@@ -1,4 +1,4 @@
-import { and, asc, eq, ilike, sql } from "drizzle-orm";
+import { and, asc, eq, ilike, inArray, sql } from "drizzle-orm";
 import { db } from "../../config/db";
 import { products, productVariants, variantRates, variantOptionValues } from "../../db/schema";
 import { AppError } from "../../middlewares/errorHandler";
@@ -172,15 +172,108 @@ export const productService = {
   /* ================= UPDATE ================= */
 
   async update(id: string, data: UpdateProductInput) {
-    const [updated] = await db
-      .update(products)
-      .set({ ...data, updatedAt: new Date() })
-      .where(and(eq(products.id, id), eq(products.isDeleted, false)))
-      .returning();
+    const { variants, deleteVariantIds, deleteVariantImageIds, ...productData } = data;
 
-    if (!updated) throw new AppError("Product not found", 404);
+    return db.transaction(async (tx) => {
+      // Update product fields if any are present
+      const productFieldsPresent = Object.values(productData).some((v) => v !== undefined);
+      let updated: typeof products.$inferSelect | undefined;
 
-    return updated;
+      if (productFieldsPresent) {
+        const [row] = await tx
+          .update(products)
+          .set({ ...productData, updatedAt: new Date() })
+          .where(and(eq(products.id, id), eq(products.isDeleted, false)))
+          .returning();
+        if (!row) throw new AppError("Product not found", 404);
+        updated = row;
+      } else {
+        // Still verify product exists
+        const existing = await tx.query.products.findFirst({
+          where: and(eq(products.id, id), eq(products.isDeleted, false)),
+          columns: { id: true },
+        });
+        if (!existing) throw new AppError("Product not found", 404);
+      }
+
+      // Delete variants
+      if (deleteVariantIds && deleteVariantIds.length > 0) {
+        await tx
+          .delete(productVariants)
+          .where(
+            and(
+              eq(productVariants.productId, id),
+              inArray(productVariants.id, deleteVariantIds)
+            )
+          );
+      }
+
+      // Upsert variants
+      if (variants && variants.length > 0) {
+        for (const variant of variants) {
+          const { id: variantId, rates, optionValueIds, ...variantData } = variant;
+
+          if (variantId) {
+            // Update existing variant
+            await tx
+              .update(productVariants)
+              .set(variantData)
+              .where(and(eq(productVariants.id, variantId), eq(productVariants.productId, id)));
+
+            // Replace rates if provided
+            if (rates && Object.values(rates).some((v) => v !== undefined)) {
+              await tx.delete(variantRates).where(eq(variantRates.variantId, variantId));
+              await tx.insert(variantRates).values({
+                variantId,
+                mrp: rates.mrp != null ? String(rates.mrp) : undefined,
+                purchaseRate: rates.purchaseRate != null ? String(rates.purchaseRate) : undefined,
+                saleRate: rates.saleRate != null ? String(rates.saleRate) : undefined,
+              });
+            }
+
+            // Replace option values if provided
+            if (optionValueIds !== undefined) {
+              await tx.delete(variantOptionValues).where(eq(variantOptionValues.variantId, variantId));
+              if (optionValueIds.length > 0) {
+                await tx.insert(variantOptionValues).values(
+                  optionValueIds.map((optionValueId) => ({ variantId, optionValueId }))
+                );
+              }
+            }
+          } else {
+            // Create new variant — upsert on (sku, productId) to avoid duplicate key errors
+            const [insertedVariant] = await tx
+              .insert(productVariants)
+              .values({ ...variantData, productId: id })
+              .onConflictDoUpdate({
+                target: [productVariants.sku, productVariants.productId],
+                set: { packing: variantData.packing },
+              })
+              .returning({ id: productVariants.id });
+
+            if (rates && Object.values(rates).some((v) => v !== undefined)) {
+              await tx.insert(variantRates).values({
+                variantId: insertedVariant.id,
+                mrp: rates.mrp != null ? String(rates.mrp) : undefined,
+                purchaseRate: rates.purchaseRate != null ? String(rates.purchaseRate) : undefined,
+                saleRate: rates.saleRate != null ? String(rates.saleRate) : undefined,
+              });
+            }
+
+            if (optionValueIds && optionValueIds.length > 0) {
+              await tx.insert(variantOptionValues).values(
+                optionValueIds.map((optionValueId) => ({
+                  variantId: insertedVariant.id,
+                  optionValueId,
+                }))
+              );
+            }
+          }
+        }
+      }
+
+      return updated ?? { id };
+    });
   },
 
   /* ================= SOFT DELETE ================= */

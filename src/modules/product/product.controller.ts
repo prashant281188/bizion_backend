@@ -1,5 +1,5 @@
 import { NextFunction, Response } from "express";
-import { and, asc, eq } from "drizzle-orm";
+import { and, asc, eq, inArray } from "drizzle-orm";
 import { AuthRequest } from "../../middlewares/authMiddleware";
 import { AppError } from "../../middlewares/errorHandler";
 import { productService } from "./product.service";
@@ -116,8 +116,20 @@ export const productController = {
     try {
       const files = req.files as { [fieldname: string]: Express.Multer.File[] } | undefined;
       const productImageFile = files?.productImage?.[0];
+      const variantImageFiles = files?.variantImages ?? [];
 
       const rawBody: Record<string, any> = { ...req.body };
+
+      // Parse JSON fields sent as strings in multipart/form-data
+      for (const key of ["variants", "deleteVariantIds", "deleteVariantImageIds"]) {
+        if (typeof rawBody[key] === "string") {
+          try {
+            rawBody[key] = JSON.parse(rawBody[key]);
+          } catch {
+            throw new AppError(`${key} must be a valid JSON string when sent as form-data`, 400);
+          }
+        }
+      }
       parseFormBooleans(rawBody);
 
       // Replace product image if a new file was provided
@@ -135,7 +147,17 @@ export const productController = {
         );
 
         await db.transaction(async (tx) => {
-          // Delete old image from S3 + DB
+          // Insert new image first
+          const [img] = await tx.insert(productImages).values({ path: key }).returning();
+          rawBody.imageId = img.id;
+
+          // Point product to new image so the FK on the old image is released
+          await tx
+            .update(products)
+            .set({ imageId: img.id, updatedAt: new Date() })
+            .where(eq(products.id, req.params.id));
+
+          // Now safe to delete the old image
           if (existing.imageId) {
             const [old] = await tx
               .delete(productImages)
@@ -143,19 +165,77 @@ export const productController = {
               .returning({ path: productImages.path });
             if (old) await deleteFromS3(old.path);
           }
-          const [img] = await tx.insert(productImages).values({ path: key }).returning();
-          rawBody.imageId = img.id;
         });
+      }
+
+      // Delete variant images from S3 + DB
+      const deleteVariantImageIds: string[] = Array.isArray(rawBody.deleteVariantImageIds)
+        ? rawBody.deleteVariantImageIds
+        : [];
+      if (deleteVariantImageIds.length > 0) {
+        const toDelete = await db
+          .select({ id: variantImages.id, path: variantImages.path })
+          .from(variantImages)
+          .where(inArray(variantImages.id, deleteVariantImageIds));
+
+        await db.delete(variantImages).where(inArray(variantImages.id, deleteVariantImageIds));
+        await Promise.all(toDelete.map((img) => deleteFromS3(img.path)));
       }
 
       const parsed = updateProductSchema.parse(rawBody);
       const product = await productService.update(req.params.id, parsed);
 
+      // Upload variant images and link by index matching the variants array order
+      // New variants (no id) are created first, so we fetch them by createdAt order
+      if (variantImageFiles.length > 0 && parsed.variants && parsed.variants.length > 0) {
+        const newVariantCount = parsed.variants.filter((v) => !v.id).length;
+
+        if (newVariantCount > 0) {
+          // Fetch newly-created variants (the last N by createdAt)
+          const allVariants = await db.query.productVariants.findMany({
+            where: eq(productVariants.productId, req.params.id),
+            columns: { id: true },
+            orderBy: [asc(productVariants.createdAt)],
+          });
+          const newVariants = allVariants.slice(-newVariantCount);
+
+          for (let i = 0; i < variantImageFiles.length; i++) {
+            if (i >= newVariants.length) break;
+            const file = variantImageFiles[i];
+            const { key } = await uploadToS3(file.buffer, file.originalname, file.mimetype);
+            await db.insert(variantImages).values({ productVariantId: newVariants[i].id, path: key });
+          }
+        }
+
+        // Also handle variantImages for existing variants: client sends variantId in file fieldname
+        // e.g. variantImages[variantId] — handled via explicit variantId mapping below
+      }
+
+      // Support uploading images to existing variants via variantImageMappings field:
+      // variantImageMappings = JSON array of { variantId, fileIndex } to link uploaded files to existing variants
+      if (variantImageFiles.length > 0 && rawBody.variantImageMappings) {
+        let mappings: { variantId: string; fileIndex: number }[] = [];
+        try {
+          mappings = typeof rawBody.variantImageMappings === "string"
+            ? JSON.parse(rawBody.variantImageMappings)
+            : rawBody.variantImageMappings;
+        } catch {
+          throw new AppError("variantImageMappings must be a valid JSON string", 400);
+        }
+
+        for (const { variantId, fileIndex } of mappings) {
+          const file = variantImageFiles[fileIndex];
+          if (!file) continue;
+          const { key } = await uploadToS3(file.buffer, file.originalname, file.mimetype);
+          await db.insert(variantImages).values({ productVariantId: variantId, path: key });
+        }
+      }
+
       await logAudit({
         userId: req.user!.userId,
         action: "product:update",
         entity: "product",
-        entityId: product.id,
+        entityId: req.params.id,
       });
 
       res.json({ success: true, message: "Product updated", data: product });

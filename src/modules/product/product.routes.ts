@@ -50,7 +50,10 @@ router.patch(
   "/:id",
   authMiddleware,
   requirePermission("product:update"),
-  uploadImages.fields([{ name: "productImage", maxCount: 1 }]),
+  uploadImages.fields([
+    { name: "productImage", maxCount: 1 },
+    { name: "variantImages", maxCount: 20 },
+  ]),
   productController.update
 );
 

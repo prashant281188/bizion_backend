@@ -15,8 +15,10 @@ import roleRoutes from "./modules/role";
 import imageRoutes from "./modules/image";
 import storeRoutes from "./modules/store";
 import partyRoutes from "./modules/party";
-import fieldOrderRoutes from "./modules/fieldOrder";
+import orderRoutes from "./modules/order";
 import inventoryRoutes from "./modules/inventory";
+import dispatchRoutes from "./modules/dispatch";
+import purchaseReceiptRoutes from "./modules/purchaseReceipt";
 
 const router = Router();
 
@@ -80,11 +82,17 @@ v1.use("/images", imageRoutes);
 /* -------- PARTIES -------- */
 v1.use("/parties", partyRoutes);
 
-/* -------- FIELD ORDERS -------- */
-v1.use("/field-orders", fieldOrderRoutes);
+/* -------- ORDERS -------- */
+v1.use("/orders", orderRoutes);
 
 /* -------- INVENTORY -------- */
 v1.use("/inventory", inventoryRoutes);
+
+/* -------- DISPATCH -------- */
+v1.use("/dispatches", dispatchRoutes);
+
+/* -------- PURCHASE RECEIPTS -------- */
+v1.use("/purchase-receipts", purchaseReceiptRoutes);
 
 /* ================= 404 HANDLER ================= */
 

@@ -3,6 +3,8 @@ import { relations } from "drizzle-orm";
 import { orders } from "./order";
 import { products } from "./product";
 import { productVariants } from "./productVariant";
+import { dispatchAllocations } from "./dispatchAllocation";
+import { purchaseReceiptAllocations } from "./purchaseReceipt";
 
 export const orderItems = pgTable(
   "order_items",
@@ -34,7 +36,7 @@ export const orderItems = pgTable(
   (table) => [index("field_order_items_order_idx").on(table.orderId)]
 );
 
-export const fieldOrderItemRelations = relations(orderItems, ({ one }) => ({
+export const fieldOrderItemRelations = relations(orderItems, ({ one, many }) => ({
   order: one(orders, {
     fields: [orderItems.orderId],
     references: [orders.id],
@@ -47,4 +49,6 @@ export const fieldOrderItemRelations = relations(orderItems, ({ one }) => ({
     fields: [orderItems.variantId],
     references: [productVariants.id],
   }),
+  dispatchAllocations: many(dispatchAllocations),
+  purchaseReceiptAllocations: many(purchaseReceiptAllocations),
 }));

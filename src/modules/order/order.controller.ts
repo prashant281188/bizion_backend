@@ -1,18 +1,29 @@
 import { NextFunction, Response } from "express";
 import { AuthRequest } from "../../middlewares/authMiddleware";
-import { fieldOrderService } from "./fieldOrder.service";
+import { orderService } from "./order.service";
 import {
   AddItemInput,
-  CreateFieldOrderInput,
-  ListFieldOrderInput,
-  UpdateFieldOrderInput,
+  CreateOrderInput,
+  ListOrderInput,
+  NextOrderNumberInput,
+  UpdateOrderInput,
   UpdateItemInput,
-} from "./fieldOrder.schema";
+} from "./order.schema";
 
-export const fieldOrderController = {
+export const orderController = {
+  async nextNumber(req: AuthRequest, res: Response, next: NextFunction) {
+    try {
+      const { orderType } = req.query as unknown as NextOrderNumberInput;
+      const data = await orderService.nextNumber(orderType);
+      res.json({ success: true, data });
+    } catch (err) {
+      next(err);
+    }
+  },
+
   async list(req: AuthRequest, res: Response, next: NextFunction) {
     try {
-      const result = await fieldOrderService.list(req.query as unknown as ListFieldOrderInput);
+      const result = await orderService.list(req.query as unknown as ListOrderInput);
       res.json({ success: true, data: result.items, meta: result.meta });
     } catch (err) {
       next(err);
@@ -21,7 +32,7 @@ export const fieldOrderController = {
 
   async getById(req: AuthRequest, res: Response, next: NextFunction) {
     try {
-      const data = await fieldOrderService.getById(req.params.id);
+      const data = await orderService.getById(req.params.id);
       res.json({ success: true, data });
     } catch (err) {
       next(err);
@@ -30,11 +41,17 @@ export const fieldOrderController = {
 
   async create(req: AuthRequest, res: Response, next: NextFunction) {
     try {
-      const data = await fieldOrderService.create(
-        req.body as CreateFieldOrderInput,
-        req.user!.userId
-      );
-      res.status(201).json({ success: true, message: "Field order created", data });
+      const data = await orderService.create(req.body as CreateOrderInput, req.user!.userId);
+      res.status(201).json({ success: true, message: "Order created", data });
+    } catch (err) {
+      next(err);
+    }
+  },
+
+  async getBalance(req: AuthRequest, res: Response, next: NextFunction) {
+    try {
+      const data = await orderService.getBalance(req.params.id);
+      res.json({ success: true, data });
     } catch (err) {
       next(err);
     }
@@ -42,11 +59,8 @@ export const fieldOrderController = {
 
   async update(req: AuthRequest, res: Response, next: NextFunction) {
     try {
-      const data = await fieldOrderService.update(
-        req.params.id,
-        req.body as UpdateFieldOrderInput
-      );
-      res.json({ success: true, message: "Field order updated", data });
+      const data = await orderService.update(req.params.id, req.body as UpdateOrderInput);
+      res.json({ success: true, message: "Order updated", data });
     } catch (err) {
       next(err);
     }
@@ -54,7 +68,7 @@ export const fieldOrderController = {
 
   async addItem(req: AuthRequest, res: Response, next: NextFunction) {
     try {
-      const data = await fieldOrderService.addItem(req.params.id, req.body as AddItemInput);
+      const data = await orderService.addItem(req.params.id, req.body as AddItemInput);
       res.status(201).json({ success: true, message: "Item added", data });
     } catch (err) {
       next(err);
@@ -63,7 +77,7 @@ export const fieldOrderController = {
 
   async updateItem(req: AuthRequest, res: Response, next: NextFunction) {
     try {
-      const data = await fieldOrderService.updateItem(
+      const data = await orderService.updateItem(
         req.params.id,
         req.params.itemId,
         req.body as UpdateItemInput
@@ -76,17 +90,8 @@ export const fieldOrderController = {
 
   async removeItem(req: AuthRequest, res: Response, next: NextFunction) {
     try {
-      await fieldOrderService.removeItem(req.params.id, req.params.itemId);
+      await orderService.removeItem(req.params.id, req.params.itemId);
       res.json({ success: true, message: "Item removed" });
-    } catch (err) {
-      next(err);
-    }
-  },
-
-  async getEstimate(req: AuthRequest, res: Response, next: NextFunction) {
-    try {
-      const data = await fieldOrderService.getEstimate(req.params.id);
-      res.json({ success: true, data });
     } catch (err) {
       next(err);
     }
