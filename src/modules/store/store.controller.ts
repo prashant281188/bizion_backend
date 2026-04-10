@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import { storeService } from "./store.service";
 import { generateCatalogHtml } from "./catalog-html.service";
-import { ListProductsInput } from "./store.schema";
+import { CatalogQueryInput, ListProductsInput } from "./store.schema";
 
 export const storeController = {
   async getCarouselData(_req: Request, res: Response, next: NextFunction) {
@@ -39,9 +39,9 @@ export const storeController = {
     } catch (err) { next(err); }
   },
 
-  async getCatalog(_req: Request, res: Response, next: NextFunction) {
+  async getCatalog(req: Request, res: Response, next: NextFunction) {
     try {
-      const data = await storeService.getCatalog();
+      const data = await storeService.getCatalog(req.query as unknown as CatalogQueryInput);
       res.json({ success: true, data });
     } catch (err) { next(err); }
   },

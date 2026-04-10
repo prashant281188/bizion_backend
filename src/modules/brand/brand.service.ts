@@ -3,6 +3,7 @@ import { db } from "../../config/db";
 import { brands } from "../../db/schema";
 import { AppError } from "../../middlewares/errorHandler";
 import { CreateBrandInput, ListBrandInput, UpdateBrandInput } from "./brand.schema";
+import { createSlug } from "../../utils/slug";
 
 export const brandService = {
   async list({ page = 1, limit = 10, search }: ListBrandInput) {
@@ -31,13 +32,14 @@ export const brandService = {
       where: eq(brands.brandName, data.brandName),
     });
     if (existing) throw new AppError("Brand name already exists", 409);
-
-    const [brand] = await db.insert(brands).values(data).returning();
+    const slug = createSlug(data.brandName)
+    const [brand] = await db.insert(brands).values({ slug, ...data }).returning();
     return brand;
   },
 
   async update(id: string, data: UpdateBrandInput) {
-    const [updated] = await db.update(brands).set(data).where(eq(brands.id, id)).returning();
+    const slug = createSlug(data.brandName)
+    const [updated] = await db.update(brands).set({ slug, ...data }).where(eq(brands.id, id)).returning();
     if (!updated) throw new AppError("Brand not found", 404);
     return updated;
   },

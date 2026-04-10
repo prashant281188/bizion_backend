@@ -30,7 +30,7 @@ function buildOptions(variants: any[]): { name: string; values: string[] }[] {
 }
 
 /** Convert a stored S3 key to a full public URL (null-safe) */
-function resolveImageUrl(image: { path: string } | null | undefined) {
+export function resolveImageUrl(image: { path: string } | null | undefined) {
   if (!image?.path) return null;
   return { url: getS3Url(image.path) };
 }
@@ -94,10 +94,9 @@ export const storeService = {
   /* ===== BRANDS ===== */
 
   async getBrands() {
-
-    return await db.query.brands.findMany({
-
-    })
+    return db.query.brands.findMany({
+      columns: { id: true, brandName: true, brandLogo: true },
+    });
   },
 
   /* ===== PRODUCT LISTING ===== */

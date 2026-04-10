@@ -2,6 +2,7 @@ import { Router } from "express";
 import { categoryController } from "./category.controller";
 import { requirePermission } from "../../middlewares/requirePermission";
 import { validateSchema } from "../../middlewares/validateSchema";
+import { uploadImages } from "../../middlewares/upload";
 import {
   listCategorySchema,
   createCategorySchema,
@@ -36,6 +37,7 @@ router.post(
   "/",
   authMiddleware,
   requirePermission("category:create"),
+  uploadImages.single("categoryImage"),
   validateSchema(createCategorySchema),
   categoryController.create
 );
@@ -46,6 +48,7 @@ router.patch(
   "/:id",
   authMiddleware,
   requirePermission("category:update"),
+  uploadImages.single("categoryImage"),
   validateSchema(updateCategorySchema),
   categoryController.update
 );

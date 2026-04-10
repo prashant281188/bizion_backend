@@ -3,7 +3,7 @@ import { hsnController } from "./hsn.controller";
 import { authMiddleware } from "../../middlewares/authMiddleware";
 import { requirePermission } from "../../middlewares/requirePermission";
 import { validateSchema } from "../../middlewares/validateSchema";
-import { listHsnSchema, createHsnSchema, updateHsnSchema } from "./hsn.schema";
+import { listHsnSchema, createHsnSchema, updateHsnSchema, assignGstGroupSchema } from "./hsn.schema";
 
 const router = Router();
 
@@ -53,6 +53,23 @@ router.delete(
   authMiddleware,
   requirePermission("hsn:delete"),
   hsnController.remove
+);
+
+/* ================= GST HISTORY ================= */
+
+router.post(
+  "/:id/gst-history",
+  authMiddleware,
+  requirePermission("hsn:update"),
+  validateSchema(assignGstGroupSchema),
+  hsnController.assignGstGroup
+);
+
+router.delete(
+  "/:id/gst-history/:historyId",
+  authMiddleware,
+  requirePermission("hsn:update"),
+  hsnController.removeGstHistory
 );
 
 export default router;

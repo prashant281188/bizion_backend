@@ -1,7 +1,7 @@
 import { NextFunction, Response } from "express";
 import { AuthRequest } from "../../../middlewares/authMiddleware";
 import { gstRateService } from "./gstRate.service";
-import { logAudit } from "../../../services/audit.service";
+import { logAudit, getClientIp } from "../../../services/audit.service";
 import { ListGstRateInput } from "./gstRate.schema";
 
 export const gstRateController = {
@@ -22,7 +22,15 @@ export const gstRateController = {
   async create(req: AuthRequest, res: Response, next: NextFunction) {
     try {
       const data = await gstRateService.create(req.body);
-      await logAudit({ userId: req.user!.userId, action: "gst:rate:create", entity: "gstRate", entityId: data.id });
+      await logAudit({
+        userId: req.user!.userId,
+        action: "create",
+        entity: "gstRate",
+        entityId: data.id,
+        ipAddress: getClientIp(req),
+        userAgent: req.headers["user-agent"],
+        after: data,
+      });
       res.status(201).json({ success: true, message: "GST rate created", data });
     } catch (err) { next(err); }
   },
@@ -30,7 +38,14 @@ export const gstRateController = {
   async update(req: AuthRequest, res: Response, next: NextFunction) {
     try {
       const data = await gstRateService.update(req.params.id, req.body);
-      await logAudit({ userId: req.user!.userId, action: "gst:rate:update", entity: "gstRate", entityId: data.id });
+      await logAudit({
+        userId: req.user!.userId,
+        action: "update",
+        entity: "gstRate",
+        entityId: data.id,
+        ipAddress: getClientIp(req),
+        userAgent: req.headers["user-agent"],
+      });
       res.json({ success: true, message: "GST rate updated", data });
     } catch (err) { next(err); }
   },
@@ -38,7 +53,14 @@ export const gstRateController = {
   async remove(req: AuthRequest, res: Response, next: NextFunction) {
     try {
       await gstRateService.remove(req.params.id);
-      await logAudit({ userId: req.user!.userId, action: "gst:rate:delete", entity: "gstRate", entityId: req.params.id });
+      await logAudit({
+        userId: req.user!.userId,
+        action: "delete",
+        entity: "gstRate",
+        entityId: req.params.id,
+        ipAddress: getClientIp(req),
+        userAgent: req.headers["user-agent"],
+      });
       res.json({ success: true, message: "GST rate deleted" });
     } catch (err) { next(err); }
   },

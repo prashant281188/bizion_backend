@@ -1,4 +1,4 @@
-import { eq, ilike, sql } from "drizzle-orm";
+import { and, eq, ilike, sql } from "drizzle-orm";
 import { db } from "../../config/db";
 import { options, optionValues } from "../../db/schema";
 import { AppError } from "../../middlewares/errorHandler";
@@ -61,6 +61,7 @@ export const optionService = {
   async remove(id: string) {
     const [deleted] = await db.delete(options).where(eq(options.id, id)).returning({ id: options.id });
     if (!deleted) throw new AppError("Option not found", 404);
+    return deleted;
   },
 
   /* ===== OPTION VALUES ===== */
@@ -69,27 +70,41 @@ export const optionService = {
     const option = await db.query.options.findFirst({ where: eq(options.id, optionId) });
     if (!option) throw new AppError("Option not found", 404);
 
+    const existing = await db.query.optionValues.findFirst({
+      where: and(eq(optionValues.optionId, optionId), eq(optionValues.optionValue, data.optionValue)),
+    });
+    if (existing) throw new AppError("Option value already exists for this option", 409);
+
     const [value] = await db.insert(optionValues).values({ ...data, optionId }).returning();
     return value;
   },
 
   async updateValue(optionId: string, valueId: string, data: UpdateOptionValueInput) {
+    const existing = await db.query.optionValues.findFirst({
+      where: and(eq(optionValues.id, valueId), eq(optionValues.optionId, optionId)),
+    });
+    if (!existing) throw new AppError("Option value not found", 404);
+
     const [updated] = await db
       .update(optionValues)
       .set(data)
       .where(eq(optionValues.id, valueId))
       .returning();
 
-    if (!updated || updated.optionId !== optionId) throw new AppError("Option value not found", 404);
     return updated;
   },
 
   async removeValue(optionId: string, valueId: string) {
+    const existing = await db.query.optionValues.findFirst({
+      where: and(eq(optionValues.id, valueId), eq(optionValues.optionId, optionId)),
+    });
+    if (!existing) throw new AppError("Option value not found", 404);
+
     const [deleted] = await db
       .delete(optionValues)
       .where(eq(optionValues.id, valueId))
-      .returning({ id: optionValues.id, optionId: optionValues.optionId });
+      .returning({ id: optionValues.id });
 
-    if (!deleted || deleted.optionId !== optionId) throw new AppError("Option value not found", 404);
+    return deleted;
   },
 };

@@ -1,16 +1,12 @@
 import { NextFunction, Response } from "express";
-import { logAudit } from "../../services/audit.service";
-import { AppError } from "../../middlewares/errorHandler";
+import { logAudit, getClientIp } from "../../services/audit.service";
 import { userService } from "./user.service";
 import { AuthRequest } from "../../middlewares/authMiddleware";
 import { ListUserInput } from "./user.schema";
 
 export const userController = {
-  /* ================= LIST ================= */
-
   async list(req: AuthRequest, res: Response, next: NextFunction) {
     try {
-      
       const result = await userService.list(req.query as unknown as ListUserInput);
       res.json({ success: true, data: result.items, meta: result.meta });
     } catch (err) {
@@ -18,79 +14,63 @@ export const userController = {
     }
   },
 
-  /* ================= GET ================= */
-
   async getById(req: AuthRequest, res: Response, next: NextFunction) {
     try {
       const user = await userService.getById(req.params.id);
-
-      if (!user) throw new AppError("User not found", 404);
-
       res.json({ success: true, data: user });
     } catch (err) {
       next(err);
     }
   },
 
-  /* ================= CREATE ================= */
-
   async create(req: AuthRequest, res: Response, next: NextFunction) {
     try {
       const user = await userService.create(req.body);
-
       await logAudit({
         userId: req.user!.userId,
-        action: "user:create",
+        action: "create",
         entity: "user",
         entityId: user.id,
+        entityLabel: `${user.firstName} ${user.lastName}`,
+        ipAddress: getClientIp(req),
+        userAgent: req.headers["user-agent"],
+        after: user,
       });
-
-      res.status(201).json({
-        success: true,
-        message: "User created",
-        data: user,
-      });
+      res.status(201).json({ success: true, message: "User created", data: user });
     } catch (err) {
       next(err);
     }
   },
 
-  /* ================= UPDATE ================= */
-
   async update(req: AuthRequest, res: Response, next: NextFunction) {
     try {
       const updated = await userService.update(req.params.id, req.body);
-
-      if (!updated) throw new AppError("User not found", 404);
-
       await logAudit({
         userId: req.user!.userId,
-        action: "user:update",
+        action: "update",
         entity: "user",
         entityId: updated.id,
+        entityLabel: `${updated.firstName} ${updated.lastName}`,
+        ipAddress: getClientIp(req),
+        userAgent: req.headers["user-agent"],
       });
-
       res.json({ success: true, message: "User updated", data: updated });
     } catch (err) {
       next(err);
     }
   },
 
-  /* ================= DELETE ================= */
-
   async remove(req: AuthRequest, res: Response, next: NextFunction) {
     try {
-      const deleted = await userService.remove(req.params.id);
-
-      if (!deleted) throw new AppError("User not found", 404);
-
+      await userService.remove(req.params.id);
       await logAudit({
         userId: req.user!.userId,
-        action: "user:delete",
+        action: "delete",
         entity: "user",
         entityId: req.params.id,
+        ipAddress: getClientIp(req),
+        userAgent: req.headers["user-agent"],
       });
-
       res.json({ success: true, message: "User deleted" });
     } catch (err) {
       next(err);

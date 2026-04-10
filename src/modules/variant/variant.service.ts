@@ -1,6 +1,6 @@
 import { and, eq, ilike } from "drizzle-orm";
 import { db } from "../../config/db";
-import { products, productVariants, variantRates, variantOptionValues, optionValues } from "../../db/schema";
+import { products, productVariants, variantRates, variantOptionValues } from "../../db/schema";
 import { AppError } from "../../middlewares/errorHandler";
 import { AssignOptionValuesInput, CreateRateInput, CreateVariantInput, UpdateVariantInput } from "./variant.schema";
 type Search = {
@@ -50,7 +50,7 @@ export const variantService = {
     const variant = await db.query.productVariants.findFirst({
       where: eq(productVariants.id, id),
       with: {
-        rates: { columns: { id: true, mrp: true, saleRate: true, purchaseRate: true, from: true, to: true } },
+        rates: { columns: { id: true, mrp: true, saleRate: true, purchaseRate: true, effectiveFrom: true, effectiveTo: true } },
         optionValues: {
           columns: {},
           with: { optionValue: { columns: { id: true, optionValue: true, position: true }, with: { option: { columns: { optionName: true } } } } },
@@ -75,7 +75,11 @@ export const variantService = {
     return db.transaction(async (tx) => {
       const [variant] = await tx
         .insert(productVariants)
-        .values({ ...variantData, productId })
+        .values({
+          ...variantData,
+          productId,
+          packing: variantData.packing != null ? String(variantData.packing) : undefined,
+        })
         .returning();
 
       if (rates && Object.values(rates).some((v) => v !== undefined)) {
@@ -102,7 +106,11 @@ export const variantService = {
   async update(id: string, data: UpdateVariantInput) {
     const [updated] = await db
       .update(productVariants)
-      .set(data)
+      .set({
+        ...data,
+        packing: data.packing != null ? String(data.packing) : undefined,
+        updatedAt: new Date(),
+      })
       .where(eq(productVariants.id, id))
       .returning();
     if (!updated) throw new AppError("Variant not found", 404);
@@ -117,6 +125,7 @@ export const variantService = {
       .where(eq(productVariants.id, id))
       .returning({ id: productVariants.id });
     if (!deleted) throw new AppError("Variant not found", 404);
+    return deleted;
   },
 
   /* ===== RATES ===== */
@@ -133,8 +142,8 @@ export const variantService = {
       mrp: data.mrp,
       purchaseRate: data.purchaseRate,
       saleRate: data.saleRate,
-      from: data.effectiveFrom ? new Date(data.effectiveFrom) : undefined,
-      to: data.effectiveTo ? new Date(data.effectiveTo) : undefined,
+      effectiveFrom: data.effectiveFrom ? new Date(data.effectiveFrom) : undefined,
+      effectiveTo: data.effectiveTo ? new Date(data.effectiveTo) : undefined,
     }).returning();
 
     return rate;
@@ -146,6 +155,7 @@ export const variantService = {
       .where(and(eq(variantRates.id, rateId), eq(variantRates.variantId, variantId)))
       .returning({ id: variantRates.id });
     if (!deleted) throw new AppError("Rate not found", 404);
+    return deleted;
   },
 
   /* ===== OPTION VALUES ===== */

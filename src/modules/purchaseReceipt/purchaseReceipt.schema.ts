@@ -2,13 +2,13 @@ import { z } from "zod";
 
 const allocationSchema = z.object({
   orderItemId: z.string().uuid("Valid order item ID required"),
-  allocatedQty: z.number().positive("Allocated quantity must be positive"),
+  allocatedQty: z.coerce.number().positive("Allocated quantity must be positive"),
 });
 
 const receiptItemSchema = z.object({
   variantId: z.string().uuid().optional(),
   orderId: z.string().uuid().optional(),
-  totalQty: z.number().positive("Total quantity must be positive"),
+  totalQty: z.coerce.number().positive("Total quantity must be positive"),
   allocations: z.array(allocationSchema).optional(),
 });
 

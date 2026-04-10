@@ -6,6 +6,8 @@ import { orderController } from "./order.controller";
 import {
   addItemSchema,
   createOrderSchema,
+  listOrderItemsSchema,
+  listOrderPartiesSchema,
   listOrderSchema,
   nextOrderNumberSchema,
   updateOrderSchema,
@@ -21,6 +23,20 @@ router.get(
   requirePermission("order:read"),
   validateSchema(nextOrderNumberSchema, "query"),
   orderController.nextNumber
+);
+router.get(
+  "/items",
+  authMiddleware,
+  requirePermission("order:read"),
+  validateSchema(listOrderItemsSchema, "query"),
+  orderController.listItems
+);
+router.get(
+  "/parties",
+  authMiddleware,
+  requirePermission("order:read"),
+  validateSchema(listOrderPartiesSchema, "query"),
+  orderController.listParties
 );
 router.get(
   "/",

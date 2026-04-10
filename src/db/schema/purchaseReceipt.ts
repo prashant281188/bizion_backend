@@ -1,11 +1,11 @@
-import { numeric, pgTable, timestamp, uuid } from "drizzle-orm/pg-core";
+import { foreignKey, index, numeric, pgTable, timestamp, uuid } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 import { orders } from "./order";
 import { users } from "./user";
 import { productVariants } from "./productVariant";
 import { orderItems } from "./orderItem";
 
-export const purchaseReceipts = pgTable("puchase_receipts", {
+export const purchaseReceipts = pgTable("purchase_receipts", {
     id: uuid("id").defaultRandom().primaryKey(),
     orderId: uuid("order_id").references(() => orders.id),
     receivedDate: timestamp("received_date"),
@@ -26,10 +26,17 @@ export const purchaseReceiptItems = pgTable("purchase_receipt_items", {
 })
 export const purchaseReceiptAllocations = pgTable("purchase_receipt_allocations", {
     id: uuid("id").defaultRandom().primaryKey(),
-    receiptItemId: uuid("receipt_item_id").references(() => purchaseReceiptItems.id),
-    orderItemId: uuid("order_item_id").references(() => orderItems.id),
-    allocatedQty: numeric("allocated_qty", { mode: "number", precision: 12, scale: 2 })
-})
+    receiptItemId: uuid("receipt_item_id").notNull(),
+    orderItemId: uuid("order_item_id").notNull(),
+    allocatedQty: numeric("allocated_qty", { mode: "number", precision: 12, scale: 2 }).notNull(),
+},
+    (table) => [
+        foreignKey({ name: "pra_receipt_item_fk", columns: [table.receiptItemId], foreignColumns: [purchaseReceiptItems.id] }).onDelete("cascade"),
+        foreignKey({ name: "pra_order_item_fk", columns: [table.orderItemId], foreignColumns: [orderItems.id] }).onDelete("restrict"),
+        index("pra_receipt_item_idx").on(table.receiptItemId),
+        index("pra_order_item_idx").on(table.orderItemId),
+    ]
+)
 
 export const purchaseReceiptRelations = relations(purchaseReceipts, ({ one, many }) => ({
     order: one(orders, {

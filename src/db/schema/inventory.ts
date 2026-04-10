@@ -19,7 +19,18 @@ export const inventory = pgTable(
       .notNull()
       .references(() => productVariants.id, { onDelete: "cascade" }),
     location: text("location").default("default").notNull(),
-    quantity: integer("quantity").default(0).notNull(),
+    // Current physical stock on hand
+    quantityOnHand: integer("quantity_on_hand").default(0).notNull(),
+    // Qty reserved for confirmed but not yet dispatched orders
+    quantityReserved: integer("quantity_reserved").default(0).notNull(),
+    // Qty on open purchase orders (ordered from supplier, not yet received)
+    quantityOrdered: integer("quantity_ordered").default(0).notNull(),
+    // Qty that needs to be ordered (reorder demand / manual override)
+    quantityToOrder: integer("quantity_to_order").default(0).notNull(),
+    // Threshold at which restocking should be triggered
+    reorderPoint: integer("reorder_point").default(0).notNull(),
+    // Default qty to order when reorder is triggered
+    reorderQty: integer("reorder_qty").default(0).notNull(),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at").defaultNow().notNull(),
   },

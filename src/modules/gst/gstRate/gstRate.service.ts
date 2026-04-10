@@ -1,6 +1,6 @@
 import { and, eq, sql } from "drizzle-orm";
 import { db } from "../../../config/db";
-import { gstRates } from "../../../db/schema";
+import { gstGroups, gstRates } from "../../../db/schema";
 import { AppError } from "../../../middlewares/errorHandler";
 import { CreateGstRateInput, ListGstRateInput, UpdateGstRateInput } from "./gstRate.schema";
 
@@ -35,6 +35,9 @@ export const gstRateService = {
   },
 
   async create(data: CreateGstRateInput) {
+    const existingGroup = await db.query.gstGroups.findFirst({ where: eq(gstGroups.id, data.gstGroupId) });
+    if (!existingGroup) throw new AppError("GST group not found", 404);
+
     const [rate] = await db
       .insert(gstRates)
       .values({
@@ -65,5 +68,6 @@ export const gstRateService = {
   async remove(id: string) {
     const [deleted] = await db.delete(gstRates).where(eq(gstRates.id, id)).returning({ id: gstRates.id });
     if (!deleted) throw new AppError("GST rate not found", 404);
+    return deleted;
   },
 };

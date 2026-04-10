@@ -14,5 +14,11 @@ export const listProductsSchema = defaultParams.merge(z.object({
   sort: z.enum(["model_asc", "model_desc", "newest"]).default("model_asc"),
 }));
 
+export const catalogQuerySchema = z.object({
+  brandId: z.string().uuid().optional(),
+  categoryId: z.string().uuid().optional(),
+});
+
 export type ListProductsInput = z.infer<typeof listProductsSchema>;
+export type CatalogQueryInput = z.infer<typeof catalogQuerySchema>;
 export type Params = z.infer<typeof defaultParams>;

@@ -1,28 +1,59 @@
 import { NextFunction, Response } from "express";
-import { and, asc, eq, inArray } from "drizzle-orm";
+import { inArray } from "drizzle-orm";
 import { AuthRequest } from "../../middlewares/authMiddleware";
 import { AppError } from "../../middlewares/errorHandler";
 import { productService } from "./product.service";
-import { logAudit } from "../../services/audit.service";
-import { ListProductInput, createProductSchema, updateProductSchema } from "./product.schema";
+import { logAudit, getClientIp } from "../../services/audit.service";
+import {
+  ListProductInput,
+  VariantImageMapping,
+  createProductSchema,
+  updateProductSchema,
+  variantImageMappingSchema,
+} from "./product.schema";
 import { uploadToS3, deleteFromS3 } from "../../services/s3.service";
 import { db } from "../../config/db";
-import { productImages, variantImages, productVariants, products } from "../../db/schema";
+import { variantImages } from "../../db/schema";
 
 /* =====================================================
-   HELPER — coerce string "true"/"false" → boolean
-   (multer returns all text fields as strings)
+   HELPERS
 ===================================================== */
 
-function parseFormBooleans(body: Record<string, any>): void {
+/**
+ * Multipart/form-data sends booleans as strings ("true"/"false").
+ * This mutates the body in-place before schema parsing.
+ */
+function parseFormBooleans(body: Record<string, unknown>): void {
   for (const key of ["isActive", "isFeatured", "isNew"]) {
-    if (body[key] === "true") body[key] = true;
-    else if (body[key] === "false") body[key] = false;
+    if (body[key] === "true")  body[key] = true;
+    if (body[key] === "false") body[key] = false;
   }
 }
 
+/**
+ * Safely JSON-parses a string field in the request body.
+ * Throws a 400 AppError with a descriptive message on failure.
+ */
+function parseJsonField(body: Record<string, unknown>, key: string): void {
+  if (typeof body[key] === "string") {
+    try {
+      body[key] = JSON.parse(body[key] as string);
+    } catch {
+      throw new AppError(`"${key}" must be a valid JSON string when sent as form-data`, 400);
+    }
+  }
+}
+
+/* =====================================================
+   CONTROLLER
+===================================================== */
+
 export const productController = {
-  /* ================= LIST ================= */
+
+  /* ─────────────────────────────────────────────────
+     LIST
+     GET /products?page=1&limit=10&search=...&sortBy=model
+  ───────────────────────────────────────────────── */
 
   async list(req: AuthRequest, res: Response, next: NextFunction) {
     try {
@@ -33,75 +64,84 @@ export const productController = {
     }
   },
 
-  /* ================= GET BY ID ================= */
+  /* ─────────────────────────────────────────────────
+     GET BY ID
+     GET /products/:id
+  ───────────────────────────────────────────────── */
 
   async getById(req: AuthRequest, res: Response, next: NextFunction) {
     try {
       const product = await productService.getById(req.params.id);
-
       if (!product) throw new AppError("Product not found", 404);
-
       res.json({ success: true, data: product });
     } catch (err) {
       next(err);
     }
   },
 
-  /* ================= CREATE ================= */
+  /* ─────────────────────────────────────────────────
+     CREATE
+     POST /products  (multipart/form-data)
+
+     Form fields:
+       model, categoryId, brandId, hsnId, unitId,
+       metal, shortDescription, description, slug,
+       sizeType, isActive, isFeatured, isNew, status
+       variants  — JSON string (see schema above)
+
+     Files:
+       productImage   — single file, becomes the cover image
+       variantImages  — up to 20 files; must pair with
+                        variantImageMappings JSON field
+                        (only applies if variants are created)
+
+     Note: After creating the product, variant image mappings
+     are applied by variantId — NOT by positional index.
+     Frontend must send explicit mappings.
+  ───────────────────────────────────────────────── */
 
   async create(req: AuthRequest, res: Response, next: NextFunction) {
     try {
       const files = req.files as { [fieldname: string]: Express.Multer.File[] } | undefined;
-      const productImageFile = files?.productImage?.[0];
+      const productImageFile  = files?.productImage?.[0];
       const variantImageFiles = files?.variantImages ?? [];
 
-      // Multer gives all text fields as strings — parse nested JSON for variants
-      const rawBody: Record<string, any> = { ...req.body };
-      if (typeof rawBody.variants === "string") {
-        try {
-          rawBody.variants = JSON.parse(rawBody.variants);
-        } catch {
-          throw new AppError("variants must be a valid JSON string when sent as form-data", 400);
-        }
-      }
+      // Prepare body: parse JSON fields + coerce booleans from form-data
+      const rawBody: Record<string, unknown> = { ...req.body };
+      parseJsonField(rawBody, "variants");
+      parseJsonField(rawBody, "variantImageMappings");
       parseFormBooleans(rawBody);
 
       const parsed = createProductSchema.parse(rawBody);
 
-      // Upload product image and create DB record before the product transaction
+      // Upload cover image to S3 if provided; pass key to service (not imageId)
+      // so the service can set productId correctly inside one transaction.
+      let productImageKey: string | undefined;
       if (productImageFile) {
         const { key } = await uploadToS3(
           productImageFile.buffer,
           productImageFile.originalname,
-          productImageFile.mimetype
+          productImageFile.mimetype,
+          `products/${parsed.model}`
         );
-        const [img] = await db.insert(productImages).values({ path: key }).returning();
-        parsed.imageId = img.id;
+        productImageKey = key;
       }
 
-      const product = await productService.create(parsed);
+      // Service creates product + cover image + variants atomically
+      const product = await productService.create(parsed, productImageKey);
 
-      // Upload variant images and link by creation order (index matches variants array)
-      if (variantImageFiles.length > 0) {
-        const createdVariants = await db.query.productVariants.findMany({
-          where: eq(productVariants.productId, product.id),
-          columns: { id: true },
-          orderBy: [asc(productVariants.createdAt)],
-        });
-
-        for (let i = 0; i < variantImageFiles.length; i++) {
-          if (i >= createdVariants.length) break;
-          const file = variantImageFiles[i];
-          const { key } = await uploadToS3(file.buffer, file.originalname, file.mimetype);
-          await db.insert(variantImages).values({ productVariantId: createdVariants[i].id, path: key });
-        }
-      }
+      // Associate uploaded variant image files with specific variants
+      // via explicit mapping: [{ variantId, fileIndex }, ...]
+      await attachVariantImages(variantImageFiles, rawBody.variantImageMappings, parsed.model);
 
       await logAudit({
-        userId: req.user!.userId,
-        action: "product:create",
-        entity: "product",
-        entityId: product.id,
+        userId:    req.user!.userId,
+        action:    "create",
+        entity:    "product",
+        entityId:  product.id,
+        entityLabel: product.model,
+        ipAddress: getClientIp(req),
+        userAgent: req.headers["user-agent"],
       });
 
       res.status(201).json({ success: true, message: "Product created", data: product });
@@ -110,151 +150,127 @@ export const productController = {
     }
   },
 
-  /* ================= UPDATE ================= */
+  /* ─────────────────────────────────────────────────
+     UPDATE
+     PATCH /products/:id  (multipart/form-data)
+
+     Form fields:
+       Any subset of product scalar fields.
+       variants                — JSON string (upsert list)
+       deleteVariantIds        — JSON string (UUID array)
+       deleteVariantImageIds   — JSON string (UUID array)
+       variantImageMappings    — JSON string (mapping array for new uploads)
+
+     Files:
+       productImage   — replaces the current cover image
+       variantImages  — new images for existing variants;
+                        must pair with variantImageMappings
+
+     Image replacement flow:
+       1. Controller fetches old cover S3 key
+       2. Controller uploads new file to S3
+       3. Service swaps DB records in a transaction
+       4. Controller deletes old S3 object
+
+     Variant image deletion flow:
+       1. Controller fetches S3 keys for deleteVariantImageIds
+       2. Controller deletes from S3
+       3. Service deletes DB rows in the same transaction as the rest of the update
+  ───────────────────────────────────────────────── */
 
   async update(req: AuthRequest, res: Response, next: NextFunction) {
     try {
       const files = req.files as { [fieldname: string]: Express.Multer.File[] } | undefined;
-      const productImageFile = files?.productImage?.[0];
+      const productImageFile  = files?.productImage?.[0];
       const variantImageFiles = files?.variantImages ?? [];
 
-      const rawBody: Record<string, any> = { ...req.body };
-
-      // Parse JSON fields sent as strings in multipart/form-data
-      for (const key of ["variants", "deleteVariantIds", "deleteVariantImageIds"]) {
-        if (typeof rawBody[key] === "string") {
-          try {
-            rawBody[key] = JSON.parse(rawBody[key]);
-          } catch {
-            throw new AppError(`${key} must be a valid JSON string when sent as form-data`, 400);
-          }
-        }
+      const rawBody: Record<string, unknown> = { ...req.body };
+      for (const key of ["variants", "deleteVariantIds", "deleteVariantImageIds", "variantImageMappings"]) {
+        parseJsonField(rawBody, key);
       }
       parseFormBooleans(rawBody);
 
-      // Replace product image if a new file was provided
+      const parsed = updateProductSchema.parse(rawBody);
+
+      // ── Step 1: Resolve old cover image path (for S3 deletion after update) ──
+      let oldCoverPath: string | null = null;
+      let newProductImageKey: string | undefined;
+
       if (productImageFile) {
-        const existing = await db.query.products.findFirst({
-          where: and(eq(products.id, req.params.id), eq(products.isDeleted, false)),
-          columns: { id: true, imageId: true },
-        });
-        if (!existing) throw new AppError("Product not found", 404);
+        oldCoverPath = await productService.getOldCoverImagePath(req.params.id);
 
         const { key } = await uploadToS3(
           productImageFile.buffer,
           productImageFile.originalname,
-          productImageFile.mimetype
+          productImageFile.mimetype,
+          `products`
         );
-
-        await db.transaction(async (tx) => {
-          // Insert new image first
-          const [img] = await tx.insert(productImages).values({ path: key }).returning();
-          rawBody.imageId = img.id;
-
-          // Point product to new image so the FK on the old image is released
-          await tx
-            .update(products)
-            .set({ imageId: img.id, updatedAt: new Date() })
-            .where(eq(products.id, req.params.id));
-
-          // Now safe to delete the old image
-          if (existing.imageId) {
-            const [old] = await tx
-              .delete(productImages)
-              .where(eq(productImages.id, existing.imageId))
-              .returning({ path: productImages.path });
-            if (old) await deleteFromS3(old.path);
-          }
-        });
+        newProductImageKey = key;
       }
 
-      // Delete variant images from S3 + DB
-      const deleteVariantImageIds: string[] = Array.isArray(rawBody.deleteVariantImageIds)
-        ? rawBody.deleteVariantImageIds
-        : [];
+      // ── Step 2: Fetch S3 paths for variant images to delete (before DB rows are gone) ──
+      const deleteVariantImageIds = parsed.deleteVariantImageIds ?? [];
+      let variantImagePathsToDelete: string[] = [];
+
       if (deleteVariantImageIds.length > 0) {
-        const toDelete = await db
-          .select({ id: variantImages.id, path: variantImages.path })
+        const rows = await db
+          .select({ path: variantImages.path })
           .from(variantImages)
           .where(inArray(variantImages.id, deleteVariantImageIds));
-
-        await db.delete(variantImages).where(inArray(variantImages.id, deleteVariantImageIds));
-        await Promise.all(toDelete.map((img) => deleteFromS3(img.path)));
+        variantImagePathsToDelete = rows.map((r) => r.path);
       }
 
-      const parsed = updateProductSchema.parse(rawBody);
-      const product = await productService.update(req.params.id, parsed);
+      // ── Step 3: Service handles all DB mutations in one transaction ──
+      const result = await productService.update(req.params.id, parsed, newProductImageKey);
 
-      // Upload variant images and link by index matching the variants array order
-      // New variants (no id) are created first, so we fetch them by createdAt order
-      if (variantImageFiles.length > 0 && parsed.variants && parsed.variants.length > 0) {
-        const newVariantCount = parsed.variants.filter((v) => !v.id).length;
-
-        if (newVariantCount > 0) {
-          // Fetch newly-created variants (the last N by createdAt)
-          const allVariants = await db.query.productVariants.findMany({
-            where: eq(productVariants.productId, req.params.id),
-            columns: { id: true },
-            orderBy: [asc(productVariants.createdAt)],
-          });
-          const newVariants = allVariants.slice(-newVariantCount);
-
-          for (let i = 0; i < variantImageFiles.length; i++) {
-            if (i >= newVariants.length) break;
-            const file = variantImageFiles[i];
-            const { key } = await uploadToS3(file.buffer, file.originalname, file.mimetype);
-            await db.insert(variantImages).values({ productVariantId: newVariants[i].id, path: key });
-          }
-        }
-
-        // Also handle variantImages for existing variants: client sends variantId in file fieldname
-        // e.g. variantImages[variantId] — handled via explicit variantId mapping below
+      // ── Step 4: S3 cleanup (after DB commit — best-effort; log on failure) ──
+      if (oldCoverPath) {
+        await deleteFromS3(oldCoverPath).catch((err) =>
+          console.error(`[S3] Failed to delete old cover image ${oldCoverPath}:`, err)
+        );
+      }
+      if (variantImagePathsToDelete.length > 0) {
+        await Promise.allSettled(variantImagePathsToDelete.map((p) => deleteFromS3(p)));
       }
 
-      // Support uploading images to existing variants via variantImageMappings field:
-      // variantImageMappings = JSON array of { variantId, fileIndex } to link uploaded files to existing variants
-      if (variantImageFiles.length > 0 && rawBody.variantImageMappings) {
-        let mappings: { variantId: string; fileIndex: number }[] = [];
-        try {
-          mappings = typeof rawBody.variantImageMappings === "string"
-            ? JSON.parse(rawBody.variantImageMappings)
-            : rawBody.variantImageMappings;
-        } catch {
-          throw new AppError("variantImageMappings must be a valid JSON string", 400);
-        }
-
-        for (const { variantId, fileIndex } of mappings) {
-          const file = variantImageFiles[fileIndex];
-          if (!file) continue;
-          const { key } = await uploadToS3(file.buffer, file.originalname, file.mimetype);
-          await db.insert(variantImages).values({ productVariantId: variantId, path: key });
-        }
+      // ── Step 5: Upload new variant images and link to existing variants ──
+      if (variantImageFiles.length > 0) {
+        const productModel = (parsed as any).model ?? "product";
+        await attachVariantImages(variantImageFiles, rawBody.variantImageMappings, productModel);
       }
 
       await logAudit({
-        userId: req.user!.userId,
-        action: "product:update",
-        entity: "product",
-        entityId: req.params.id,
+        userId:    req.user!.userId,
+        action:    "update",
+        entity:    "product",
+        entityId:  req.params.id,
+        ipAddress: getClientIp(req),
+        userAgent: req.headers["user-agent"],
       });
 
-      res.json({ success: true, message: "Product updated", data: product });
+      res.json({ success: true, message: "Product updated", data: result });
     } catch (err) {
       next(err);
     }
   },
 
-  /* ================= DELETE ================= */
+  /* ─────────────────────────────────────────────────
+     DELETE
+     DELETE /products/:id
+     Soft-delete only — data is preserved for audit.
+  ───────────────────────────────────────────────── */
 
   async remove(req: AuthRequest, res: Response, next: NextFunction) {
     try {
       await productService.remove(req.params.id);
 
       await logAudit({
-        userId: req.user!.userId,
-        action: "product:delete",
-        entity: "product",
-        entityId: req.params.id,
+        userId:    req.user!.userId,
+        action:    "delete",
+        entity:    "product",
+        entityId:  req.params.id,
+        ipAddress: getClientIp(req),
+        userAgent: req.headers["user-agent"],
       });
 
       res.json({ success: true, message: "Product deleted" });
@@ -263,3 +279,48 @@ export const productController = {
     }
   },
 };
+
+/* =====================================================
+   PRIVATE HELPER — variant image attachment
+   Uploads files to S3 and inserts variantImages rows
+   using explicit { variantId, fileIndex } mappings.
+   Called by both create and update handlers.
+===================================================== */
+
+async function attachVariantImages(
+  files: Express.Multer.File[],
+  rawMappings: unknown,
+  folderHint: string
+): Promise<void> {
+  if (files.length === 0 || !rawMappings) return;
+
+  // Parse and validate the mappings array
+  let mappings: VariantImageMapping[] = [];
+  const rawArr = Array.isArray(rawMappings) ? rawMappings : [];
+  for (const item of rawArr) {
+    const result = variantImageMappingSchema.safeParse(item);
+    if (result.success) mappings.push(result.data);
+  }
+
+  if (mappings.length === 0) return;
+
+  // Upload each referenced file and insert the DB row
+  await Promise.all(
+    mappings.map(async ({ variantId, fileIndex }) => {
+      const file = files[fileIndex];
+      if (!file) return;
+
+      const { key } = await uploadToS3(
+        file.buffer,
+        file.originalname,
+        file.mimetype,
+        `products/${folderHint}/variants`
+      );
+
+      await db.insert(variantImages).values({
+        productVariantId: variantId,
+        path: key,
+      });
+    })
+  );
+}

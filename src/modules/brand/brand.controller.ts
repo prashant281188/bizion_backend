@@ -1,7 +1,7 @@
 import { NextFunction, Response } from "express";
 import { AuthRequest } from "../../middlewares/authMiddleware";
 import { brandService } from "./brand.service";
-import { logAudit } from "../../services/audit.service";
+import { logAudit, getClientIp } from "../../services/audit.service";
 import { ListBrandInput } from "./brand.schema";
 import { deleteFromS3, getS3Url, uploadToS3 } from "../../services/s3.service";
 
@@ -27,9 +27,16 @@ export const brandController = {
         const { key } = await uploadToS3(req.file.buffer, req.file.originalname, req.file.mimetype, "brands");
         brandLogo = key;
       }
-
       const data = await brandService.create({ ...req.body, ...(brandLogo && { brandLogo }) });
-      await logAudit({ userId: req.user!.userId, action: "brand:create", entity: "brand", entityId: data.id });
+      await logAudit({
+        userId: req.user!.userId,
+        action: "create",
+        entity: "brand",
+        entityId: data.id,
+        entityLabel: data.brandName,
+        ipAddress: getClientIp(req),
+        userAgent: req.headers["user-agent"],
+      });
       res.status(201).json({ success: true, message: "Brand created", data: { ...data, ...(data.brandLogo && { brandLogoUrl: getS3Url(data.brandLogo) }) } });
     } catch (err) { next(err); }
   },
@@ -40,13 +47,19 @@ export const brandController = {
       if (req.file) {
         const existing = await brandService.getById(req.params.id);
         if (existing.brandLogo) await deleteFromS3(existing.brandLogo);
-
         const { key } = await uploadToS3(req.file.buffer, req.file.originalname, req.file.mimetype, "brands");
         brandLogo = key;
       }
-
       const data = await brandService.update(req.params.id, { ...req.body, ...(brandLogo && { brandLogo }) });
-      await logAudit({ userId: req.user!.userId, action: "brand:update", entity: "brand", entityId: data.id });
+      await logAudit({
+        userId: req.user!.userId,
+        action: "update",
+        entity: "brand",
+        entityId: data.id,
+        entityLabel: data.brandName,
+        ipAddress: getClientIp(req),
+        userAgent: req.headers["user-agent"],
+      });
       res.json({ success: true, message: "Brand updated", data: { ...data, ...(data.brandLogo && { brandLogoUrl: getS3Url(data.brandLogo) }) } });
     } catch (err) { next(err); }
   },
@@ -55,9 +68,16 @@ export const brandController = {
     try {
       const existing = await brandService.getById(req.params.id);
       if (existing.brandLogo) await deleteFromS3(existing.brandLogo);
-
       await brandService.remove(req.params.id);
-      await logAudit({ userId: req.user!.userId, action: "brand:delete", entity: "brand", entityId: req.params.id });
+      await logAudit({
+        userId: req.user!.userId,
+        action: "delete",
+        entity: "brand",
+        entityId: req.params.id,
+        entityLabel: existing.brandName,
+        ipAddress: getClientIp(req),
+        userAgent: req.headers["user-agent"],
+      });
       res.json({ success: true, message: "Brand deleted" });
     } catch (err) { next(err); }
   },

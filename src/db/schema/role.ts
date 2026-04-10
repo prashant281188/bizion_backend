@@ -1,10 +1,11 @@
 import { relations } from "drizzle-orm";
-import { pgTable, uuid, text } from "drizzle-orm/pg-core";
+import { boolean, pgTable, uuid, text } from "drizzle-orm/pg-core";
 import { users } from "./user";
 
 export const roles = pgTable("roles", {
   id: uuid("id").defaultRandom().primaryKey(),
   name: text("name").notNull().unique(),
+  isSystem: boolean("is_system").default(false).notNull(), // system roles cannot be deleted or have permissions changed
 });
 
 

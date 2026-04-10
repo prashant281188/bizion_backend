@@ -6,6 +6,8 @@ import {
   index,
   boolean,
   uniqueIndex,
+  pgEnum,
+  PgColumn,
 } from "drizzle-orm/pg-core";
 import { categories } from "./category";
 import { relations } from "drizzle-orm";
@@ -15,56 +17,45 @@ import { hsnCodes } from "./hsnCodes";
 import { units } from "./unit";
 import { productImages } from "./productImage";
 
+export const productStatusEnum = pgEnum("product_status", ["draft", "active", "archived"]);
 
 export const products = pgTable(
   "products",
   {
     id: uuid("id").defaultRandom().primaryKey(),
-
     model: text("model").notNull(),
-    metal: text("metal"),
+    metal: text("metal"),          // enum, not free text
+    slug: text("slug").notNull(),  // notNull + unique
     shortDescription: text("short_description"),
     description: text("description"),
-    slug: text("slug"),
 
-    brandId: uuid("brand_id")
-      .references(() => brands.id, { onDelete: "no action" }),
 
-    categoryId: uuid("category_id")
-      .references(() => categories.id, { onDelete: "restrict" })
-      .notNull(),
-
-    hsnId: uuid("hsn_id")
-      .references(() => hsnCodes.id, { onDelete: "set null" }),
-
-    unitId: uuid("unit_id")
-      .references(() => units.id),
-
-    imageId: uuid("image_id")
-      .references(() => productImages.id),
+    brandId: uuid("brand_id").references(() => brands.id, { onDelete: "set null" }), // not "no action"
+    categoryId: uuid("category_id").references(() => categories.id, { onDelete: "restrict" }).notNull(),
+    hsnId: uuid("hsn_id").references(() => hsnCodes.id, { onDelete: "set null" }),
+    unitId: uuid("unit_id").references(() => units.id, { onDelete: "set null" }),
+    imageId: uuid("image_id").references((): PgColumn => productImages.id, { onDelete: "set null" }),
 
     sizeType: text("size_type"),
-
     isActive: boolean("is_active").default(true).notNull(),
-    inStock :boolean("in_stock").default(false),
+    isFeatured: boolean("is_featured").default(false).notNull(),
+    isNew: boolean("is_new").default(false).notNull(),
+    status: productStatusEnum("status").default("draft").notNull(),  // enum
 
-
-    isFeatured: boolean("is_featured").default(false),
-    isNew: boolean("is_new").default(false),
-
-    status: text("status").default('draft'), // draft, active, archived
-
-    isDeleted: boolean("is_deleted").default(false),
-    deletedAt: timestamp("deleted_at"),
-
-    createdAt: timestamp("created_at").defaultNow().notNull(),
-    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+    isDeleted: boolean("is_deleted").default(false).notNull(),
+    deletedAt: timestamp("deleted_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
   },
   (table) => [
     uniqueIndex("products_brand_model_unique").on(table.brandId, table.model),
     index("products_model_idx").on(table.model),
+    index("products_slug_idx").on(table.slug),
     index("products_category_idx").on(table.categoryId),
-  ])
+    index("products_status_deleted_idx").on(table.status, table.isDeleted), // compound — most common filter
+    index("products_brand_idx").on(table.brandId),
+    index("products_featured_idx").on(table.isFeatured),
+  ]);
 
 export const productsRelations = relations(products, ({ one, many }) => ({
   category: one(categories, {

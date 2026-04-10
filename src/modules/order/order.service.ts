@@ -1,4 +1,4 @@
-import { and, asc, eq, sql } from "drizzle-orm";
+import { and, asc, eq, inArray, sql } from "drizzle-orm";
 import { db } from "../../config/db";
 import { orders, orderItems, parties, users } from "../../db/schema";
 import { AppError } from "../../middlewares/errorHandler";
@@ -6,6 +6,8 @@ import {
   AddItemInput,
   CreateOrderInput,
   ListOrderInput,
+  ListOrderItemsInput,
+  ListOrderPartiesInput,
   UpdateOrderInput,
   UpdateItemInput,
 } from "./order.schema";
@@ -42,6 +44,78 @@ export const orderService = {
   async nextNumber(orderType: "purchase" | "sale") {
     const orderNumber = await generateOrderNumber(orderType);
     return { orderNumber };
+  },
+
+  async listParties({ orderType }: ListOrderPartiesInput) {
+    const conditions = [];
+    if (orderType) conditions.push(eq(orders.orderType, orderType));
+    const where = conditions.length ? and(...conditions) : undefined;
+
+    const rows = await db
+      .selectDistinctOn([orders.partyId], {
+        id: parties.id,
+        name: parties.name,
+        tradeName: parties.tradeName,
+        phone: parties.phone,
+        city: parties.city,
+        type: parties.type,
+      })
+      .from(orders)
+      .innerJoin(parties, eq(orders.partyId, parties.id))
+      .where(where)
+      .orderBy(asc(orders.partyId), asc(parties.name));
+
+    return rows;
+  },
+
+  async listItems({ partyId, orderType, status, page = 1, limit = 20 }: ListOrderItemsInput) {
+    const offset = (page - 1) * limit;
+
+    const conditions = [eq(orders.partyId, partyId)];
+    if (orderType) conditions.push(eq(orders.orderType, orderType));
+    if (status?.length) conditions.push(inArray(orders.status, status));
+
+    const where = and(...conditions);
+
+    const [items, [{ count }]] = await Promise.all([
+      db
+        .select({
+          id: orderItems.id,
+          orderId: orderItems.orderId,
+          orderNumber: orders.orderNumber,
+          orderType: orders.orderType,
+          orderDate: orders.orderDate,
+          orderStatus: orders.status,
+          productId: orderItems.productId,
+          variantId: orderItems.variantId,
+          sku: orderItems.sku,
+          boxQty: orderItems.boxQty,
+          packing: orderItems.packing,
+          orderQty: orderItems.orderQty,
+          fulfilledQty: orderItems.fulfilledQty,
+          cancelledQty: orderItems.cancelledQty,
+          rate: orderItems.rate,
+          amount: orderItems.amount,
+          notes: orderItems.notes,
+          createdAt: orderItems.createdAt,
+        })
+        .from(orderItems)
+        .innerJoin(orders, eq(orderItems.orderId, orders.id))
+        .where(where)
+        .orderBy(asc(orders.orderDate), asc(orderItems.createdAt))
+        .limit(limit)
+        .offset(offset),
+      db
+        .select({ count: sql<number>`count(*)` })
+        .from(orderItems)
+        .innerJoin(orders, eq(orderItems.orderId, orders.id))
+        .where(where),
+    ]);
+
+    return {
+      items,
+      meta: { page, limit, total: Number(count), totalPages: Math.ceil(Number(count) / limit) },
+    };
   },
 
   async list({ page = 1, limit = 20, partyId, salesmanId, orderType, status }: ListOrderInput) {

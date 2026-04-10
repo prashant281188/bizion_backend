@@ -2,7 +2,7 @@ import { NextFunction, Response } from "express";
 import { eq } from "drizzle-orm";
 import { AuthRequest } from "../../middlewares/authMiddleware";
 import { carouselService } from "./carousel.service";
-import { logAudit } from "../../services/audit.service";
+import { logAudit, getClientIp } from "../../services/audit.service";
 import { AppError } from "../../middlewares/errorHandler";
 import { deleteFromS3, getS3Url, uploadToS3 } from "../../services/s3.service";
 import { createCarouselSchema, updateCarouselSchema } from "./carousel.schema";
@@ -35,10 +35,17 @@ export const carouselController = {
       else if (rawBody.isActive === "false") rawBody.isActive = false;
 
       const parsed = createCarouselSchema.parse({ ...rawBody, image: key });
-
       const data = await carouselService.create(parsed);
 
-      await logAudit({ userId: req.user!.userId, action: "carousel:create", entity: "carousel", entityId: data.id });
+      await logAudit({
+        userId: req.user!.userId,
+        action: "create",
+        entity: "carousel",
+        entityId: data.id,
+        entityLabel: data.title ?? undefined,
+        ipAddress: getClientIp(req),
+        userAgent: req.headers["user-agent"],
+      });
       res.status(201).json({ success: true, message: "Carousel item created", data: { ...data, imageUrl: getS3Url(key) } });
     } catch (err) { next(err); }
   },
@@ -49,7 +56,6 @@ export const carouselController = {
       if (rawBody.isActive === "true") rawBody.isActive = true;
       else if (rawBody.isActive === "false") rawBody.isActive = false;
 
-      // Replace image if a new file was provided
       if (req.file) {
         const existing = await db.query.carousel.findFirst({
           where: eq(carousel.id, req.params.id),
@@ -58,24 +64,28 @@ export const carouselController = {
         if (!existing) throw new AppError("Carousel item not found", 404);
 
         const { key } = await uploadToS3(req.file.buffer, req.file.originalname, req.file.mimetype, "carousel");
-
-        // Delete old image from S3
         if (existing.image) await deleteFromS3(existing.image);
-
         rawBody.image = key;
       }
 
       const parsed = updateCarouselSchema.parse(rawBody);
       const data = await carouselService.update(req.params.id, parsed);
 
-      await logAudit({ userId: req.user!.userId, action: "carousel:update", entity: "carousel", entityId: data.id });
+      await logAudit({
+        userId: req.user!.userId,
+        action: "update",
+        entity: "carousel",
+        entityId: data.id,
+        entityLabel: data.title ?? undefined,
+        ipAddress: getClientIp(req),
+        userAgent: req.headers["user-agent"],
+      });
       res.json({ success: true, message: "Carousel item updated", data });
     } catch (err) { next(err); }
   },
 
   async remove(req: AuthRequest, res: Response, next: NextFunction) {
     try {
-      // Delete image from S3 before removing the record
       const existing = await db.query.carousel.findFirst({
         where: eq(carousel.id, req.params.id),
         columns: { image: true },
@@ -83,7 +93,14 @@ export const carouselController = {
       if (existing?.image) await deleteFromS3(existing.image);
 
       await carouselService.remove(req.params.id);
-      await logAudit({ userId: req.user!.userId, action: "carousel:delete", entity: "carousel", entityId: req.params.id });
+      await logAudit({
+        userId: req.user!.userId,
+        action: "delete",
+        entity: "carousel",
+        entityId: req.params.id,
+        ipAddress: getClientIp(req),
+        userAgent: req.headers["user-agent"],
+      });
       res.json({ success: true, message: "Carousel item deleted" });
     } catch (err) { next(err); }
   },

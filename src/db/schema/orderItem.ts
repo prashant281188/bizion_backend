@@ -10,12 +10,8 @@ export const orderItems = pgTable(
   "order_items",
   {
     id: uuid("id").defaultRandom().primaryKey(),
-    orderId: uuid("order_id")
-      .notNull()
-      .references(() => orders.id, { onDelete: "cascade" }),
-
+    orderId: uuid("order_id").notNull().references(() => orders.id, { onDelete: "cascade" }),
     productId: uuid("product_id").references(() => products.id, { onDelete: "set null" }),
-
     variantId: uuid("variant_id").references(() => productVariants.id, { onDelete: "set null" }),
 
     // Stored at order time in case product data changes later
@@ -27,7 +23,14 @@ export const orderItems = pgTable(
     fulfilledQty: numeric("fulfilled_qty", { mode: "number", precision: 12, scale: 2 }).default(0),
     cancelledQty: numeric("cancelled_qty", { mode: "number", precision: 12, scale: 2 }).default(0),
 
+
+    mrp: numeric("mrp", { precision: 12, scale: 2 }), // for printing on invoice
+    discount: numeric("discount", { precision: 5, scale: 2 }).default("0"), // % applied
+    
     rate: numeric("rate", { precision: 12, scale: 2 }),
+    taxRate: numeric("tax_rate", { precision: 5, scale: 2 }), // GST % at time of order
+    taxAmount: numeric("tax_amount", { precision: 12, scale: 2 }), // per line item
+
     amount: numeric("amount", { precision: 12, scale: 2 }).notNull(),
 
     notes: text("notes"),

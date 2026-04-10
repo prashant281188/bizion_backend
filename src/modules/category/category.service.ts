@@ -7,6 +7,7 @@ import {
   ListCategoryInput,
   UpdateCategoryInput,
 } from "./category.schema";
+import { createSlug } from "../../utils/slug";
 
 export const categoryService = {
   async list({ page = 1, limit = 10, search }: ListCategoryInput) {
@@ -45,15 +46,17 @@ export const categoryService = {
 
     if (existing) throw new AppError("Category name already exists", 409);
 
-    const [row] = await db.insert(categories).values(data).returning();
+    const slug = createSlug(data.categoryName);
+    const [row] = await db.insert(categories).values({ slug, ...data }).returning();
 
     return row;
   },
 
   async update(id: string, data: UpdateCategoryInput) {
+
     const [row] = await db
       .update(categories)
-      .set(data)
+      .set({ ...data })
       .where(eq(categories.id, id))
       .returning();
 

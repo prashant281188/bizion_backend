@@ -2,6 +2,7 @@ import { Router } from "express";
 import { authController } from "./auth.controller";
 import { validateSchema } from "../../middlewares/validateSchema";
 import { authLimiter } from "../../middlewares/authRateLimit";
+import { authMiddleware } from "../../middlewares/authMiddleware";
 import {
   changePasswordSchema,
   forgotPasswordSchema,
@@ -11,79 +12,89 @@ import {
   updateProfileSchema,
   verifyOtpSchema,
 } from "./auth.schema";
-import { authMiddleware } from "../../middlewares/authMiddleware";
 
 const router = Router();
 
-/* ================= REGISTER ================= */
+// ─── Public routes (no auth required) ────────────────────────────────────────
+
+// authLimiter: 5 requests / 15 min window, skips successful requests
+// This guards against brute-force on registration and login
 
 router.post(
   "/register",
   authLimiter,
   validateSchema(registerSchema),
-  authController.register
+  authController.register,
 );
-
-/* ================= LOGIN ================= */
 
 router.post(
   "/login",
   authLimiter,
   validateSchema(loginSchema),
-  authController.login
+  authController.login,
 );
 
-/* ================= LOGOUT ================= */
-
+// Refresh does not need authMiddleware (access token may be expired),
+// but rate-limited to prevent token farming / enumeration
 router.post(
-  "/logout",
-  authController.logout
+  "/refresh",
+  authLimiter,
+  authController.refresh,
 );
 
-/* ================= CURRENT USER ================= */
+// Logout does not require a valid access token — allows clients to clean up
+// even after the access token has expired (the refresh cookie is used instead)
+router.post("/logout", authController.logout);
 
-router.get(
-  "/me",
-  authMiddleware,
-  authController.me
-);
-
-/* ================= UPDATE PROFILE ================= */
-
-router.patch(
-  "/me",
-  authMiddleware,
-  validateSchema(updateProfileSchema),
-  authController.updateProfile
-);
-
+// ─── Password reset flow (public, rate-limited) ────────────────────────────────
+// Step 1: submit email → receive OTP
+// Step 2: submit email + OTP → receive short-lived reset token
+// Step 3: submit reset token + new password → password updated
 
 router.post(
   "/forgot-password",
   authLimiter,
   validateSchema(forgotPasswordSchema),
-  authController.forgotPassword
+  authController.forgotPassword,
 );
 
 router.post(
   "/verify-otp",
   authLimiter,
   validateSchema(verifyOtpSchema),
-  authController.verifyOtp
+  authController.verifyOtp,
 );
 
 router.post(
   "/reset-password",
   authLimiter,
   validateSchema(resetPasswordSchema),
-  authController.resetPassword
+  authController.resetPassword,
 );
 
+// ─── Authenticated routes ─────────────────────────────────────────────────────
+
+router.get(
+  "/me",
+  authMiddleware,
+  authController.me,
+);
+
+router.patch(
+  "/me",
+  authMiddleware,
+  validateSchema(updateProfileSchema),
+  authController.updateProfile,
+);
+
+// Rate-limited: an attacker with a stolen access token should not be able to
+// spam password changes for the 15-minute window the token is valid
 router.post(
   "/change-password",
   authMiddleware,
+  authLimiter,
   validateSchema(changePasswordSchema),
-  authController.changePassword
+  authController.changePassword,
 );
 
 export default router;

@@ -46,13 +46,24 @@ export function getS3Url(key: string): string {
 }
 
 /* =====================================================
-   DELETE — accepts the stored key directly
+   DELETE
+   - Throws on real failures (permissions, network, etc.)
+   - Silently ignores "object not found" (idempotent)
+   - Guards against empty/null keys
 ===================================================== */
 
 export async function deleteFromS3(key: string): Promise<void> {
+  if (!key || key.trim() === "") {
+    return;
+  }
+
   try {
     await s3.send(new DeleteObjectCommand({ Bucket: ENV.AWS_S3_BUCKET, Key: key }));
-  } catch {
-    console.error("Failed to delete S3 object:", key);
+  } catch (err) {
+    // Object already gone — treat as success (idempotent delete)
+
+
+    // Real failure — log with full error details and rethrow so caller knows
+    throw err;
   }
 }

@@ -12,6 +12,7 @@ import unitRoutes from "./modules/unit";
 import optionRoutes from "./modules/option";
 import carouselRoutes from "./modules/carousel";
 import roleRoutes from "./modules/role";
+import permissionRoutes from "./modules/permission";
 import imageRoutes from "./modules/image";
 import storeRoutes from "./modules/store";
 import partyRoutes from "./modules/party";
@@ -19,6 +20,8 @@ import orderRoutes from "./modules/order";
 import inventoryRoutes from "./modules/inventory";
 import dispatchRoutes from "./modules/dispatch";
 import purchaseReceiptRoutes from "./modules/purchaseReceipt";
+import auditRoutes from "./modules/audit";
+import businessRoutes from "./modules/business";
 
 const router = Router();
 
@@ -46,8 +49,11 @@ v1.use("/auth", authRoutes);
 /* -------- USERS -------- */
 v1.use("/users", userRoutes);
 
-/* -------- ROLES & PERMISSIONS -------- */
+/* -------- ROLES -------- */
 v1.use("/roles", roleRoutes);
+
+/* -------- PERMISSIONS -------- */
+v1.use("/permissions", permissionRoutes);
 
 /* -------- CATEGORIES -------- */
 v1.use("/categories", categoryRoutes);
@@ -93,6 +99,14 @@ v1.use("/dispatches", dispatchRoutes);
 
 /* -------- PURCHASE RECEIPTS -------- */
 v1.use("/purchase-receipts", purchaseReceiptRoutes);
+
+/* -------- AUDIT LOGS -------- */
+v1.use("/audit-logs", auditRoutes);
+
+/* -------- BUSINESS -------- */
+v1.use("/business", businessRoutes);
+
+ 
 
 /* ================= 404 HANDLER ================= */
 

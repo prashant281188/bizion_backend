@@ -3,7 +3,7 @@ import { authMiddleware } from "../../middlewares/authMiddleware";
 import { requirePermission } from "../../middlewares/requirePermission";
 import { validateSchema } from "../../middlewares/validateSchema";
 import { dispatchController } from "./dispatch.controller";
-import { createDispatchSchema, listDispatchSchema } from "./dispatch.schema";
+import { createDispatchSchema, listDispatchSchema, updateDispatchSchema } from "./dispatch.schema";
 
 const router = Router();
 
@@ -26,6 +26,13 @@ router.post(
   requirePermission("dispatch:create"),
   validateSchema(createDispatchSchema),
   dispatchController.create
+);
+router.patch(
+  "/:id",
+  authMiddleware,
+  requirePermission("dispatch:update"),
+  validateSchema(updateDispatchSchema),
+  dispatchController.update
 );
 router.delete(
   "/:id",

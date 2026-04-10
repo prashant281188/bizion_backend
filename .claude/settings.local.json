@@ -20,7 +20,10 @@
       "Bash(xargs basename:*)",
       "Bash(find src:*)",
       "Bash(/tmp/tree_structure.txt:*)",
-      "Read(//tmp/**)"
+      "Read(//tmp/**)",
+      "Bash(npx drizzle-kit:*)",
+      "Bash(npx ts-node:*)",
+      "mcp__ide__getDiagnostics"
     ]
   }
 }

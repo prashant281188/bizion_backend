@@ -4,6 +4,7 @@ export const listHsnSchema = z.object({
   page: z.coerce.number().min(1).default(1),
   limit: z.coerce.number().min(1).max(100).default(10),
   search: z.string().optional(),
+  isActive: z.coerce.boolean().optional(),
 });
 
 export const createHsnSchema = z.object({
@@ -24,6 +25,13 @@ export const updateHsnSchema = z
     message: "At least one field must be provided",
   });
 
+export const assignGstGroupSchema = z.object({
+  gstGroupId: z.string().uuid("Invalid GST group ID"),
+  effectiveFrom: z.string().datetime({ message: "Invalid datetime" }),
+  effectiveTo: z.string().datetime({ message: "Invalid datetime" }).optional(),
+});
+
 export type ListHsnInput = z.infer<typeof listHsnSchema>;
 export type CreateHsnInput = z.infer<typeof createHsnSchema>;
 export type UpdateHsnInput = z.infer<typeof updateHsnSchema>;
+export type AssignGstGroupInput = z.infer<typeof assignGstGroupSchema>;

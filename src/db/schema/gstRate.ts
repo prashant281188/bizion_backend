@@ -7,18 +7,13 @@ import { gstGroups } from "./gstGroup";
 export const gstRates = pgTable("gst_rates", {
   id: uuid("id").defaultRandom().primaryKey(),
 
-  gstGroupId: uuid("gst_group_id")
-    .references(() => gstGroups.id, { onDelete: "cascade" })
-    .notNull(),
-
+  gstGroupId: uuid("gst_group_id").references(() => gstGroups.id, { onDelete: "cascade" }).notNull(),
   cgst: numeric("cgst", { precision: 5, scale: 2 }).notNull(),
   sgst: numeric("sgst", { precision: 5, scale: 2 }).notNull(),
   igst: numeric("igst", { precision: 5, scale: 2 }).notNull(),
-
-  effectiveFrom: timestamp("effective_from").notNull(),
-  effectiveTo: timestamp("effective_to"),
-
-  createdAt: timestamp("created_at").defaultNow(),
+  effectiveFrom: timestamp("effective_from", { withTimezone: true }).notNull(),
+  effectiveTo: timestamp("effective_to", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
 });
 
 export const gstRateRelations = relations(gstRates, ({ one }) => ({

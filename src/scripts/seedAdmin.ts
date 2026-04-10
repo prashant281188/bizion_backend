@@ -1,5 +1,6 @@
 import { randomUUID as uuid } from "crypto";
 import bcrypt from "bcrypt";
+import { eq } from "drizzle-orm";
 import { db } from "../config/db";
 import { permissions } from "../db/schema/permission";
 import { roles } from "../db/schema/role";
@@ -14,6 +15,7 @@ import { users } from "../db/schema/user";
 const RESOURCES = [
   "user",
   "role",
+  "permission",
   "category",
   "product",
   "brand",
@@ -29,6 +31,7 @@ const RESOURCES = [
   "inventory",
   "dispatch",
   "purchase_receipt",
+  "audit",
 ] as const;
 
 const ACTIONS = ["create", "read", "update", "delete"] as const;
@@ -48,50 +51,39 @@ const ALL_PERMISSIONS = RESOURCES.flatMap((resource) =>
 async function seedAdmin() {
   console.log("🌱 Starting admin seed...");
 
-  // 1. Upsert permissions
-  await db
-    .insert(permissions)
-    .values(ALL_PERMISSIONS)
-    .onConflictDoNothing();
-
+  // 1. Upsert all permissions
+  await db.insert(permissions).values(ALL_PERMISSIONS).onConflictDoNothing();
   console.log(`✅ ${ALL_PERMISSIONS.length} permissions upserted`);
 
-  // 2. Create superadmin role
+  // 2. Upsert superadmin role (system role — cannot be deleted or have permissions changed)
   const superAdminRoleId = uuid();
-
   await db
     .insert(roles)
-    .values({ id: superAdminRoleId, name: "superadmin" })
+    .values({ id: superAdminRoleId, name: "superadmin", isSystem: true })
     .onConflictDoNothing();
 
-  console.log("✅ Role 'superadmin' upserted");
+  // Mark existing superadmin as system role in case it was created before this flag existed
+  await db.update(roles).set({ isSystem: true }).where(eq(roles.name, "superadmin"));
 
-  // 3. Fetch the actual permission IDs from DB (handles pre-existing rows)
-  const existingPerms = await db.query.permissions.findMany();
+  console.log("✅ Role 'superadmin' upserted (isSystem = true)");
 
-  const rolePermValues = existingPerms.map((p) => ({
-    roleId: superAdminRoleId,
-    permissionId: p.id,
-  }));
-
-  // Need the actual role ID if it already existed
+  // 3. Resolve the actual role ID (handles pre-existing rows)
   const existingRole = await db.query.roles.findFirst({
-    // @ts-ignore — drizzle where helper
-    where: (r: any, { eq }: any) => eq(r.name, "superadmin"),
+    where: eq(roles.name, "superadmin"),
   });
-
   const resolvedRoleId = existingRole?.id ?? superAdminRoleId;
 
+  // 4. Assign ALL permissions to superadmin
+  const existingPerms = await db.query.permissions.findMany();
   await db
     .insert(rolePermissions)
-    .values(rolePermValues.map((rp) => ({ ...rp, roleId: resolvedRoleId })))
+    .values(existingPerms.map((p) => ({ roleId: resolvedRoleId, permissionId: p.id })))
     .onConflictDoNothing();
 
-  console.log(`✅ All permissions assigned to 'superadmin' role`);
+  console.log(`✅ All ${existingPerms.length} permissions assigned to 'superadmin'`);
 
-  // 4. Create the admin user
+  // 5. Upsert the admin user
   const hashed = await bcrypt.hash("Admin@1234", 10);
-
   await db
     .insert(users)
     .values({

@@ -1,6 +1,7 @@
 import { NextFunction, Response } from "express";
 import { AuthRequest } from "../../middlewares/authMiddleware";
 import { purchaseReceiptService } from "./purchaseReceipt.service";
+import { logAudit, getClientIp } from "../../services/audit.service";
 import { CreatePurchaseReceiptInput, ListPurchaseReceiptInput } from "./purchaseReceipt.schema";
 
 export const purchaseReceiptController = {
@@ -28,6 +29,15 @@ export const purchaseReceiptController = {
         req.body as CreatePurchaseReceiptInput,
         req.user!.userId
       );
+      await logAudit({
+        userId: req.user!.userId,
+        action: "create",
+        entity: "purchaseReceipt",
+        entityId: data.id,
+        ipAddress: getClientIp(req),
+        userAgent: req.headers["user-agent"],
+        after: { orderId: data.orderId, receivedDate: data.receivedDate },
+      });
       res.status(201).json({ success: true, message: "Purchase receipt created", data });
     } catch (err) {
       next(err);
@@ -37,6 +47,14 @@ export const purchaseReceiptController = {
   async remove(req: AuthRequest, res: Response, next: NextFunction) {
     try {
       await purchaseReceiptService.remove(req.params.id);
+      await logAudit({
+        userId: req.user!.userId,
+        action: "delete",
+        entity: "purchaseReceipt",
+        entityId: req.params.id,
+        ipAddress: getClientIp(req),
+        userAgent: req.headers["user-agent"],
+      });
       res.json({ success: true, message: "Purchase receipt deleted" });
     } catch (err) {
       next(err);

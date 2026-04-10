@@ -51,5 +51,6 @@ export const gstGroupService = {
   async remove(id: string) {
     const [deleted] = await db.delete(gstGroups).where(eq(gstGroups.id, id)).returning({ id: gstGroups.id });
     if (!deleted) throw new AppError("GST group not found", 404);
+    return deleted;
   },
 };

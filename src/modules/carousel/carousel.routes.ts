@@ -9,21 +9,9 @@ const router = Router();
 router.get("/", authMiddleware, requirePermission("carousel:read"), carouselController.list);
 router.get("/:id", authMiddleware, requirePermission("carousel:read"), carouselController.getById);
 
-router.post(
-  "/",
-  authMiddleware,
-  requirePermission("carousel:create"),
-  uploadImages.single("image"),
-  carouselController.create
-);
+router.post("/", authMiddleware, requirePermission("carousel:create"), uploadImages.single("image"), carouselController.create);
 
-router.patch(
-  "/:id",
-  authMiddleware,
-  requirePermission("carousel:update"),
-  uploadImages.single("image"),
-  carouselController.update
-);
+router.patch("/:id", authMiddleware, requirePermission("carousel:update"), uploadImages.single("image"), carouselController.update);
 
 router.delete("/:id", authMiddleware, requirePermission("carousel:delete"), carouselController.remove);
 

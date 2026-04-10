@@ -1,34 +1,19 @@
 import nodemailer from "nodemailer";
+import { ENV } from "../config/env";
 
 const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST,
-  port: Number(process.env.SMTP_PORT),
-  secure: process.env.SMTP_SECURE === "true", // true for 465
+  host: ENV.SMTP_HOST,
+  port: ENV.SMTP_PORT,
+  secure: ENV.SMTP_SECURE,
   auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS,
+    user: ENV.SMTP_USER,
+    pass: ENV.SMTP_PASS,
   },
 });
 
-/* =====================================================
-   SEND EMAIL
-===================================================== */
-
-export async function sendEmail(options: {
-  to: string;
-  subject: string;
-  html: string;
-}) {
-
-  transporter.verify((err, success) => {
-  if (err) {
-    console.error(err);
-  } else {
-    console.log("SMTP Ready");
-  }
-});
+export async function sendEmail(options: { to: string; subject: string; html: string }) {
   await transporter.sendMail({
-    from: `"Bizion Admin" <${process.env.SMTP_FROM}>`,
+    from: `"Bizion" <${ENV.SMTP_FROM}>`,
     to: options.to,
     subject: options.subject,
     html: options.html,

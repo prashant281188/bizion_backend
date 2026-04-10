@@ -32,8 +32,6 @@ export const users = pgTable(
     // Email verification
     emailVerified: boolean("email_verified").default(false).notNull(),
     emailVerifiedAt: timestamp("email_verified_at", { withTimezone: true }),
-    emailVerificationToken: text("email_verification_token"),
-    emailVerificationExpiresAt: timestamp("email_verification_expires_at", { withTimezone: true }),
 
     // Security
     failedLoginAttempts: integer("failed_login_attempts").default(0).notNull(),

@@ -40,8 +40,8 @@ export const createUserSchema = z.object({
 
 export const updateUserSchema = z
   .object({
-    firstName: z.string().optional(),
-    lastName: z.string().optional(),
+    firstName: z.string().trim().min(1).optional(),
+    lastName: z.string().trim().min(1).optional(),
     phone: z.string().optional(),
     email: emailSchema.optional(),
     password: passwordSchema.optional(),
@@ -49,14 +49,8 @@ export const updateUserSchema = z
     isActive: z.boolean().optional(),
   })
   .refine(
-    (data) =>
-      data.email ||
-      data.password ||
-      data.roleId ||
-      data.isActive !== undefined,
-    {
-      message: "At least one field must be provided",
-    }
+    (data) => Object.values(data).some((v) => v !== undefined),
+    { message: "At least one field must be provided" }
   );
 
 /* =====================================================

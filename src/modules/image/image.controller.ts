@@ -4,15 +4,10 @@ import { AuthRequest } from "../../middlewares/authMiddleware";
 import { AppError } from "../../middlewares/errorHandler";
 import { db } from "../../config/db";
 import { products, productImages, variantImages, productVariants } from "../../db/schema";
-import { logAudit } from "../../services/audit.service";
+import { logAudit, getClientIp } from "../../services/audit.service";
 import { uploadToS3, deleteFromS3, getS3Url } from "../../services/s3.service";
 
 export const imageController = {
-
-
-
-
-
   /* ===== PRODUCT IMAGE ===== */
 
   async uploadProductImage(req: AuthRequest, res: Response, next: NextFunction) {
@@ -28,7 +23,6 @@ export const imageController = {
       const { key } = await uploadToS3(req.file.buffer, req.file.originalname, req.file.mimetype);
 
       await db.transaction(async (tx) => {
-        // Delete old image from S3 and DB if present
         if (product.imageId) {
           const [old] = await tx
             .delete(productImages)
@@ -36,16 +30,22 @@ export const imageController = {
             .returning({ path: productImages.path });
           if (old) await deleteFromS3(old.path);
         }
-
         const [image] = await tx.insert(productImages).values({ path: key }).returning();
-
         await tx
           .update(products)
           .set({ imageId: image.id, updatedAt: new Date() })
           .where(eq(products.id, product.id));
       });
 
-      await logAudit({ userId: req.user!.userId, action: "product:image:upload", entity: "product", entityId: product.id });
+      await logAudit({
+        userId: req.user!.userId,
+        action: "update",
+        entity: "product",
+        entityId: product.id,
+        ipAddress: getClientIp(req),
+        userAgent: req.headers["user-agent"],
+        meta: { trigger: "image_upload" },
+      });
 
       res.status(201).json({ success: true, message: "Image uploaded", data: { url: getS3Url(key) } });
     } catch (err) { next(err); }
@@ -65,16 +65,22 @@ export const imageController = {
           .delete(productImages)
           .where(eq(productImages.id, product.imageId!))
           .returning({ path: productImages.path });
-
         await tx
           .update(products)
           .set({ imageId: null, updatedAt: new Date() })
           .where(eq(products.id, product.id));
-
         if (old) await deleteFromS3(old.path);
       });
 
-      await logAudit({ userId: req.user!.userId, action: "product:image:delete", entity: "product", entityId: product.id });
+      await logAudit({
+        userId: req.user!.userId,
+        action: "update",
+        entity: "product",
+        entityId: product.id,
+        ipAddress: getClientIp(req),
+        userAgent: req.headers["user-agent"],
+        meta: { trigger: "image_delete" },
+      });
 
       res.json({ success: true, message: "Image deleted" });
     } catch (err) { next(err); }
@@ -93,13 +99,20 @@ export const imageController = {
       if (!variant) throw new AppError("Variant not found", 404);
 
       const { key } = await uploadToS3(req.file.buffer, req.file.originalname, req.file.mimetype);
-
       const [image] = await db
         .insert(variantImages)
         .values({ productVariantId: variant.id, path: key })
         .returning();
 
-      await logAudit({ userId: req.user!.userId, action: "variant:image:upload", entity: "variant", entityId: variant.id });
+      await logAudit({
+        userId: req.user!.userId,
+        action: "update",
+        entity: "variant",
+        entityId: variant.id,
+        ipAddress: getClientIp(req),
+        userAgent: req.headers["user-agent"],
+        meta: { trigger: "image_upload" },
+      });
 
       res.status(201).json({ success: true, message: "Image uploaded", data: { ...image, url: getS3Url(key) } });
     } catch (err) { next(err); }
@@ -118,10 +131,17 @@ export const imageController = {
         .returning({ path: variantImages.path });
 
       if (!deleted) throw new AppError("Image not found", 404);
-
       await deleteFromS3(deleted.path);
 
-      await logAudit({ userId: req.user!.userId, action: "variant:image:delete", entity: "variant", entityId: req.params.id });
+      await logAudit({
+        userId: req.user!.userId,
+        action: "update",
+        entity: "variant",
+        entityId: req.params.id,
+        ipAddress: getClientIp(req),
+        userAgent: req.headers["user-agent"],
+        meta: { trigger: "image_delete", imageId: req.params.imageId },
+      });
 
       res.json({ success: true, message: "Image deleted" });
     } catch (err) { next(err); }
