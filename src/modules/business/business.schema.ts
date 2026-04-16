@@ -88,8 +88,8 @@ export const updateBusinessSchema = createBusinessSchema.partial().extend({
 // ─── List / Query ─────────────────────────────────────────────────────────────
 
 export const listBusinessSchema = z.object({
-  page:   z.coerce.number().min(1).default(1),
-  limit:  z.coerce.number().min(1).max(100).default(10),
+  page:   z.coerce.number().min(1).default(1).optional(),
+  limit:  z.coerce.number().min(1).max(100).default(10).optional(),
   search: z.string().trim().optional(),
 });
 

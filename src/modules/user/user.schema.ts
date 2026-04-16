@@ -58,8 +58,8 @@ export const updateUserSchema = z
 ===================================================== */
 
 export const listUserSchema = z.object({
-  page: z.coerce.number().min(1).default(1),
-  limit: z.coerce.number().min(1).max(100).default(10),
+  page: z.coerce.number().min(1).optional(),
+  limit: z.coerce.number().min(1).max(1000).optional(),
   search: z.string().optional(),
   roleId: uuid.optional(),
   isActive: z.coerce.boolean().optional(),

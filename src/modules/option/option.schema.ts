@@ -11,8 +11,8 @@ export const updateOptionSchema = z.object({
 });
 
 export const listOptionSchema = z.object({
-  page: z.coerce.number().min(1).default(1),
-  limit: z.coerce.number().min(1).max(100).default(10),
+  page: z.coerce.number().min(1).optional(),
+  limit: z.coerce.number().min(1).max(1000).optional(),
   search: z.string().optional(),
 });
 
@@ -20,7 +20,7 @@ export const listOptionSchema = z.object({
 
 export const createOptionValueSchema = z.object({
   optionValue: z.string().trim().min(1, "Option value is required"),
-  position: z.number().int().min(0).default(0),
+  position: z.number().int().min(0).default(0).optional(),
 });
 
 export const updateOptionValueSchema = z

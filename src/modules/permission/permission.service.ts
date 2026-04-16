@@ -6,18 +6,22 @@ import { clearPermissionCache } from "../../services/permission.service";
 import { CreatePermissionInput, ListPermissionInput, UpdatePermissionInput } from "./permission.schema";
 
 export const permissionService = {
-  async list({ page = 1, limit = 99, search }: ListPermissionInput) {
-    const offset = (page - 1) * limit;
+  async list({ page, limit, search }: ListPermissionInput) {
     const where = search ? ilike(permissions.code, `%${search}%`) : undefined;
 
     const [items, [{ count }]] = await Promise.all([
-      db.select().from(permissions).where(where).limit(limit).offset(offset),
+      limit !== undefined
+        ? db.select().from(permissions).where(where).limit(limit).offset(((page ?? 1) - 1) * limit)
+        : db.select().from(permissions).where(where),
       db.select({ count: sql<number>`count(*)` }).from(permissions).where(where),
     ]);
 
+    const total = Number(count);
+    const resolvedPage = page ?? 1;
+    const resolvedLimit = limit ?? total;
     return {
       items,
-      meta: { page, limit, total: Number(count), totalPages: Math.ceil(Number(count) / limit) },
+      meta: { page: resolvedPage, limit: resolvedLimit, total, totalPages: limit ? Math.ceil(total / limit) : 1 },
     };
   },
 

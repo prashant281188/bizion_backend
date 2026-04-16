@@ -21,9 +21,7 @@ const safeUserColumns = {
 };
 
 export const userService = {
-  async list({ page = 1, limit = 10, search, roleId, isActive }: ListUserInput) {
-    const offset = (page - 1) * limit;
-
+  async list({ page, limit, search, roleId, isActive }: ListUserInput) {
     const conditions = [isNull(users.deletedAt)];
     if (search) {
       conditions.push(
@@ -38,25 +36,25 @@ export const userService = {
     if (isActive !== undefined) conditions.push(eq(users.isActive, isActive));
 
     const where = and(...conditions);
+    const baseQuery = db.select(safeUserColumns).from(users).leftJoin(roles, eq(users.roleId, roles.id)).where(where);
 
     const [items, [{ count }]] = await Promise.all([
-      db
-        .select(safeUserColumns)
-        .from(users)
-        .leftJoin(roles, eq(users.roleId, roles.id))
-        .where(where)
-        .limit(limit)
-        .offset(offset),
+      limit !== undefined
+        ? baseQuery.limit(limit).offset(((page ?? 1) - 1) * limit)
+        : baseQuery,
       db.select({ count: sql<number>`count(*)` }).from(users).where(where),
     ]);
 
+    const total = Number(count);
+    const resolvedPage = page ?? 1;
+    const resolvedLimit = limit ?? total;
     return {
       items,
       meta: {
-        page,
-        limit,
-        total: Number(count),
-        totalPages: Math.ceil(Number(count) / limit),
+        page: resolvedPage,
+        limit: resolvedLimit,
+        total,
+        totalPages: limit ? Math.ceil(total / limit) : 1,
       },
     };
   },

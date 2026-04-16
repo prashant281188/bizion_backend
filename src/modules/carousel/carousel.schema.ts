@@ -1,5 +1,11 @@
 import { z } from "zod";
 
+export const listCarouselSchema = z.object({
+  page: z.coerce.number().min(1).optional(),
+  limit: z.coerce.number().min(1).max(1000).optional(),
+  search: z.string().optional(),
+});
+
 export const createCarouselSchema = z.object({
   title: z.string().trim().optional(),
   description: z.string().trim().optional(),
@@ -22,5 +28,6 @@ export const updateCarouselSchema = z
     message: "At least one field must be provided",
   });
 
+export type ListCarouselInput = z.infer<typeof listCarouselSchema>;
 export type CreateCarouselInput = z.infer<typeof createCarouselSchema>;
 export type UpdateCarouselInput = z.infer<typeof updateCarouselSchema>;

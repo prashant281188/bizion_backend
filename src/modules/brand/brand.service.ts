@@ -6,18 +6,22 @@ import { CreateBrandInput, ListBrandInput, UpdateBrandInput } from "./brand.sche
 import { createSlug } from "../../utils/slug";
 
 export const brandService = {
-  async list({ page = 1, limit = 10, search }: ListBrandInput) {
-    const offset = (page - 1) * limit;
+  async list({ page, limit, search }: ListBrandInput) {
     const where = search ? ilike(brands.brandName, `%${search}%`) : undefined;
 
     const [items, [{ count }]] = await Promise.all([
-      db.select().from(brands).where(where).limit(limit).offset(offset),
+      limit !== undefined
+        ? db.select().from(brands).where(where).limit(limit).offset(((page ?? 1) - 1) * limit)
+        : db.select().from(brands).where(where),
       db.select({ count: sql<number>`count(*)` }).from(brands).where(where),
     ]);
 
+    const total = Number(count);
+    const resolvedPage = page ?? 1;
+    const resolvedLimit = limit ?? total;
     return {
       items,
-      meta: { page, limit, total: Number(count), totalPages: Math.ceil(Number(count) / limit) },
+      meta: { page: resolvedPage, limit: resolvedLimit, total, totalPages: limit ? Math.ceil(total / limit) : 1 },
     };
   },
 

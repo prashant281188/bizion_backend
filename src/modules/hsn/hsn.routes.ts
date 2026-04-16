@@ -11,8 +11,6 @@ const router = Router();
 
 router.get(
   "/",
-  authMiddleware,
-  requirePermission("hsn:read"),
   validateSchema(listHsnSchema, "query"),
   hsnController.list
 );

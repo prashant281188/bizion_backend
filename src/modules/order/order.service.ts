@@ -1,4 +1,4 @@
-import { and, asc, eq, inArray, sql } from "drizzle-orm";
+import { and, asc, eq, ilike, inArray, sql } from "drizzle-orm";
 import { db } from "../../config/db";
 import { orders, orderItems, parties, users } from "../../db/schema";
 import { AppError } from "../../middlewares/errorHandler";
@@ -68,43 +68,43 @@ export const orderService = {
     return rows;
   },
 
-  async listItems({ partyId, orderType, status, page = 1, limit = 20 }: ListOrderItemsInput) {
-    const offset = (page - 1) * limit;
-
+  async listItems({ partyId, orderType, status, page, limit }: ListOrderItemsInput) {
     const conditions = [eq(orders.partyId, partyId)];
     if (orderType) conditions.push(eq(orders.orderType, orderType));
     if (status?.length) conditions.push(inArray(orders.status, status));
 
     const where = and(...conditions);
 
+    const baseItemsQuery = db
+      .select({
+        id: orderItems.id,
+        orderId: orderItems.orderId,
+        orderNumber: orders.orderNumber,
+        orderType: orders.orderType,
+        orderDate: orders.orderDate,
+        orderStatus: orders.status,
+        productId: orderItems.productId,
+        variantId: orderItems.variantId,
+        sku: orderItems.sku,
+        boxQty: orderItems.boxQty,
+        packing: orderItems.packing,
+        orderQty: orderItems.orderQty,
+        fulfilledQty: orderItems.fulfilledQty,
+        cancelledQty: orderItems.cancelledQty,
+        rate: orderItems.rate,
+        amount: orderItems.amount,
+        notes: orderItems.notes,
+        createdAt: orderItems.createdAt,
+      })
+      .from(orderItems)
+      .innerJoin(orders, eq(orderItems.orderId, orders.id))
+      .where(where)
+      .orderBy(asc(orders.orderDate), asc(orderItems.createdAt));
+
     const [items, [{ count }]] = await Promise.all([
-      db
-        .select({
-          id: orderItems.id,
-          orderId: orderItems.orderId,
-          orderNumber: orders.orderNumber,
-          orderType: orders.orderType,
-          orderDate: orders.orderDate,
-          orderStatus: orders.status,
-          productId: orderItems.productId,
-          variantId: orderItems.variantId,
-          sku: orderItems.sku,
-          boxQty: orderItems.boxQty,
-          packing: orderItems.packing,
-          orderQty: orderItems.orderQty,
-          fulfilledQty: orderItems.fulfilledQty,
-          cancelledQty: orderItems.cancelledQty,
-          rate: orderItems.rate,
-          amount: orderItems.amount,
-          notes: orderItems.notes,
-          createdAt: orderItems.createdAt,
-        })
-        .from(orderItems)
-        .innerJoin(orders, eq(orderItems.orderId, orders.id))
-        .where(where)
-        .orderBy(asc(orders.orderDate), asc(orderItems.createdAt))
-        .limit(limit)
-        .offset(offset),
+      limit !== undefined
+        ? baseItemsQuery.limit(limit).offset(((page ?? 1) - 1) * limit)
+        : baseItemsQuery,
       db
         .select({ count: sql<number>`count(*)` })
         .from(orderItems)
@@ -112,16 +112,18 @@ export const orderService = {
         .where(where),
     ]);
 
+    const total = Number(count);
+    const resolvedPage = page ?? 1;
+    const resolvedLimit = limit ?? total;
     return {
       items,
-      meta: { page, limit, total: Number(count), totalPages: Math.ceil(Number(count) / limit) },
+      meta: { page: resolvedPage, limit: resolvedLimit, total, totalPages: limit ? Math.ceil(total / limit) : 1 },
     };
   },
 
-  async list({ page = 1, limit = 20, partyId, salesmanId, orderType, status }: ListOrderInput) {
-    const offset = (page - 1) * limit;
-
+  async list({ page, limit, search, partyId, salesmanId, orderType, status }: ListOrderInput) {
     const conditions = [];
+    if (search) conditions.push(ilike(orders.orderNumber, `%${search}%`));
     if (partyId) conditions.push(eq(orders.partyId, partyId));
     if (salesmanId) conditions.push(eq(orders.salesmanId, salesmanId));
     if (orderType) conditions.push(eq(orders.orderType, orderType));
@@ -132,8 +134,8 @@ export const orderService = {
     const [items, [{ count }]] = await Promise.all([
       db.query.orders.findMany({
         where,
-        limit,
-        offset,
+        limit: limit,
+        offset: limit !== undefined ? ((page ?? 1) - 1) * limit : undefined,
         orderBy: [asc(orders.createdAt)],
         with: {
           party: { columns: { id: true, name: true, phone: true, city: true } },
@@ -143,9 +145,12 @@ export const orderService = {
       db.select({ count: sql<number>`count(*)` }).from(orders).where(where),
     ]);
 
+    const total = Number(count);
+    const resolvedPage = page ?? 1;
+    const resolvedLimit = limit ?? total;
     return {
       items,
-      meta: { page, limit, total: Number(count), totalPages: Math.ceil(Number(count) / limit) },
+      meta: { page: resolvedPage, limit: resolvedLimit, total, totalPages: limit ? Math.ceil(total / limit) : 1 },
     };
   },
 

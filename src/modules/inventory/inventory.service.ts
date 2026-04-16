@@ -81,21 +81,27 @@ async function upsertInventory(
 }
 
 export const inventoryService = {
-  async listStock({ page = 1, limit = 20, variantId, location }: ListInventoryInput) {
-    const offset = (page - 1) * limit;
+  async listStock({ page, limit, variantId, location }: ListInventoryInput) {
     const conditions = [];
     if (variantId) conditions.push(eq(inventory.variantId, variantId));
     if (location) conditions.push(eq(inventory.location, location));
     const where = conditions.length ? and(...conditions) : undefined;
 
+    const baseQuery = db.select().from(inventory).where(where).orderBy(asc(inventory.location));
+
     const [items, [{ count }]] = await Promise.all([
-      db.select().from(inventory).where(where).orderBy(asc(inventory.location)).limit(limit).offset(offset),
+      limit !== undefined
+        ? baseQuery.limit(limit).offset(((page ?? 1) - 1) * limit)
+        : baseQuery,
       db.select({ count: sql<number>`count(*)` }).from(inventory).where(where),
     ]);
 
+    const total = Number(count);
+    const resolvedPage = page ?? 1;
+    const resolvedLimit = limit ?? total;
     return {
       items,
-      meta: { page, limit, total: Number(count), totalPages: Math.ceil(Number(count) / limit) },
+      meta: { page: resolvedPage, limit: resolvedLimit, total, totalPages: limit ? Math.ceil(total / limit) : 1 },
     };
   },
 
@@ -114,8 +120,7 @@ export const inventoryService = {
     return { locations: rows, totals };
   },
 
-  async listTransactions({ page = 1, limit = 20, variantId, partyId, type, location }: ListTransactionInput) {
-    const offset = (page - 1) * limit;
+  async listTransactions({ page, limit, variantId, partyId, type, location }: ListTransactionInput) {
     const conditions = [];
     if (variantId) conditions.push(eq(inventoryTransactions.variantId, variantId));
     if (partyId) conditions.push(eq(inventoryTransactions.partyId, partyId));
@@ -123,14 +128,21 @@ export const inventoryService = {
     if (location) conditions.push(eq(inventoryTransactions.location, location));
     const where = conditions.length ? and(...conditions) : undefined;
 
+    const baseQuery = db.select().from(inventoryTransactions).where(where).orderBy(desc(inventoryTransactions.createdAt));
+
     const [items, [{ count }]] = await Promise.all([
-      db.select().from(inventoryTransactions).where(where).orderBy(desc(inventoryTransactions.createdAt)).limit(limit).offset(offset),
+      limit !== undefined
+        ? baseQuery.limit(limit).offset(((page ?? 1) - 1) * limit)
+        : baseQuery,
       db.select({ count: sql<number>`count(*)` }).from(inventoryTransactions).where(where),
     ]);
 
+    const total = Number(count);
+    const resolvedPage = page ?? 1;
+    const resolvedLimit = limit ?? total;
     return {
       items,
-      meta: { page, limit, total: Number(count), totalPages: Math.ceil(Number(count) / limit) },
+      meta: { page: resolvedPage, limit: resolvedLimit, total, totalPages: limit ? Math.ceil(total / limit) : 1 },
     };
   },
 

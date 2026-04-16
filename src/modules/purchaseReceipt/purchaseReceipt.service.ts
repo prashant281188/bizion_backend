@@ -5,15 +5,14 @@ import { AppError } from "../../middlewares/errorHandler";
 import { CreatePurchaseReceiptInput, ListPurchaseReceiptInput } from "./purchaseReceipt.schema";
 
 export const purchaseReceiptService = {
-  async list({ page = 1, limit = 20, orderId }: ListPurchaseReceiptInput) {
-    const offset = (page - 1) * limit;
+  async list({ page, limit, orderId }: ListPurchaseReceiptInput) {
     const where = orderId ? eq(purchaseReceipts.orderId, orderId) : undefined;
 
     const [items, [{ count }]] = await Promise.all([
       db.query.purchaseReceipts.findMany({
         where,
-        limit,
-        offset,
+        limit: limit,
+        offset: limit !== undefined ? ((page ?? 1) - 1) * limit : undefined,
         orderBy: [asc(purchaseReceipts.createdAt)],
         with: {
           order: { columns: { id: true, orderNumber: true, orderType: true } },
@@ -23,9 +22,12 @@ export const purchaseReceiptService = {
       db.select({ count: sql<number>`count(*)` }).from(purchaseReceipts).where(where),
     ]);
 
+    const total = Number(count);
+    const resolvedPage = page ?? 1;
+    const resolvedLimit = limit ?? total;
     return {
       items,
-      meta: { page, limit, total: Number(count), totalPages: Math.ceil(Number(count) / limit) },
+      meta: { page: resolvedPage, limit: resolvedLimit, total, totalPages: limit ? Math.ceil(total / limit) : 1 },
     };
   },
 

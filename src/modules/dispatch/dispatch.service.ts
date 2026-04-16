@@ -1,29 +1,35 @@
-import { asc, eq, sql } from "drizzle-orm";
+import { asc, eq, ilike, or, sql } from "drizzle-orm";
 import { db } from "../../config/db";
 import { dispatches, dispatchItems, dispatchAllocations, orderItems } from "../../db/schema";
 import { AppError } from "../../middlewares/errorHandler";
 import { CreateDispatchInput, ListDispatchInput, UpdateDispatchInput } from "./dispatch.schema";
 
 export const dispatchService = {
-  async list({ page = 1, limit = 20 }: ListDispatchInput) {
-    const offset = (page - 1) * limit;
+  async list({ page, limit, search }: ListDispatchInput) {
+    const where = search
+      ? or(ilike(dispatches.dispatchNumber, `%${search}%`), ilike(dispatches.transport, `%${search}%`))
+      : undefined;
 
     const [items, [{ count }]] = await Promise.all([
       db.query.dispatches.findMany({
-        limit,
-        offset,
+        where,
+        limit: limit,
+        offset: limit !== undefined ? ((page ?? 1) - 1) * limit : undefined,
         orderBy: [asc(dispatches.createdAt)],
         with: {
           createdByUser: { columns: { id: true, firstName: true, lastName: true } },
           items: true,
         },
       }),
-      db.select({ count: sql<number>`count(*)` }).from(dispatches),
+      db.select({ count: sql<number>`count(*)` }).from(dispatches).where(where),
     ]);
 
+    const total = Number(count);
+    const resolvedPage = page ?? 1;
+    const resolvedLimit = limit ?? total;
     return {
       items,
-      meta: { page, limit, total: Number(count), totalPages: Math.ceil(Number(count) / limit) },
+      meta: { page: resolvedPage, limit: resolvedLimit, total, totalPages: limit ? Math.ceil(total / limit) : 1 },
     };
   },
 

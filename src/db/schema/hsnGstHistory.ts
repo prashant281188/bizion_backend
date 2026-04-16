@@ -13,7 +13,7 @@ export const hsnGstHistory = pgTable("hsn_gst_history", {
 },
     (table) => [
         index("hsn_gst_history_hsn_idx").on(table.hsnId),
-        index("hsn_gst_histort_effective_idx").on(table.effectiveFrom, table.effectiveTo)
+        index("hsn_gst_historY_effective_idx").on(table.effectiveFrom, table.effectiveTo)
     ])
 
 export const hsnGstHistoryRelations = relations(hsnGstHistory,

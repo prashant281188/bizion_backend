@@ -5,15 +5,16 @@ import { carouselService } from "./carousel.service";
 import { logAudit, getClientIp } from "../../services/audit.service";
 import { AppError } from "../../middlewares/errorHandler";
 import { deleteFromS3, getS3Url, uploadToS3 } from "../../services/s3.service";
-import { createCarouselSchema, updateCarouselSchema } from "./carousel.schema";
+import { createCarouselSchema, listCarouselSchema, updateCarouselSchema } from "./carousel.schema";
 import { db } from "../../config/db";
 import { carousel } from "../../db/schema";
 
 export const carouselController = {
   async list(req: AuthRequest, res: Response, next: NextFunction) {
     try {
-      const data = await carouselService.list();
-      res.json({ success: true, data });
+      const query = listCarouselSchema.parse(req.query);
+      const result = await carouselService.list(query);
+      res.json({ success: true, data: result.items, meta: result.meta });
     } catch (err) { next(err); }
   },
 

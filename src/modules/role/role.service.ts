@@ -23,18 +23,24 @@ function guardSystemRole(role: { isSystem: boolean; name: string }) {
 }
 
 export const roleService = {
-  async listRoles({ page = 1, limit = 10, search }: ListRoleInput) {
-    const offset = (page - 1) * limit;
+  async listRoles({ page, limit, search }: ListRoleInput) {
     const where = search ? ilike(roles.name, `%${search}%`) : undefined;
 
     const [items, [{ count }]] = await Promise.all([
-      db.query.roles.findMany({ where, limit, offset }),
+      db.query.roles.findMany({
+        where,
+        limit: limit,
+        offset: limit !== undefined ? ((page ?? 1) - 1) * limit : undefined,
+      }),
       db.select({ count: sql<number>`count(*)` }).from(roles).where(where),
     ]);
 
+    const total = Number(count);
+    const resolvedPage = page ?? 1;
+    const resolvedLimit = limit ?? total;
     return {
       items,
-      meta: { page, limit, total: Number(count), totalPages: Math.ceil(Number(count) / limit) },
+      meta: { page: resolvedPage, limit: resolvedLimit, total, totalPages: limit ? Math.ceil(total / limit) : 1 },
     };
   },
 

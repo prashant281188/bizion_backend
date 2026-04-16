@@ -7,7 +7,7 @@ import { createGstGroupSchema, listGstGroupSchema, updateGstGroupSchema } from "
 
 const router = Router();
 
-router.get("/", authMiddleware, requirePermission("gst:read"), validateSchema(listGstGroupSchema, "query"), gstGroupController.list);
+router.get("/", validateSchema(listGstGroupSchema, "query"), gstGroupController.list);
 router.get("/:id", authMiddleware, requirePermission("gst:read"), gstGroupController.getById);
 router.post("/", authMiddleware, requirePermission("gst:create"), validateSchema(createGstGroupSchema), gstGroupController.create);
 router.patch("/:id", authMiddleware, requirePermission("gst:update"), validateSchema(updateGstGroupSchema), gstGroupController.update);

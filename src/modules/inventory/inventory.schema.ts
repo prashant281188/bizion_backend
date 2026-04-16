@@ -12,8 +12,8 @@ export const createTransactionSchema = z.object({
 });
 
 export const listTransactionSchema = z.object({
-  page: z.coerce.number().min(1).default(1),
-  limit: z.coerce.number().min(1).max(100).default(20),
+  page: z.coerce.number().min(1).optional(),
+  limit: z.coerce.number().min(1).max(1000).optional(),
   variantId: z.string().uuid().optional(),
   partyId: z.string().uuid().optional(),
   type: z.enum(txTypes).optional(),
@@ -21,8 +21,8 @@ export const listTransactionSchema = z.object({
 });
 
 export const listInventorySchema = z.object({
-  page: z.coerce.number().min(1).default(1),
-  limit: z.coerce.number().min(1).max(100).default(20),
+  page: z.coerce.number().min(1).optional(),
+  limit: z.coerce.number().min(1).max(1000).optional(),
   variantId: z.string().uuid().optional(),
   location: z.string().optional(),
 });

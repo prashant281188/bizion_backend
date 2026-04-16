@@ -7,8 +7,8 @@ const coercedBoolean = z
   .optional();
 
 export const listCategorySchema = z.object({
-  page: z.coerce.number().min(1).default(1),
-  limit: z.coerce.number().min(1).max(50).default(10),
+  page: z.coerce.number().min(1).optional(),
+  limit: z.coerce.number().min(1).max(500).optional(),
   search: z.string().optional(),
 });
 

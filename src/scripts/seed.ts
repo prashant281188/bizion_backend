@@ -323,6 +323,7 @@ async function seed() {
   const varTB01_S    = varBySku["TB4001-S"]!;
   const varTB01_M    = varBySku["TB4001-M"]!;
   log("✅ Variants seeded");
+  
 
   // ── 12. Variant ↔ Option Values ───────────────────────────────────────────
   // variantOptionValues has unique on (variantId, optionValueId)

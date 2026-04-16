@@ -1,6 +1,6 @@
 import { and, asc, desc, eq, ilike, sql } from "drizzle-orm";
 import { db } from "../../config/db";
-import { carousel, categories, products } from "../../db/schema";
+import { carousel, categories, optionValues, products } from "../../db/schema";
 import { AppError } from "../../middlewares/errorHandler";
 import { getS3Url } from "../../services/s3.service";
 import { ListProductsInput } from "./store.schema";
@@ -177,7 +177,9 @@ export const storeService = {
               orderBy: (r, { desc }) => [desc(r.createdAt)],
             },
             optionValues: {
-              columns: {},
+              columns: {
+
+              },
               with: {
                 optionValue: {
                   columns: { id: true, optionValue: true, position: true },

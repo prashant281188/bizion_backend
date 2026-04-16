@@ -14,9 +14,7 @@ export const auditService = {
     return record;
   },
 
-  async list({ page = 1, limit = 20, userId, entity, entityId, action, from, to }: ListAuditInput) {
-    const offset = (page - 1) * limit;
-
+  async list({ page, limit, userId, entity, entityId, action, from, to }: ListAuditInput) {
     const conditions = [];
     if (userId) conditions.push(eq(auditLogs.userId, userId));
     if (entity) conditions.push(eq(auditLogs.entity, entity));
@@ -26,21 +24,21 @@ export const auditService = {
     if (to) conditions.push(lte(auditLogs.createdAt, to));
 
     const where = conditions.length ? and(...conditions) : undefined;
+    const baseQuery = db.select().from(auditLogs).where(where).orderBy(desc(auditLogs.createdAt));
 
     const [items, [{ count }]] = await Promise.all([
-      db
-        .select()
-        .from(auditLogs)
-        .where(where)
-        .orderBy(desc(auditLogs.createdAt))
-        .limit(limit)
-        .offset(offset),
+      limit !== undefined
+        ? baseQuery.limit(limit).offset(((page ?? 1) - 1) * limit)
+        : baseQuery,
       db.select({ count: sql<number>`count(*)` }).from(auditLogs).where(where),
     ]);
 
+    const total = Number(count);
+    const resolvedPage = page ?? 1;
+    const resolvedLimit = limit ?? total;
     return {
       items,
-      meta: { page, limit, total: Number(count), totalPages: Math.ceil(Number(count) / limit) },
+      meta: { page: resolvedPage, limit: resolvedLimit, total, totalPages: limit ? Math.ceil(total / limit) : 1 },
     };
   },
 

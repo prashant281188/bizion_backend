@@ -5,20 +5,24 @@ import { AppError } from "../../middlewares/errorHandler";
 import { CreateUnitInput, ListUnitInput, UpdateUnitInput } from "./unit.schema";
 
 export const unitService = {
-  async list({ page = 1, limit = 10, search }: ListUnitInput) {
-    const offset = (page - 1) * limit;
+  async list({ page, limit, search }: ListUnitInput) {
     const where = search
       ? or(ilike(units.unitName, `%${search}%`), ilike(units.unitSymbol, `%${search}%`))
       : undefined;
 
     const [items, [{ count }]] = await Promise.all([
-      db.select().from(units).where(where).limit(limit).offset(offset),
+      limit !== undefined
+        ? db.select().from(units).where(where).limit(limit).offset(((page ?? 1) - 1) * limit)
+        : db.select().from(units).where(where),
       db.select({ count: sql<number>`count(*)` }).from(units).where(where),
     ]);
 
+    const total = Number(count);
+    const resolvedPage = page ?? 1;
+    const resolvedLimit = limit ?? total;
     return {
       items,
-      meta: { page, limit, total: Number(count), totalPages: Math.ceil(Number(count) / limit) },
+      meta: { page: resolvedPage, limit: resolvedLimit, total, totalPages: limit ? Math.ceil(total / limit) : 1 },
     };
   },
 

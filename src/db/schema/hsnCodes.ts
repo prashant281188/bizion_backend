@@ -17,7 +17,7 @@ export const hsnCodes = pgTable("hsn_codes", {
   description: varchar("description", { length: 255 }),
   isActive: boolean("is_active").default(true),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
-  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull().$onUpdate(() => new Date()),
 }, (table) => [
   index("hsn_code_idx").on(table.hsnCode)
 ]);

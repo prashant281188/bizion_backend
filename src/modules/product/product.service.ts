@@ -65,8 +65,8 @@ export const productService = {
   ───────────────────────────────────────────────── */
 
   async list({
-    page       = 1,
-    limit      = 10,
+    page,
+    limit,
     search,
     categoryId,
     brandId,
@@ -77,8 +77,6 @@ export const productService = {
     sortBy     = "model",
     sortOrder  = "asc",
   }: ListProductInput) {
-    const offset = (page - 1) * limit;
-
     // Build WHERE conditions dynamically based on provided filters
     const conditions = [eq(products.isDeleted, false)];
     if (search)                conditions.push(ilike(products.model, `%${search}%`));
@@ -95,8 +93,8 @@ export const productService = {
     const [items, [{ count }]] = await Promise.all([
       db.query.products.findMany({
         where,
-        limit,
-        offset,
+        limit: limit,
+        offset: limit !== undefined ? ((page ?? 1) - 1) * limit : undefined,
         orderBy: [orderFn(getSortColumn(sortBy) as any)],
         columns: {
           id: true, model: true, metal: true, sizeType: true,
@@ -111,13 +109,16 @@ export const productService = {
       db.select({ count: sql<number>`count(*)` }).from(products).where(where),
     ]);
 
+    const total = Number(count);
+    const resolvedPage = page ?? 1;
+    const resolvedLimit = limit ?? total;
     return {
       items: items.map((p) => ({ ...p, image: resolveImageUrl(p.image) })),
       meta: {
-        page,
-        limit,
-        total:      Number(count),
-        totalPages: Math.ceil(Number(count) / limit),
+        page:       resolvedPage,
+        limit:      resolvedLimit,
+        total,
+        totalPages: limit ? Math.ceil(total / limit) : 1,
       },
     };
   },

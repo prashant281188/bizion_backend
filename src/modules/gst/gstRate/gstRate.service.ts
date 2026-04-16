@@ -5,23 +5,25 @@ import { AppError } from "../../../middlewares/errorHandler";
 import { CreateGstRateInput, ListGstRateInput, UpdateGstRateInput } from "./gstRate.schema";
 
 export const gstRateService = {
-  async list({ page = 1, limit = 10, gstGroupId }: ListGstRateInput) {
-    const offset = (page - 1) * limit;
+  async list({ page, limit, gstGroupId }: ListGstRateInput) {
     const where = gstGroupId ? eq(gstRates.gstGroupId, gstGroupId) : undefined;
 
     const [items, [{ count }]] = await Promise.all([
       db.query.gstRates.findMany({
         where,
-        limit,
-        offset,
+        limit: limit,
+        offset: limit !== undefined ? ((page ?? 1) - 1) * limit : undefined,
         with: { gstGroup: { columns: { name: true } } },
       }),
       db.select({ count: sql<number>`count(*)` }).from(gstRates).where(where),
     ]);
 
+    const total = Number(count);
+    const resolvedPage = page ?? 1;
+    const resolvedLimit = limit ?? total;
     return {
       items,
-      meta: { page, limit, total: Number(count), totalPages: Math.ceil(Number(count) / limit) },
+      meta: { page: resolvedPage, limit: resolvedLimit, total, totalPages: limit ? Math.ceil(total / limit) : 1 },
     };
   },
 

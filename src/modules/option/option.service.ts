@@ -13,23 +13,25 @@ import {
 export const optionService = {
   /* ===== OPTIONS ===== */
 
-  async list({ page = 1, limit = 10, search }: ListOptionInput) {
-    const offset = (page - 1) * limit;
+  async list({ page, limit, search }: ListOptionInput) {
     const where = search ? ilike(options.optionName, `%${search}%`) : undefined;
 
     const [items, [{ count }]] = await Promise.all([
       db.query.options.findMany({
         where,
-        limit,
-        offset,
+        limit: limit,
+        offset: limit !== undefined ? ((page ?? 1) - 1) * limit : undefined,
         with: { values: { orderBy: (v, { asc }) => [asc(v.position)] } },
       }),
       db.select({ count: sql<number>`count(*)` }).from(options).where(where),
     ]);
 
+    const total = Number(count);
+    const resolvedPage = page ?? 1;
+    const resolvedLimit = limit ?? total;
     return {
       items,
-      meta: { page, limit, total: Number(count), totalPages: Math.ceil(Number(count) / limit) },
+      meta: { page: resolvedPage, limit: resolvedLimit, total, totalPages: limit ? Math.ceil(total / limit) : 1 },
     };
   },
 
@@ -75,6 +77,8 @@ export const optionService = {
     });
     if (existing) throw new AppError("Option value already exists for this option", 409);
 
+    if (parseInt(data.optionValue))
+      data.position = Number(data.optionValue.trim())
     const [value] = await db.insert(optionValues).values({ ...data, optionId }).returning();
     return value;
   },

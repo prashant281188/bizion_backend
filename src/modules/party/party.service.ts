@@ -6,8 +6,8 @@ import { CreatePartyInput, ListPartyInput, UpdatePartyInput } from "./party.sche
 
 export const partyService = {
   async list({
-    page = 1,
-    limit = 20,
+    page,
+    limit,
     search,
     type,
     gstRegistrationType,
@@ -15,8 +15,6 @@ export const partyService = {
     stateCode,
     isActive,
   }: ListPartyInput) {
-    const offset = (page - 1) * limit;
-
     const conditions = [eq(parties.isDeleted, false)];
 
     if (search)
@@ -37,15 +35,21 @@ export const partyService = {
     if (isActive !== undefined) conditions.push(eq(parties.isActive, isActive));
 
     const where = and(...conditions);
+    const baseQuery = db.select().from(parties).where(where).orderBy(asc(parties.name));
 
     const [items, [{ count }]] = await Promise.all([
-      db.select().from(parties).where(where).orderBy(asc(parties.name)).limit(limit).offset(offset),
+      limit !== undefined
+        ? baseQuery.limit(limit).offset(((page ?? 1) - 1) * limit)
+        : baseQuery,
       db.select({ count: sql<number>`count(*)` }).from(parties).where(where),
     ]);
 
+    const total = Number(count);
+    const resolvedPage = page ?? 1;
+    const resolvedLimit = limit ?? total;
     return {
       items,
-      meta: { page, limit, total: Number(count), totalPages: Math.ceil(Number(count) / limit) },
+      meta: { page: resolvedPage, limit: resolvedLimit, total, totalPages: limit ? Math.ceil(total / limit) : 1 },
     };
   },
 

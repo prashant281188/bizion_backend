@@ -10,25 +10,30 @@ import {
 import { createSlug } from "../../utils/slug";
 
 export const categoryService = {
-  async list({ page = 1, limit = 10, search }: ListCategoryInput) {
-    const offset = (page - 1) * limit;
-
+  async list({ page, limit, search }: ListCategoryInput) {
     const where = search
       ? ilike(categories.categoryName, `%${search}%`)
       : undefined;
 
+    const baseQuery = db.select().from(categories).where(where).orderBy(asc(categories.categoryName));
+
     const [items, [{ count }]] = await Promise.all([
-      db.select().from(categories).where(where).limit(limit).orderBy(asc(categories.categoryName)).offset(offset),
+      limit !== undefined
+        ? baseQuery.limit(limit).offset(((page ?? 1) - 1) * limit)
+        : baseQuery,
       db.select({ count: sql<number>`count(*)` }).from(categories).where(where),
     ]);
 
+    const total = Number(count);
+    const resolvedPage = page ?? 1;
+    const resolvedLimit = limit ?? total;
     return {
       items,
       meta: {
-        page,
-        limit,
-        total: Number(count),
-        totalPages: Math.ceil(Number(count) / limit),
+        page: resolvedPage,
+        limit: resolvedLimit,
+        total,
+        totalPages: limit ? Math.ceil(total / limit) : 1,
       },
     };
   },

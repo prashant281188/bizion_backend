@@ -15,9 +15,7 @@ export const hsnService = {
      Full history is available via GET /hsn/:id.
   ───────────────────────────────────────────────── */
 
-  async list({ page = 1, limit = 10, search, isActive }: ListHsnInput) {
-    const offset = (page - 1) * limit;
-
+  async list({ page, limit, search, isActive }: ListHsnInput) {
     const filters = [];
     if (isActive !== undefined) filters.push(eq(hsnCodes.isActive, isActive));
     if (search) filters.push(ilike(hsnCodes.hsnCode, `%${search}%`));
@@ -26,8 +24,8 @@ export const hsnService = {
     const [items, [{ count }]] = await Promise.all([
       db.query.hsnCodes.findMany({
         where,
-        limit,
-        offset,
+        limit: limit,
+        offset: limit !== undefined ? ((page ?? 1) - 1) * limit : undefined,
         orderBy: [asc(hsnCodes.hsnCode)],
         with: {
           // Only the currently active GST assignment (effectiveTo IS NULL)
@@ -54,13 +52,16 @@ export const hsnService = {
       db.select({ count: sql<number>`count(*)` }).from(hsnCodes).where(where),
     ]);
 
+    const total = Number(count);
+    const resolvedPage = page ?? 1;
+    const resolvedLimit = limit ?? total;
     return {
       items: items.map(flattenHsnCurrentGst),
       meta: {
-        page,
-        limit,
-        total: Number(count),
-        totalPages: Math.ceil(Number(count) / limit),
+        page: resolvedPage,
+        limit: resolvedLimit,
+        total,
+        totalPages: limit ? Math.ceil(total / limit) : 1,
       },
     };
   },
