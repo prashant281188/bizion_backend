@@ -57,6 +57,8 @@ function clearAuthCookies(res: Response) {
   };
   res.clearCookie("token",         { ...base, path: "/" });
   res.clearCookie("refresh_token", { ...base, path: "/api/v1/auth" });
+  // Backward-compatibility: clear legacy refresh cookie path used by older clients.
+  res.clearCookie("refresh_token", { ...base, path: "/api/v1/auth/refresh" });
 }
 
 // ─── Controller ───────────────────────────────────────────────────────────────

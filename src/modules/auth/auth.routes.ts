@@ -43,8 +43,11 @@ router.post(
 );
 
 // Logout does not require a valid access token — allows clients to clean up
-// even after the access token has expired (the refresh cookie is used instead)
+// even after the access token has expired (the refresh cookie is used instead).
+// Keep /refresh/logout as a backward-compatible endpoint for clients that still
+// have a refresh cookie scoped to /api/v1/auth/refresh.
 router.post("/logout", authController.logout);
+router.post("/refresh/logout", authController.logout);
 
 // ─── Password reset flow (public, rate-limited) ────────────────────────────────
 // Step 1: submit email → receive OTP
