@@ -1,6 +1,5 @@
 import { db } from "../config/db";
-import { rolePermissions } from "../db/schema/rolePermission";
-import { permissions } from "../db/schema/permission";
+import { rolePermissions, permissions } from "../db/schema";
 import { eq } from "drizzle-orm";
 
 const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes

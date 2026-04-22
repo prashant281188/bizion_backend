@@ -4,7 +4,7 @@ import { eq, and, isNull, lt } from "drizzle-orm";
 import { db } from "../../config/db";
 import { users, refreshTokens } from "../../db/schema";
 import { AppError } from "../../middlewares/errorHandler";
-import { passwordResetTokens } from "../../db/schema/passwordResetToken";
+import { passwordResetTokens } from "../../db/schema";
 import { sendEmail } from "../../services/email.service";
 import { otpEmailTemplate } from "../../utils/emailTemplates";
 

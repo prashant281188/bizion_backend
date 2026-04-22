@@ -66,3 +66,38 @@ export const userRelations = relations(users, ({ one }) => ({
 
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
+
+// ─── Password Reset Tokens ────────────────────────────────────────────────────
+
+export const passwordResetTokens = pgTable(
+    "password_reset_tokens",
+    {
+        id: uuid("id").defaultRandom().primaryKey(),
+        userId: uuid("user_id")
+            .references(() => users.id, { onDelete: "cascade" })
+            .notNull(),
+        tokenHash: text("token_hash").notNull(),
+        expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+        createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    },
+    (table) => [index("reset_user_idx").on(table.userId)]
+);
+
+// ─── Refresh Tokens ───────────────────────────────────────────────────────────
+
+export const refreshTokens = pgTable(
+    "refresh_tokens",
+    {
+        id: uuid("id").defaultRandom().primaryKey(),
+        userId: uuid("user_id")
+            .references(() => users.id, { onDelete: "cascade" })
+            .notNull(),
+        tokenHash: text("token_hash").notNull().unique(),
+        expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+        createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    },
+    (table) => [
+        index("refresh_tokens_user_idx").on(table.userId),
+        index("refresh_tokens_hash_idx").on(table.tokenHash),
+    ]
+);

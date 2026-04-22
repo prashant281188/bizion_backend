@@ -1,6 +1,6 @@
 import { Router } from "express";
-import gstGroupRoutes from "./gstGroup/gstGroup.routes";
-import gstRateRoutes from "./gstRate/gstRate.routes";
+import gstGroupRoutes from "./gstGroup.routes";
+import gstRateRoutes from "./gstRate.routes";
 
 const router = Router();
 

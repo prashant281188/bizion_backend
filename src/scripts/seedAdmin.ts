@@ -2,10 +2,7 @@ import { randomUUID as uuid } from "crypto";
 import bcrypt from "bcrypt";
 import { eq } from "drizzle-orm";
 import { db } from "../config/db";
-import { permissions } from "../db/schema/permission";
-import { roles } from "../db/schema/role";
-import { rolePermissions } from "../db/schema/rolePermission";
-import { users } from "../db/schema/user";
+import { permissions, roles, rolePermissions, users } from "../db/schema";
 
 /* =====================================================
    ALL PERMISSIONS

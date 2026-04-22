@@ -1,7 +1,7 @@
 import { Router } from "express";
-import { authMiddleware } from "../../../middlewares/authMiddleware";
-import { requirePermission } from "../../../middlewares/requirePermission";
-import { validateSchema } from "../../../middlewares/validateSchema";
+import { authMiddleware } from "../../middlewares/authMiddleware";
+import { requirePermission } from "../../middlewares/requirePermission";
+import { validateSchema } from "../../middlewares/validateSchema";
 import { gstGroupController } from "./gstGroup.controller";
 import { createGstGroupSchema, listGstGroupSchema, updateGstGroupSchema } from "./gstGroup.schema";
 

@@ -12,35 +12,36 @@ import { randomUUID as uuid } from "crypto";
 import bcrypt from "bcrypt";
 import { eq, and } from "drizzle-orm";
 import { db } from "../config/db";
-import { permissions } from "../db/schema/permission";
-import { roles } from "../db/schema/role";
-import { rolePermissions } from "../db/schema/rolePermission";
-import { users } from "../db/schema/user";
-import { gstGroups } from "../db/schema/gstGroup";
-import { gstRates } from "../db/schema/gstRate";
-import { hsnCodes } from "../db/schema/hsnCodes";
-import { hsnGstHistory } from "../db/schema/hsnGstHistory";
-import { units } from "../db/schema/unit";
-import { brands } from "../db/schema/brand";
-import { categories } from "../db/schema/category";
-import { options } from "../db/schema/options";
-import { optionValues } from "../db/schema/optionValues";
-import { products } from "../db/schema/product";
-import { productVariants } from "../db/schema/productVariant";
-import { variantOptionValues } from "../db/schema/variantOptionValues";
-import { variantRates } from "../db/schema/variantRates";
-import { parties } from "../db/schema/party";
-import { inventory, inventoryTransactions } from "../db/schema/inventory";
-import { orders } from "../db/schema/order";
-import { orderItems } from "../db/schema/orderItem";
 import {
+  permissions,
+  roles,
+  rolePermissions,
+  users,
+  gstGroups,
+  gstRates,
+  hsnCodes,
+  hsnGstHistory,
+  units,
+  brands,
+  categories,
+  options,
+  optionValues,
+  products,
+  productVariants,
+  variantOptionValues,
+  variantRates,
+  parties,
+  inventory,
+  inventoryTransactions,
+  orders,
+  orderItems,
   purchaseReceipts,
   purchaseReceiptItems,
   purchaseReceiptAllocations,
-} from "../db/schema/purchaseReceipt";
-import { dispatches } from "../db/schema/dispatch";
-import { dispatchItems } from "../db/schema/dispatchItems";
-import { dispatchAllocations } from "../db/schema/dispatchAllocation";
+  dispatches,
+  dispatchItems,
+  dispatchAllocations,
+} from "../db/schema";
 
 const PAST = new Date("2025-01-01T00:00:00Z");
 

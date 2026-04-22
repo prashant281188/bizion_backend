@@ -4,11 +4,7 @@ import { PostgresJsQueryResultHKT } from "drizzle-orm/postgres-js";
 import { db } from "../../config/db";
 import * as schema from "../../db/schema";
 import { inventory, inventoryTransactions } from "../../db/schema";
-import { dispatches } from "../../db/schema/dispatch";
-import { dispatchItems } from "../../db/schema/dispatchItems";
-import { orders } from "../../db/schema/order";
-import { orderItems } from "../../db/schema/orderItem";
-import { purchaseReceipts, purchaseReceiptItems } from "../../db/schema/purchaseReceipt";
+import { dispatches, dispatchItems, orders, orderItems, purchaseReceipts, purchaseReceiptItems } from "../../db/schema";
 import { AppError } from "../../middlewares/errorHandler";
 import {
   AdjustInventoryInput,

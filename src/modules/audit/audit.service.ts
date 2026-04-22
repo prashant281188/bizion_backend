@@ -2,7 +2,7 @@ import { and, asc, desc, eq, gte, lte, sql } from "drizzle-orm";
 import { db } from "../../config/db";
 import { auditLogs } from "../../db/schema";
 import { AppError } from "../../middlewares/errorHandler";
-import { NewAuditLog } from "../../db/schema/auditLog";
+import { NewAuditLog } from "../../db/schema";
 import { ListAuditInput } from "./audit.schema";
 
 export const auditService = {

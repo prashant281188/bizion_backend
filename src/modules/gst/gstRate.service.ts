@@ -1,7 +1,7 @@
 import { and, eq, sql } from "drizzle-orm";
-import { db } from "../../../config/db";
-import { gstGroups, gstRates } from "../../../db/schema";
-import { AppError } from "../../../middlewares/errorHandler";
+import { db } from "../../config/db";
+import { gstGroups, gstRates } from "../../db/schema";
+import { AppError } from "../../middlewares/errorHandler";
 import { CreateGstRateInput, ListGstRateInput, UpdateGstRateInput } from "./gstRate.schema";
 
 export const gstRateService = {

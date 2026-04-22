@@ -18,19 +18,21 @@ import { randomUUID as uuid } from "crypto";
 import ExcelJS from "exceljs";
 import { eq, and, isNull, inArray } from "drizzle-orm";
 import { db } from "../../config/db";
-import { brands } from "../../db/schema/brand";
-import { categories } from "../../db/schema/category";
-import { units } from "../../db/schema/unit";
-import { hsnCodes } from "../../db/schema/hsnCodes";
-import { hsnGstHistory } from "../../db/schema/hsnGstHistory";
-import { gstGroups } from "../../db/schema/gstGroup";
-import { gstRates } from "../../db/schema/gstRate";
-import { options } from "../../db/schema/options";
-import { optionValues } from "../../db/schema/optionValues";
-import { products } from "../../db/schema/product";
-import { productVariants } from "../../db/schema/productVariant";
-import { variantRates } from "../../db/schema/variantRates";
-import { variantOptionValues } from "../../db/schema/variantOptionValues";
+import {
+  brands,
+  categories,
+  units,
+  hsnCodes,
+  hsnGstHistory,
+  gstGroups,
+  gstRates,
+  options,
+  optionValues,
+  products,
+  productVariants,
+  variantRates,
+  variantOptionValues,
+} from "../../db/schema";
 
 // ─── helpers ──────────────────────────────────────────────────────────────────
 

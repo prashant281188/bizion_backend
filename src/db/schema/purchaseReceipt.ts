@@ -3,7 +3,7 @@ import { relations } from "drizzle-orm";
 import { orders } from "./order";
 import { users } from "./user";
 import { productVariants } from "./productVariant";
-import { orderItems } from "./orderItem";
+import { orderItems } from "./order";
 
 export const purchaseReceipts = pgTable("purchase_receipts", {
     id: uuid("id").defaultRandom().primaryKey(),

@@ -1,7 +1,7 @@
 import { eq, ilike, sql } from "drizzle-orm";
-import { db } from "../../../config/db";
-import { gstGroups } from "../../../db/schema";
-import { AppError } from "../../../middlewares/errorHandler";
+import { db } from "../../config/db";
+import { gstGroups } from "../../db/schema";
+import { AppError } from "../../middlewares/errorHandler";
 import { CreateGstGroupInput, ListGstGroupInput, UpdateGstGroupInput } from "./gstGroup.schema";
 
 export const gstGroupService = {

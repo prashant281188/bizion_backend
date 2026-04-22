@@ -1,29 +1,12 @@
 {
   "permissions": {
     "allow": [
-      "Bash(npm install:*)",
-      "Bash(npx tsc:*)",
-      "Bash(find /d/project/bizion_backend/src -name \"*.routes.ts\" -exec basename {})",
-      "Bash(wc:*)",
-      "Bash(git add:*)",
-      "Bash(git commit:*)",
-      "Bash(git push:*)",
-      "Bash(xargs grep:*)",
-      "Bash(wmic logicaldisk:*)",
-      "Bash(powershell \"Get-PSDrive C | Select-Object Used,Free\")",
-      "Bash(npm run:*)",
-      "Bash(ls:*)",
-      "Bash(for f:*)",
-      "Bash(do)",
-      "Bash(sed -i 's|authMiddelware|authMiddleware|g' \"$f\")",
-      "Bash(done)",
-      "Bash(xargs basename:*)",
-      "Bash(find src:*)",
-      "Bash(/tmp/tree_structure.txt:*)",
-      "Read(//tmp/**)",
-      "Bash(npx drizzle-kit:*)",
-      "Bash(npx ts-node:*)",
-      "mcp__ide__getDiagnostics"
+      "mcp__ide__executeCode",
+      "Bash(npx tsc *)",
+      "Bash(npx tsx *)",
+      "Bash(node -e \"require\\('./node_modules/typescript'\\).version\")",
+      "Bash(node_modules/.bin/tsc --noEmit)",
+      "Bash(node_modules/.bin/tsc --noEmit --ignoreDeprecations 5.0)"
     ]
   }
 }
