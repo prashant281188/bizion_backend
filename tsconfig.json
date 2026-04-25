@@ -10,8 +10,7 @@
     "resolveJsonModule": true,
     "forceConsistentCasingInFileNames": true,
     "moduleResolution": "node",
-    "ignoreDeprecations": "6.0",
-    "noErrorTruncation": true,
+    "noErrorTruncation": true
   },
   "include": ["src"],
   "exclude": ["node_modules", "dist"]

@@ -31,15 +31,15 @@ function setAccessCookie(res: Response, token: string) {
 
 /**
  * Sets the long-lived refresh token cookie.
- * The path is scoped to /api/v1/auth/refresh so the browser only sends this
- * cookie to the refresh endpoint — it won't leak to other API routes.
+ * The path is scoped to /api/v1/auth so auth endpoints (refresh/logout) can
+ * both access it, while still avoiding leakage to non-auth API routes.
  */
 function setRefreshCookie(res: Response, token: string) {
   res.cookie("refresh_token", token, {
     httpOnly: true,
     secure:   ENV.NODE_ENV === "production",
     sameSite: ENV.NODE_ENV === "production" ? "none" : "lax",
-    path:     "/api/v1/auth/refresh",
+    path:     "/api/v1/auth",
     maxAge:   REFRESH_TOKEN_TTL_MS,
   });
 }
@@ -56,6 +56,8 @@ function clearAuthCookies(res: Response) {
     sameSite: ENV.NODE_ENV === "production" ? "none" as const : "lax" as const,
   };
   res.clearCookie("token",         { ...base, path: "/" });
+  res.clearCookie("refresh_token", { ...base, path: "/api/v1/auth" });
+  // Backward-compatibility: clear legacy refresh cookie path used by older clients.
   res.clearCookie("refresh_token", { ...base, path: "/api/v1/auth/refresh" });
 }
 
